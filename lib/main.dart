@@ -13,7 +13,11 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
 
 
-      title: 'MineChat.ai test purpose',
+      title: 'MineChat.ai hello dear',
+
+
+    
+
 
       theme: ThemeData(
         // This is the theme of your application.
