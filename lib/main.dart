@@ -12,7 +12,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
 
+
       title: 'MineChat.ai hello dear',
+
+
+    
+
+
       theme: ThemeData(
         // This is the theme of your application.
         //
