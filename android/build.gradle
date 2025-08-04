@@ -1,3 +1,18 @@
+buildscript {
+    ext.kotlin_version = '2.0.0'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Kotlin Gradle plugin with version 2.1.0 to match Firebase libs
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+
+        // Google Services plugin
+        classpath 'com.google.gms:google-services:4.4.3'
+    }
+}
+
 allprojects {
     repositories {
         google()
@@ -6,11 +21,10 @@ allprojects {
 }
 
 rootProject.buildDir = "../build"
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
-subprojects {
-    project.evaluationDependsOn(":app")
+    evaluationDependsOn(":app")
 }
 
 tasks.register("clean", Delete) {

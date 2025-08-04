@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "881871036377",
+    "project_id": "minechat-29605",
+    "storage_bucket": "minechat-29605.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:881871036377:android:4d2fe3876aad72c55d43c8",
+        "android_client_info": {
+          "package_name": "com.minechatapp.minechat"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCaZV7OhdvHFNlk5nv1fgCrkUlSm7TMt4E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
