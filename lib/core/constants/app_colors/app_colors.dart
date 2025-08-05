@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Brand colors (fixed)
-  static const Color primary = Color(0xFF86174F);
-  static const Color secondary = Color(0xffb73a4e);
+  static const Color primary = Color(0xFF87174F);
+  static const Color secondary = Color(0xffab2856);
+  static const Color tertiary = Color(0xffb73a4e);
   static const Color success = Colors.green;
   static const Color error = Colors.red;
 

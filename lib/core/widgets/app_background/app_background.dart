@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
-import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 
 class AppBackground extends StatelessWidget {
@@ -14,18 +14,7 @@ class AppBackground extends StatelessWidget {
     final screenWidth = AppResponsive.screenWidth(context);
 
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.secondary,
-            AppColors.secondary,
-            AppColors.primary,
-            AppColors.primary
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
+      decoration: BoxDecoration().withAppGradient,
       child: Stack(
         children: [
           // Upper Grid
