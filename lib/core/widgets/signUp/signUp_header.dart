@@ -21,14 +21,15 @@ class SignupHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title,
-            style: AppTextStyles.headline(context)
-                .copyWith(fontSize: AppResponsive.scaleSize(context, 24))),
+            style: AppTextStyles.headline(context).copyWith(
+                fontSize: AppResponsive.scaleSize(context, 24),
+                fontWeight: FontWeight.bold)),
         AppSpacing.vertical(context, 0.01),
         Align(
           alignment: Alignment.center,
           child: Text(subtitle,
               style: AppTextStyles.bodyText(context).copyWith(
-                  fontSize: AppResponsive.scaleSize(context, 16),
+                  fontSize: AppResponsive.scaleSize(context, 18),
                   fontWeight: FontWeight.bold)),
         ),
         AppSpacing.vertical(context, 0.01),
