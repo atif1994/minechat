@@ -1,39 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/controller/google_signin_controller/google_signin_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
-import 'package:minechat/core/constants/app_texts/app_texts.dart';
-import 'package:minechat/core/widgets/app_button/app_button.dart';
-import 'package:minechat/view/screens/email/email_sign_up.dart';
-import 'package:minechat/view/screens/signUp/signUp_screen.dart';
+import 'package:minechat/core/widgets/google_signin_button/google_signin_button.dart';
 import '../../../core/utils/helpers/app_styles/app_text_styles.dart';
 
-class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+class EmailSignUp extends StatelessWidget {
+  const EmailSignUp({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Initialize the Google Sign-In controller
+    Get.put(GoogleSignInController());
+    
     return Obx(() {
       final themeController = Get.find<ThemeController>();
       final isDark = themeController.isDarkMode;
-
-      // Set status bar style based on theme
-      SystemChrome.setSystemUIOverlayStyle(
-        isDark 
-          ? SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: Brightness.light,
-              statusBarBrightness: Brightness.dark,
-            )
-          : SystemUiOverlayStyle(
-              statusBarColor: Colors.white,
-              statusBarIconBrightness: Brightness.dark,
-              statusBarBrightness: Brightness.light,
-            ),
-      );
 
       return Scaffold(
         resizeToAvoidBottomInset: false,
@@ -163,54 +148,41 @@ class LoginScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppTexts.signUpText,
+                    "Build, customize, and deploy\nyour AI chat assistants today!",
                     style: AppTextStyles.semiBoldHeading(context).copyWith(fontSize: 20, color: Colors.white),
                   ),
                   const SizedBox(height: 6),
                   Column(
                     children: [
                       Text(
-                        AppTexts.signUpNoCodeText,
+                        "No coding needed. Launch your smart",
                         style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                       Text(
-                        AppTexts.signUpNoCodeText1,
+                        "AI assistant in minutes.",
                         style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 25),
-                  Row(
-                    children: [
-                      Expanded(child: AppButtonStyles.secondary(text: 'Login', height: 40, onPressed: _onLoginPressed)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: AppButtonStyles.secondary(
-                          text: 'Signup',
-                          height: 40,
-                          onPressed: () {
-                            Get.to(() => EmailSignUp());
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
                   const SizedBox(height: 12),
+                  const GoogleSignInButton(),
+                  const SizedBox(height: 20),
                   Center(
                     child: Text(
-                      AppTexts.signUpVersionText,
+                      "By continuing, you agree to Minechat AI\nTerms & Conditions and Privacy Policy",
                       style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white, fontSize: 10),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 20),
                   Center(
                     child: Container(
                       width: 130,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.white,
                         borderRadius: BorderRadius.circular(30),
                       ),
                     ),
@@ -222,10 +194,6 @@ class LoginScreen extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  void _onLoginPressed() {
-    Get.snackbar('Login', 'Login functionality coming soon!', snackPosition: SnackPosition.BOTTOM);
   }
 }
 
@@ -251,4 +219,3 @@ class GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-
