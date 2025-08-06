@@ -10,6 +10,7 @@ class AppAssets {
   static const String darkMode = "assets/images/logos/darkmode.svg";
 
 
+
   // ===== SOCIAL MEDIA ICONS =====
   // Dark theme versions (white icons)
   static const String socialMessengerDark = 'assets/images/logos/logo_messenger.svg';
@@ -84,11 +85,20 @@ class AppAssets {
   // Social media platform names for mapping
   static List<String> get socialMediaPlatforms => [
     'messenger',
-    'instagram', 
+    'instagram',
     'telegram',
     'discord',
     'slack',
     'whatsapp',
     'viber',
   ];
+
+  // Signup Screen Icons
+  static const String signupIconCompany = 'assets/images/icons/icon_company.svg';
+  static const String signupIconPhone = 'assets/images/icons/icon_phone.svg';
+  static const String signupIconAdmin = 'assets/images/icons/icon_admin.svg';
+  static const String signupIconPosition = 'assets/images/icons/icon_position.svg';
+  static const String signupIconEmail = 'assets/images/icons/icon_email.svg';
+  static const String signupIconPassword = 'assets/images/icons/icon_password.svg';
+
 }

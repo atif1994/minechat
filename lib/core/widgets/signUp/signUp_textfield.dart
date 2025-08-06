@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
@@ -8,13 +9,14 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 class SignupTextField extends StatelessWidget {
   final String label;
   final String hintText;
-  final IconData prefixIcon;
+  final String prefixIcon;
   final Widget? suffixIcon;
   final TextEditingController controller;
   final RxString? errorText;
   final Function(String)? onChanged;
   final bool obscureText;
   final VoidCallback? onSuffixTap;
+  final TextInputType keyboardType;
 
   const SignupTextField({
     super.key,
@@ -25,8 +27,9 @@ class SignupTextField extends StatelessWidget {
     required this.controller,
     this.errorText,
     this.onChanged,
-    this.obscureText = true,
+    this.obscureText = false,
     this.onSuffixTap,
+    this.keyboardType = TextInputType.text,
   });
 
   @override
@@ -35,17 +38,26 @@ class SignupTextField extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(label,
-                style: AppTextStyles.bodyText(context)
-                    .copyWith(fontSize: AppResponsive.scaleSize(context, 14))),
+                style: AppTextStyles.bodyText(context).copyWith(
+                    fontSize: AppResponsive.scaleSize(context, 14),
+                    fontWeight: FontWeight.w500)),
             AppSpacing.vertical(context, 0.005),
             TextField(
               controller: controller,
               onChanged: onChanged,
               obscureText: obscureText,
+              keyboardType: keyboardType,
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: AppTextStyles.hintText(context),
-                prefixIcon: Icon(prefixIcon, color: AppColors.black),
+                prefixIcon: Padding(
+                  padding: EdgeInsets.all(AppResponsive.scaleSize(context, 10)),
+                  child: SvgPicture.asset(
+                    prefixIcon,
+                    width: AppResponsive.iconSize(context),
+                    height: AppResponsive.iconSize(context),
+                  ),
+                ),
                 suffixIcon: suffixIcon != null
                     ? GestureDetector(
                         onTap: onSuffixTap,
@@ -53,7 +65,7 @@ class SignupTextField extends StatelessWidget {
                       )
                     : null,
                 filled: true,
-                fillColor: AppColors.grey.withValues(alpha: 0.1),
+                fillColor: Color(0xfffafbfd),
                 enabledBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(AppResponsive.radius(context)),
@@ -63,12 +75,12 @@ class SignupTextField extends StatelessWidget {
                   borderRadius:
                       BorderRadius.circular(AppResponsive.radius(context)),
                   borderSide:
-                      const BorderSide(color: AppColors.primary, width: 1.5),
+                      const BorderSide(color: AppColors.primary, width: 2),
                 ),
               ),
               style: AppTextStyles.bodyText(context).copyWith(
-                fontSize: AppResponsive.scaleSize(context, 14),
-              ),
+                  fontSize: AppResponsive.scaleSize(context, 14),
+                  fontWeight: FontWeight.w500),
             ),
             if (errorText != null && errorText!.value.isNotEmpty)
               Padding(
