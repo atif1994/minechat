@@ -20,6 +20,8 @@ class AppTexts {
   static const String signupConfirmPasswordHintText = "Re-enter password";
   static const String signupButton = "Create Account";
 
+  ///signup screen => business account
+
   //signup screen => business account
   static const String signupBusinessHeaderTitle = "Create Business Account";
   static const String signupBusinessHeaderSubTitle = "Company Logo";
@@ -43,5 +45,4 @@ class AppTexts {
   static const String otpPasteButton = "Paste";
   static const String otpVerifyCodeButton = "Verify Code";
   static const String otpResendCodeButton = "Resend Code";
-
 }
