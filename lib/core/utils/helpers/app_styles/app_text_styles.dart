@@ -4,8 +4,8 @@ import 'package:minechat/core/constants/app_fonts/app_fonts.dart';
 class AppTextStyles {
   static TextStyle headline(BuildContext context) => Theme.of(context)
       .textTheme
-      .headlineMedium!
-      .copyWith(fontFamily: AppFonts.primaryFont);
+      .headlineSmall!
+      .copyWith(fontFamily: AppFonts.primaryFont, fontWeight: FontWeight.w700);
 
   static TextStyle heading(BuildContext context) => Theme.of(context)
       .textTheme
@@ -24,9 +24,9 @@ class AppTextStyles {
           );
 
   static TextStyle buttonText(BuildContext context) =>
-      Theme.of(context).textTheme.labelLarge!.copyWith(
+      Theme.of(context).textTheme.labelMedium!.copyWith(
             fontFamily: AppFonts.primaryFont,
-            color: Colors.white, // stays fixed
+            color: Colors.white,
           );
 
   static TextStyle semiBoldHeading(BuildContext context) => TextStyle(

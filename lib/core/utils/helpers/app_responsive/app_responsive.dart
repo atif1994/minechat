@@ -19,7 +19,7 @@ class AppResponsive {
   }
 
   static double iconSize(BuildContext context, {double factor = 1}) {
-    return screenWidth(context) * 0.06 * factor;
+    return screenWidth(context) * 0.04 * factor;
   }
 
   static double radius(BuildContext context, {double factor = 1}) =>
