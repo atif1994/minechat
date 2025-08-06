@@ -12,6 +12,7 @@ void main() async {
   runApp(const MineChatApp());
 }
 
+
 class MineChatApp extends StatelessWidget {
   const MineChatApp({super.key});
 
@@ -20,13 +21,15 @@ class MineChatApp extends StatelessWidget {
     final ThemeController themeController = Get.put(ThemeController());
 
     return Obx(() => GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'minechat.ai',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode:
-              themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          home: const SplashScreen(),
-        ));
+      debugShowCheckedModeBanner: false,
+      title: 'minechat.ai',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeController.isDarkMode
+          ? ThemeMode.dark
+          : ThemeMode.light,
+      home: const SplashScreen(),
+    ));
   }
 }
+

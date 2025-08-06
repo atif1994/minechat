@@ -81,7 +81,7 @@ class _AppAnimatedLogoState extends State<AppAnimatedLogo>
     //   colorFilter: const ColorFilter.mode(AppColors.white, BlendMode.srcIn),
     // );
     final logo = Image.asset(
-      AppAssets.dummyPngLogo,
+      AppAssets.minechatLogoDummy,
       height: AppResponsive.screenHeight(context) * 0.15,
       color: AppColors.white,
     );

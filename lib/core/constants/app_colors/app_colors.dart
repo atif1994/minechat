@@ -15,7 +15,8 @@ class AppColors {
 
   // Light / Dark backgrounds (used in themes)
   static const Color backgroundLight = Colors.white;
-  static const Color backgroundDark = Color(0xFF121212);
+  static const Color backgroundDark = Color(0xFF0A0A0A);
+
 
   static const Color primaryDark = Color(0xFF6B123E); // darker variant
 }

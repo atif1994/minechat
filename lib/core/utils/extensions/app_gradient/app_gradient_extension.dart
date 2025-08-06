@@ -3,7 +3,11 @@ import 'package:minechat/core/constants/app_colors/app_colors.dart';
 
 extension AppGradientExtension on BoxDecoration {
   BoxDecoration get withAppGradient => copyWith(
+
+        gradient:  LinearGradient(
+=======
         gradient: const LinearGradient(
+
           colors: [
             AppColors.primary,
             AppColors.secondary,

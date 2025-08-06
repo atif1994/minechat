@@ -28,7 +28,7 @@ class AppBackground extends StatelessWidget {
               ).createShader(bounds),
               blendMode: BlendMode.dstIn,
               child: SvgPicture.asset(
-                AppAssets.gridUpper,
+                AppAssets.gridPatternUpper,
                 width: screenWidth,
                 fit: BoxFit.cover,
               ),
@@ -46,7 +46,7 @@ class AppBackground extends StatelessWidget {
               ).createShader(bounds),
               blendMode: BlendMode.dstIn,
               child: SvgPicture.asset(
-                AppAssets.gridLower,
+                AppAssets.gridPatternLower,
                 width: screenWidth,
                 fit: BoxFit.cover,
               ),
