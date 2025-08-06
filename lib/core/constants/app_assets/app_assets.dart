@@ -21,6 +21,7 @@ class AppAssets {
   static const String socialSlackDark = 'assets/images/logos/logo_slack.svg';
   static const String socialWhatsappDark = 'assets/images/logos/logo_whatsapp.svg';
   static const String socialViberDark = 'assets/images/logos/logo_viber.svg';
+  static const String googleIcon = 'assets/images/logos/google.svg';
   // Light theme versions (colored icons) - same files but different styling
   static const String socialMessengerLight = 'assets/images/logos/logo_messenger.svg';
   static const String socialInstagramLight = 'assets/images/logos/logo_instagram.svg';

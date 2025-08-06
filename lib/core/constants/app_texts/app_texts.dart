@@ -22,7 +22,7 @@ class AppTexts {
   static const String signupButton = "Create Account";
 
   ///signup screen => business account
-=======
+
   //signup screen => business account
 
   static const String signupBusinessHeaderTitle = "Create Business Account";
@@ -34,8 +34,7 @@ class AppTexts {
   static const String signupBusinessPhoneNumberHintText = "+1 234567890";
 
 
-  ///signup screen => business account
-=======
+
   //signup screen => business account
   
   static const String signupAdminHeaderTitle = "Create Admin User Profile";
