@@ -6,7 +6,6 @@ import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/signUp_controller/signUp_controller.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
-
 import 'package:minechat/view/screens/splash/splash_screen.dart';
 import 'package:minechat/view/screens/login_screen/login_screen.dart';
 import 'package:minechat/view/screens/signUp/business_account_form.dart';
