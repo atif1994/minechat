@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../../core/services/firebase_auth_service.dart';
 import '../../model/repositories/user_repository.dart';
 import '../../model/data/user_model.dart';
-import '../../view/screens/signUp/business_account_form.dart';
 
 class GoogleSignInController extends GetxController {
   final FirebaseAuthService _authService = FirebaseAuthService();

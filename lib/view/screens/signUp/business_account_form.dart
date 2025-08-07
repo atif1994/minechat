@@ -3,22 +3,13 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:minechat/controller/signUp_controller/signUp_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
-import 'package:minechat/core/constants/app_assets/app_assets.dart';
-import 'package:minechat/core/constants/app_assets/app_assets.dart';
-import 'package:minechat/core/constants/app_assets/app_assets.dart';
-import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
-import 'package:minechat/core/widgets/signUp/signUp_button.dart';
 import 'package:minechat/core/widgets/signUp/signUp_header.dart';
 import 'package:minechat/core/widgets/signUp/signUp_profile_avatar_picker.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
-import 'package:minechat/view/screens/signUp/admin_user_form.dart';
-
-import '../../../core/constants/app_colors/app_colors.dart';
-import '../../../core/utils/helpers/app_responsive/app_responsive.dart';
 
 class SignupBusinessAccount extends StatelessWidget {
   final String email;
