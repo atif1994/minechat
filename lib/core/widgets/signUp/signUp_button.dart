@@ -5,12 +5,14 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 class SignupButton extends StatelessWidget {
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool isLoading;
 
   const SignupButton({
     super.key,
     required this.label,
-    required this.onTap,
+    this.onTap,
+    this.isLoading = false,
   });
 
   @override
@@ -18,16 +20,39 @@ class SignupButton extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: InkWell(
-        onTap: onTap,
+        onTap: isLoading ? null : onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
+            color: isLoading ? Colors.grey.withOpacity(0.3) : null,
           ).withAppGradient,
           alignment: Alignment.center,
-          child: Text(label,
-              style: AppTextStyles.buttonText(context)
-                  .copyWith(fontSize: AppResponsive.scaleSize(context, 16))),
+          child: isLoading
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      label,
+                      style: AppTextStyles.buttonText(context)
+                          .copyWith(fontSize: AppResponsive.scaleSize(context, 16)),
+                    ),
+                  ],
+                )
+              : Text(
+                  label,
+                  style: AppTextStyles.buttonText(context)
+                      .copyWith(fontSize: AppResponsive.scaleSize(context, 16)),
+                ),
         ),
       ),
     );

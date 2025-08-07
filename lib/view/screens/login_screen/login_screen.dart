@@ -8,7 +8,6 @@ import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/widgets/app_button/app_button.dart';
 import 'package:minechat/view/screens/email/email_sign_up.dart';
-import 'package:minechat/view/screens/signUp/signUp_screen.dart';
 import '../../../core/utils/helpers/app_styles/app_text_styles.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -22,17 +21,17 @@ class LoginScreen extends StatelessWidget {
 
       // Set status bar style based on theme
       SystemChrome.setSystemUIOverlayStyle(
-        isDark 
-          ? SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: Brightness.light,
-              statusBarBrightness: Brightness.dark,
-            )
-          : SystemUiOverlayStyle(
-              statusBarColor: Colors.white,
-              statusBarIconBrightness: Brightness.dark,
-              statusBarBrightness: Brightness.light,
-            ),
+        isDark
+            ? SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        )
+            : SystemUiOverlayStyle(
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       );
 
       return Scaffold(
@@ -70,7 +69,9 @@ class LoginScreen extends StatelessWidget {
   Widget _buildGridPattern(bool isDark) {
     return CustomPaint(
       painter: GridPainter(
-        color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.15),
+        color: isDark
+            ? Colors.white.withOpacity(0.08)
+            : Colors.black.withOpacity(0.15),
         spacing: isDark ? 50.0 : 40.0,
       ),
       size: Size.infinite,
@@ -94,22 +95,35 @@ class LoginScreen extends StatelessWidget {
                 iconPath,
                 width: 32,
                 height: 32,
-                placeholderBuilder: (context) => const CircularProgressIndicator(),
+                placeholderBuilder: (context) =>
+                const CircularProgressIndicator(),
               ),
             );
           }),
         ),
 
         // Social Icons (static)
-        Positioned(top: 30, right: 20, child: _socialIcon('camera', 28, isDark)),
-        Positioned(top: 100, left: 80, child: _socialIcon('messenger', 20, isDark)),
-        Positioned(top: 110, right: 80, child: _socialIcon('slack', 20, isDark)),
-        Positioned(top: 160, right: 120, child: _socialIcon('telegram', 20, isDark)),
-        Positioned(top: 220, left: 25, child: _socialIcon('instagram', 30, isDark)),
-        Positioned(top: 270, right: 25, child: _socialIcon('discord', 20, isDark)),
-        Positioned(bottom: 100, left: 0, right: 0, child: _socialIcon('whatsapp', 28, isDark)),
-        Positioned(bottom: 50, left: 70, child: _socialIcon('slack', 24, isDark)),
-        Positioned(bottom: 50, right: 70, child: _socialIcon('viber', 24, isDark)),
+        Positioned(
+            top: 30, right: 20, child: _socialIcon('camera', 28, isDark)),
+        Positioned(
+            top: 100, left: 80, child: _socialIcon('messenger', 20, isDark)),
+        Positioned(
+            top: 110, right: 80, child: _socialIcon('slack', 20, isDark)),
+        Positioned(
+            top: 160, right: 120, child: _socialIcon('telegram', 20, isDark)),
+        Positioned(
+            top: 220, left: 25, child: _socialIcon('instagram', 30, isDark)),
+        Positioned(
+            top: 270, right: 25, child: _socialIcon('discord', 20, isDark)),
+        Positioned(
+            bottom: 100,
+            left: 0,
+            right: 0,
+            child: _socialIcon('whatsapp', 28, isDark)),
+        Positioned(
+            bottom: 50, left: 70, child: _socialIcon('slack', 24, isDark)),
+        Positioned(
+            bottom: 50, right: 70, child: _socialIcon('viber', 24, isDark)),
       ],
     );
   }
@@ -138,10 +152,12 @@ class LoginScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(30), topRight: Radius.circular(30)),
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(30), topRight: Radius.circular(30)),
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(30), topRight: Radius.circular(30)),
         child: Stack(
           children: [
             Positioned.fill(
@@ -152,7 +168,8 @@ class LoginScreen extends StatelessWidget {
                     left: 0,
                     right: 0,
                     height: 300,
-                    child: SvgPicture.asset(AppAssets.gridPatternLower, fit: BoxFit.cover),
+                    child: SvgPicture.asset(AppAssets.gridPatternLower,
+                        fit: BoxFit.cover),
                   ),
                 ],
               ),
@@ -164,19 +181,22 @@ class LoginScreen extends StatelessWidget {
                 children: [
                   Text(
                     AppTexts.signUpText,
-                    style: AppTextStyles.semiBoldHeading(context).copyWith(fontSize: 20, color: Colors.white),
+                    style: AppTextStyles.semiBoldHeading(context)
+                        .copyWith(fontSize: 20, color: Colors.white),
                   ),
                   const SizedBox(height: 6),
                   Column(
                     children: [
                       Text(
                         AppTexts.signUpNoCodeText,
-                        style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white),
+                        style: AppTextStyles.poppinsRegular(context)
+                            .copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                       Text(
                         AppTexts.signUpNoCodeText1,
-                        style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white),
+                        style: AppTextStyles.poppinsRegular(context)
+                            .copyWith(color: Colors.white),
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -184,7 +204,11 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 25),
                   Row(
                     children: [
-                      Expanded(child: AppButtonStyles.secondary(text: 'Login', height: 40, onPressed: _onLoginPressed)),
+                      Expanded(
+                          child: AppButtonStyles.secondary(
+                              text: 'Login',
+                              height: 40,
+                              onPressed: _onLoginPressed)),
                       const SizedBox(width: 8),
                       Expanded(
                         child: AppButtonStyles.secondary(
@@ -201,7 +225,8 @@ class LoginScreen extends StatelessWidget {
                   Center(
                     child: Text(
                       AppTexts.signUpVersionText,
-                      style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white, fontSize: 10),
+                      style: AppTextStyles.poppinsRegular(context)
+                          .copyWith(color: Colors.white, fontSize: 10),
                     ),
                   ),
                   const SizedBox(height: 25),
@@ -225,7 +250,8 @@ class LoginScreen extends StatelessWidget {
   }
 
   void _onLoginPressed() {
-    Get.snackbar('Login', 'Login functionality coming soon!', snackPosition: SnackPosition.BOTTOM);
+    Get.snackbar('Login', 'Login functionality coming soon!',
+        snackPosition: SnackPosition.BOTTOM);
   }
 }
 
@@ -251,4 +277,3 @@ class GridPainter extends CustomPainter {
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
-

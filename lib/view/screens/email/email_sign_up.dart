@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
-import 'package:minechat/controller/google_signin_controller/google_signin_controller.dart';
+import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/widgets/google_signin_button/google_signin_button.dart';
+import '../../../core/constants/app_texts/app_texts.dart';
 import '../../../core/utils/helpers/app_styles/app_text_styles.dart';
 
 class EmailSignUp extends StatelessWidget {
@@ -13,8 +14,7 @@ class EmailSignUp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Initialize the Google Sign-In controller
-    Get.put(GoogleSignInController());
+    final loginController = Get.find<LoginController>();
     
     return Obx(() {
       final themeController = Get.find<ThemeController>();
@@ -26,7 +26,7 @@ class EmailSignUp extends StatelessWidget {
           child: Column(
             children: [
               _buildUpperSection(isDark),
-              Expanded(child: _buildLowerSection(context)),
+              Expanded(child: _buildLowerSection(context, loginController)),
             ],
           ),
         ),
@@ -119,7 +119,7 @@ class EmailSignUp extends StatelessWidget {
     );
   }
 
-  Widget _buildLowerSection(BuildContext context) {
+  Widget _buildLowerSection(BuildContext context, LoginController loginController) {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.primary,
@@ -166,31 +166,101 @@ class EmailSignUp extends StatelessWidget {
                       ),
                     ],
                   ),
+
                   const SizedBox(height: 12),
-                  const GoogleSignInButton(),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      "By continuing, you agree to Minechat AI\nTerms & Conditions and Privacy Policy",
-                      style: AppTextStyles.poppinsRegular(context).copyWith(color: Colors.white, fontSize: 10),
-                      textAlign: TextAlign.center,
-                    ),
+                  // Google Sign-In Button
+                  Obx(() => GoogleSignInButton(
+                    onPressed: loginController.isLoading.value 
+                        ? null 
+                        : () => loginController.loginWithGoogle(),
+                    isLoading: loginController.isLoading.value,
+                  )),
+                  
+
+                  
+
+                  
+
+              const SizedBox(height: 12),
+              Center(
+                child: Text(
+                  AppTexts.signUpVersionText,
+                  style: AppTextStyles.poppinsRegular(context)
+                      .copyWith(color: Colors.white, fontSize: 10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: Container(
+                  width: 130,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Container(
-                      width: 130,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                  ),
+                ),
+              )
                 ],
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAccountTypeButton({
+    required BuildContext context,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      width: double.infinity,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withOpacity(0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 24),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.6), size: 16),
+              ],
+            ),
+          ),
         ),
       ),
     );
