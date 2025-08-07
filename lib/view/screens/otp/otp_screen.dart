@@ -18,6 +18,7 @@ class OtpScreen extends StatelessWidget {
     final controller = Get.put(OtpController());
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -31,50 +32,66 @@ class OtpScreen extends StatelessWidget {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: AppSpacing.all(context, factor: 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const OtpHeader(
-                title: AppTexts.otpHeaderTitle,
-                subtitle: AppTexts.otpHeaderSubTitle,
-                email: AppTexts.dummyEmailText,
-              ),
-              AppSpacing.vertical(context, 0.03),
-              const OtpInputBoxes(),
-              AppSpacing.vertical(context, 0.01),
-              Padding(
-                padding: AppSpacing.symmetric(context, h: 0.01,v: 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const OtpTimer(),
-                    OtpActionButton(
-                      label: AppTexts.otpPasteButton,
-                      isPrimary: true,
-                      onTap: () => controller.pasteFromClipboard(),
-                    ),
-                  ],
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: AppSpacing.all(context, factor: 2),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const OtpHeader(
+                        title: AppTexts.otpHeaderTitle,
+                        subtitle: AppTexts.otpHeaderSubTitle,
+                        email: AppTexts.dummyEmailText,
+                      ),
+                      AppSpacing.vertical(context, 0.03),
+                      const OtpInputBoxes(),
+                      AppSpacing.vertical(context, 0.01),
+                      Padding(
+                        padding: AppSpacing.symmetric(context, h: 0.01, v: 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const OtpTimer(),
+                            OtpActionButton(
+                              label: AppTexts.otpPasteButton,
+                              isPrimary: true,
+                              onTap: () => controller.pasteFromClipboard(),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      Padding(
+                        padding: AppSpacing.symmetric(context, v: 0.05, h: 0),
+                        child: Column(
+                          children: [
+                            Obx(() => AppLargeButton(
+                                  label: AppTexts.otpVerifyCodeButton,
+                                  isEnabled: controller.isButtonEnabled.value,
+                                  onTap: () {
+                                    // verify OTP logic
+                                  },
+                                )),
+                            AppSpacing.vertical(context, 0.015),
+                            Center(
+                              child: OtpActionButton(
+                                label: AppTexts.otpResendCodeButton,
+                                onTap: () => controller.startTimer(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              AppSpacing.vertical(context, 0.03),
-              Obx(() => AppLargeButton(
-                    label: AppTexts.otpVerifyCodeButton,
-                    isEnabled: controller.isButtonEnabled.value,
-                    onTap: () {
-                      // verify OTP logic
-                    },
-                  )),
-              AppSpacing.vertical(context, 0.01),
-              Center(
-                child: OtpActionButton(
-                  label: AppTexts.otpResendCodeButton,
-                  onTap: () => controller.startTimer(),
-                ),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

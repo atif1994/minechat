@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
+import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
 import 'view/screens/splash/splash_screen.dart';
 
 void main() async {
@@ -14,7 +15,6 @@ void main() async {
   runApp(const MineChatApp());
 }
 
-
 class MineChatApp extends StatelessWidget {
   const MineChatApp({super.key});
 
@@ -23,14 +23,14 @@ class MineChatApp extends StatelessWidget {
     final ThemeController themeController = Get.put(ThemeController());
 
     return Obx(() => GetMaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'minechat.ai',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: themeController.isDarkMode
-          ? ThemeMode.dark
-          : ThemeMode.light,
-      home: const SplashScreen(),
-    ));
+          debugShowCheckedModeBanner: false,
+          title: 'minechat.ai',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode:
+              themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          // home: const SplashScreen(),
+          home: const ForgotPasswordScreen(),
+        ));
   }
 }
