@@ -68,11 +68,12 @@ class LoginController extends GetxController {
 
       if (userCredential.user != null) {
         // Get user data from Firestore
-        final userData = await _userRepository.getUser(userCredential.user!.uid);
-        
+        final userData =
+            await _userRepository.getUser(userCredential.user!.uid);
+
         if (userData != null) {
           currentUser.value = userData;
-          
+
           // Update last login
           await _userRepository.updateLastLogin(userCredential.user!.uid);
 
@@ -115,18 +116,18 @@ class LoginController extends GetxController {
       isLoading.value = true;
 
       final userCredential = await _authService.signInWithGoogle();
-      
+
       if (userCredential != null) {
         final user = userCredential.user;
         if (user != null) {
           // Check if user exists in Firestore
           var userData = await _userRepository.getUser(user.uid);
-          
+
           if (userData == null) {
             // Create new user from Google data
             userData = _userRepository.createUserFromFirebaseUser(user);
             await _userRepository.saveUser(userData);
-            
+
             // Show success message and navigate to account type selection
             Get.snackbar(
               'Success',
@@ -135,9 +136,9 @@ class LoginController extends GetxController {
               backgroundColor: Colors.green,
               colorText: Colors.white,
             );
-            
+
             // Navigate to business account form for new users
-            Get.to(() => BusinessAccountForm(email: user.email ?? ''));
+            Get.to(() => SignupBusinessAccount(email: user.email ?? ''));
           } else {
             // Existing user - update last login and navigate based on account type
             await _userRepository.updateLastLogin(user.uid);
@@ -151,7 +152,7 @@ class LoginController extends GetxController {
               colorText: Colors.white,
             );
 
-                Get.to(() => BusinessAccountForm(email: user.email ?? ''));
+            Get.to(() => SignupBusinessAccount(email: user.email ?? ''));
           }
         }
       } else {
@@ -165,10 +166,11 @@ class LoginController extends GetxController {
       }
     } catch (e) {
       String errorMessage = 'Failed to sign in with Google';
-      
+
       // Handle specific Google Sign-In errors
       if (e.toString().contains('ApiException: 10')) {
-        errorMessage = 'Google Sign-In configuration error. Please check Firebase setup.';
+        errorMessage =
+            'Google Sign-In configuration error. Please check Firebase setup.';
       } else if (e.toString().contains('network_error')) {
         errorMessage = 'Network error. Please check your internet connection.';
       } else if (e.toString().contains('sign_in_canceled')) {
@@ -176,7 +178,7 @@ class LoginController extends GetxController {
       } else if (e.toString().contains('sign_in_failed')) {
         errorMessage = 'Google Sign-In failed. Please try again.';
       }
-      
+
       Get.snackbar(
         'Error',
         errorMessage,
@@ -276,7 +278,9 @@ class LoginController extends GetxController {
 
   // Getters
   bool get isSignedIn => currentUser.value != null;
+
   String get currentUserName => currentUser.value?.name ?? '';
+
   String get currentUserEmail => currentUser.value?.email ?? '';
 
   @override

@@ -2,56 +2,55 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:minechat/controller/signUp_controller/signUp_controller.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
+import 'package:minechat/core/widgets/app_button/app_large_button.dart';
 import 'package:minechat/core/widgets/signUp/signUp_button.dart';
 import 'package:minechat/core/widgets/signUp/signUp_header.dart';
 import 'package:minechat/core/widgets/signUp/signUp_profile_avatar_picker.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
+import 'package:minechat/view/screens/signUp/admin_user_form.dart';
 
 import '../../../core/constants/app_colors/app_colors.dart';
 import '../../../core/utils/helpers/app_responsive/app_responsive.dart';
 
-class BusinessAccountForm extends StatelessWidget {
+class SignupBusinessAccount extends StatelessWidget {
   final String email;
 
-  const BusinessAccountForm({super.key, required this.email});
+  const SignupBusinessAccount({super.key, required this.email});
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(SignupController());
     final authService = FirebaseAuthService();
     final isUserAuthenticated = authService.currentUser != null;
-    
+
     // Clear form data and set email when form is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.clearFormData();
       if (email.isNotEmpty) {
         controller.emailCtrl.text = email;
         controller.isGoogleUser.value = true;
-      } else if (isUserAuthenticated && authService.currentUser?.email != null) {
+      } else if (isUserAuthenticated &&
+          authService.currentUser?.email != null) {
         controller.emailCtrl.text = authService.currentUser!.email!;
         controller.isGoogleUser.value = true;
       }
     });
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Business Account'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
-      ),
       body: SingleChildScrollView(
         padding: AppSpacing.all(context, factor: 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppSpacing.vertical(context, 0.02),
+            AppSpacing.vertical(context, 0.1),
             SignupHeader(
               title: AppTexts.signupBusinessHeaderTitle,
               subtitle: AppTexts.signupBusinessHeaderSubTitle,
@@ -61,7 +60,7 @@ class BusinessAccountForm extends StatelessWidget {
             SignupTextField(
               label: AppTexts.signupBusinessCompanyNameLabel,
               hintText: AppTexts.signupBusinessCompanyNameHintText,
-              prefixIcon: Iconsax.building,
+              prefixIcon: AppAssets.signupIconCompany,
               controller: controller.companyNameCtrl,
               errorText: controller.companyNameError,
               onChanged: (val) => controller.validateCompanyName(val),
@@ -70,7 +69,7 @@ class BusinessAccountForm extends StatelessWidget {
             SignupTextField(
               label: AppTexts.signupBusinessPhoneNumberLabel,
               hintText: AppTexts.signupBusinessPhoneNumberHintText,
-              prefixIcon: Iconsax.mobile,
+              prefixIcon: AppAssets.signupIconPhone,
               controller: controller.phoneCtrl,
               errorText: controller.phoneError,
               onChanged: (val) => controller.validatePhone(val),
@@ -78,8 +77,8 @@ class BusinessAccountForm extends StatelessWidget {
             AppSpacing.vertical(context, 0.01),
             SignupTextField(
               label: AppTexts.signupEmailLabel,
-              hintText: AppTexts.signupEmailHintText,
-              prefixIcon: Iconsax.sms,
+              hintText: AppTexts.dummyEmailText,
+              prefixIcon: AppAssets.signupIconEmail,
               controller: controller.emailCtrl,
               errorText: controller.emailError,
               onChanged: (val) => controller.validateEmail(val),
@@ -89,7 +88,7 @@ class BusinessAccountForm extends StatelessWidget {
               () => SignupTextField(
                 label: AppTexts.signupPasswordLabel,
                 hintText: AppTexts.signupPasswordHintText,
-                prefixIcon: Iconsax.lock,
+                prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.passwordCtrl,
                 errorText: controller.passwordError,
                 obscureText: !controller.isPasswordVisible.value,
@@ -111,7 +110,7 @@ class BusinessAccountForm extends StatelessWidget {
               () => SignupTextField(
                 label: AppTexts.signupConfirmPasswordLabel,
                 hintText: AppTexts.signupConfirmPasswordHintText,
-                prefixIcon: Iconsax.lock,
+                prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.confirmPasswordCtrl,
                 errorText: controller.confirmPasswordError,
                 obscureText: !controller.isConfirmPasswordVisible.value,
@@ -130,13 +129,12 @@ class BusinessAccountForm extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.02),
             Obx(
-              () => SignupButton(
-                label: controller.isLoading.value 
-                    ? 'Creating Account...' 
+              () => AppLargeButton(
+                label: controller.isLoading.value
+                    ? 'Creating Account...'
                     : AppTexts.signupButton,
-                onTap: controller.isLoading.value 
-                    ? null 
-                    : () => controller.createBusinessAccount(),
+                onTap: () => controller.createBusinessAccount(),
+                isEnabled: !controller.isLoading.value,
                 isLoading: controller.isLoading.value,
               ),
             ),

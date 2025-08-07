@@ -44,25 +44,23 @@ class ForgotPasswordScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ForgotPasswordHeader(
-                        title: "Forgot Password",
-                        subtitle:
-                        "Enter your email to reset your new password",
+                        title: AppTexts.forgotPasswordHeaderTitle,
+                        subtitle: AppTexts.forgotPasswordHeaderSubTitle,
                       ),
-                      AppSpacing.vertical(context, 3),
-                      Obx(() => SignupTextField(
+                      AppSpacing.vertical(context, 0.03),
+                      SignupTextField(
                         label: AppTexts.signupEmailLabel,
                         hintText: AppTexts.dummyEmailText,
                         prefixIcon: AppAssets.signupIconEmail,
                         controller: controller.emailCtrl,
-                        errorText: controller.emailError.value,
+                        errorText: controller.emailError,
                         onChanged: controller.validateEmail,
-                      )),
+                      ),
                       const Spacer(),
                       Padding(
-                        padding:
-                        AppSpacing.symmetric(context, v: 0.05, h: 0),
+                        padding: AppSpacing.symmetric(context, v: 0.05, h: 0),
                         child: AppLargeButton(
-                          label: "Reset Password",
+                          label: AppTexts.forgotPasswordButton,
                           onTap: controller.submit,
                         ),
                       ),
@@ -77,4 +75,3 @@ class ForgotPasswordScreen extends StatelessWidget {
     );
   }
 }
-

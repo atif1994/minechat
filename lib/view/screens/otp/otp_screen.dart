@@ -42,7 +42,7 @@ class OtpScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const OtpHeader(
+                      OtpHeader(
                         title: AppTexts.otpHeaderTitle,
                         subtitle: AppTexts.otpHeaderSubTitle,
                         email: AppTexts.dummyEmailText,
@@ -97,4 +97,3 @@ class OtpScreen extends StatelessWidget {
     );
   }
 }
-
