@@ -7,24 +7,28 @@ class AppLargeButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isEnabled;
+  final bool isLoading; // ✅ New
 
   const AppLargeButton({
     super.key,
     required this.label,
     required this.onTap,
     this.isEnabled = true,
+    this.isLoading = false, // ✅ New
   });
 
   @override
   Widget build(BuildContext context) {
+    final bool isButtonActive = isEnabled && !isLoading;
+
     return SizedBox(
       width: double.infinity,
       child: InkWell(
-        onTap: isEnabled ? onTap : null,
+        onTap: isButtonActive ? onTap : null,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: isEnabled
+          decoration: isButtonActive
               ? BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                 ).withAppGradient
@@ -33,14 +37,36 @@ class AppLargeButton extends StatelessWidget {
                   color: Color(0xffffffff),
                 ),
           alignment: Alignment.center,
-          child: Text(
-            label,
-            style: AppTextStyles.buttonText(context).copyWith(
-              fontSize: AppResponsive.scaleSize(context, 16),
-              color: isEnabled ? Color(0xffffffff) : Color(0xffa8aebf),
-              fontWeight: FontWeight.w600
-            ),
-          ),
+          child: isLoading
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      label,
+                      style: AppTextStyles.buttonText(context).copyWith(
+                        fontSize: AppResponsive.scaleSize(context, 16),
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                )
+              : Text(
+                  label,
+                  style: AppTextStyles.buttonText(context).copyWith(
+                    fontSize: AppResponsive.scaleSize(context, 16),
+                    color: isEnabled ? Colors.white : const Color(0xffa8aebf),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ),
     );

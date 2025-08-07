@@ -3,36 +3,35 @@ import 'package:get/get.dart';
 
 class ForgotPasswordController extends GetxController {
   final emailCtrl = TextEditingController();
-  final emailError = RxnString();
+  final RxString emailError = ''.obs; // ✅ RxString instead of just String
 
-  /// Email validation logic
   void validateEmail(String value) {
     if (value.trim().isEmpty) {
       emailError.value = 'Email is required';
     } else if (!GetUtils.isEmail(value.trim())) {
       emailError.value = 'Enter a valid email address';
     } else {
-      emailError.value = null;
+      emailError.value = ''; // ✅ No error
     }
   }
 
-  /// Submit logic (extend with Firebase)
   void submit() {
     validateEmail(emailCtrl.text);
-    if (emailError.value == null) {
-      // TODO: Add Firebase reset logic
+    if (emailError.value.isEmpty) {
       Get.snackbar(
         'Success',
         'Password reset link sent!',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.shade100,
+        colorText: Colors.black,
       );
     } else {
       Get.snackbar(
         'Error',
-        emailError.value!,
+        emailError.value,
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.shade100,
+        colorText: Colors.black,
       );
     }
   }

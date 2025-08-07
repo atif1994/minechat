@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:minechat/controller/signUp_controller/signUp_controller.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
+import 'package:minechat/core/widgets/app_button/app_large_button.dart';
 import 'package:minechat/core/widgets/signUp/signUp_profile_avatar_picker.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/core/widgets/signUp/signUp_header.dart';
-import 'package:minechat/core/widgets/signUp/signUp_button.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 
-class AdminUserForm extends StatelessWidget {
-  const AdminUserForm({super.key});
+class SignupAdminAccount extends StatelessWidget {
+  const SignupAdminAccount({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +33,13 @@ class AdminUserForm extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Admin User Profile'),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(
+            Icons.arrow_back,
+            color: AppColors.black,
+          ),
           onPressed: () => Get.back(),
         ),
       ),
@@ -44,7 +48,6 @@ class AdminUserForm extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            AppSpacing.vertical(context, 0.02),
             SignupHeader(
               title: AppTexts.signupAdminHeaderTitle,
               subtitle: AppTexts.signupAdminHeaderSubTitle,
@@ -54,7 +57,7 @@ class AdminUserForm extends StatelessWidget {
             SignupTextField(
               label: AppTexts.signupAdminNameLabel,
               hintText: AppTexts.signupAdminNameHintText,
-              prefixIcon: Iconsax.personalcard,
+              prefixIcon: AppAssets.signupIconAdmin,
               controller: controller.adminNameCtrl,
               errorText: controller.adminNameError,
               onChanged: (val) => controller.validateAdminName(val),
@@ -63,7 +66,7 @@ class AdminUserForm extends StatelessWidget {
             SignupTextField(
               label: AppTexts.signupAdminPositionLabel,
               hintText: AppTexts.signupAdminPositionHintText,
-              prefixIcon: Iconsax.profile_2user,
+              prefixIcon: AppAssets.signupIconPosition,
               controller: controller.positionCtrl,
               errorText: controller.positionError,
               onChanged: (val) => controller.validatePosition(val),
@@ -71,8 +74,8 @@ class AdminUserForm extends StatelessWidget {
             AppSpacing.vertical(context, 0.01),
             SignupTextField(
               label: AppTexts.signupEmailLabel,
-              hintText: AppTexts.signupEmailHintText,
-              prefixIcon: Iconsax.sms,
+              hintText: AppTexts.dummyEmailText,
+              prefixIcon: AppAssets.signupIconEmail,
               controller: controller.emailCtrl,
               errorText: controller.emailError,
               onChanged: (val) => controller.validateEmail(val),
@@ -82,7 +85,7 @@ class AdminUserForm extends StatelessWidget {
               () => SignupTextField(
                 label: AppTexts.signupPasswordLabel,
                 hintText: AppTexts.signupPasswordHintText,
-                prefixIcon: Iconsax.lock,
+                prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.passwordCtrl,
                 errorText: controller.passwordError,
                 obscureText: !controller.isPasswordVisible.value,
@@ -104,7 +107,7 @@ class AdminUserForm extends StatelessWidget {
               () => SignupTextField(
                 label: AppTexts.signupConfirmPasswordLabel,
                 hintText: AppTexts.signupConfirmPasswordHintText,
-                prefixIcon: Iconsax.lock,
+                prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.confirmPasswordCtrl,
                 errorText: controller.confirmPasswordError,
                 obscureText: !controller.isConfirmPasswordVisible.value,
@@ -123,13 +126,12 @@ class AdminUserForm extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.02),
             Obx(
-              () => SignupButton(
-                label: controller.isLoading.value 
-                    ? 'Creating Account...' 
+              () => AppLargeButton(
+                label: controller.isLoading.value
+                    ? 'Creating Account...'
                     : AppTexts.signupButton,
-                onTap: controller.isLoading.value 
-                    ? null 
-                    : () => controller.createAdminAccount(),
+                onTap: () => controller.createAdminAccount(),
+                isEnabled: !controller.isLoading.value,
                 isLoading: controller.isLoading.value,
               ),
             ),

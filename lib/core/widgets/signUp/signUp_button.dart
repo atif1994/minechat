@@ -43,8 +43,8 @@ class SignupButton extends StatelessWidget {
                     const SizedBox(width: 12),
                     Text(
                       label,
-                      style: AppTextStyles.buttonText(context)
-                          .copyWith(fontSize: AppResponsive.scaleSize(context, 16)),
+                      style: AppTextStyles.buttonText(context).copyWith(
+                          fontSize: AppResponsive.scaleSize(context, 16)),
                     ),
                   ],
                 )
