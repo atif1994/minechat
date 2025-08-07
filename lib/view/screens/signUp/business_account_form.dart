@@ -88,7 +88,7 @@ class SignupBusinessAccount extends StatelessWidget {
               () => SignupTextField(
                 label: AppTexts.signupPasswordLabel,
                 hintText: AppTexts.signupPasswordHintText,
-                prefixIcon: Iconsax.lock,
+                prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.passwordCtrl,
                 errorText: controller.passwordError,
                 obscureText: !controller.isPasswordVisible.value,
@@ -110,7 +110,7 @@ class SignupBusinessAccount extends StatelessWidget {
               () => SignupTextField(
                 label: AppTexts.signupConfirmPasswordLabel,
                 hintText: AppTexts.signupConfirmPasswordHintText,
-                prefixIcon: Iconsax.lock,
+                prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.confirmPasswordCtrl,
                 errorText: controller.confirmPasswordError,
                 obscureText: !controller.isConfirmPasswordVisible.value,
@@ -129,11 +129,12 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.02),
             Obx(
-              () => SignupButton(
-                label: controller.isLoading.value 
-                    ? 'Creating Account...' 
+              () => AppLargeButton(
+                label: controller.isLoading.value
+                    ? 'Creating Account...'
                     : AppTexts.signupButton,
                 onTap: () => controller.createBusinessAccount(),
+                isEnabled: !controller.isLoading.value,
                 isLoading: controller.isLoading.value,
               ),
             ),
