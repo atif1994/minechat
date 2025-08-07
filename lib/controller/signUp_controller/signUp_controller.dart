@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 import 'package:minechat/model/repositories/user_repository.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
-import 'package:minechat/model/data/user_model.dart';
 
 class SignupController extends GetxController {
   static SignupController get to => Get.find();
@@ -444,8 +443,4 @@ class SignupController extends GetxController {
     return RegExp(r'^\+?[\d\s\-\(\)]+$').hasMatch(phone) && phone.length >= 10;
   }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
 }

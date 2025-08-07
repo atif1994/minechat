@@ -16,7 +16,7 @@ class OnboardingFlotatingIcons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconSize = (double size) => AppResponsive.scaleSize(context, size);
+    iconSize(double size) => AppResponsive.scaleSize(context, size);
 
     return Stack(
       children: [
