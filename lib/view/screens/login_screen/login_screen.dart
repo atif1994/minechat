@@ -23,15 +23,15 @@ class LoginScreen extends StatelessWidget {
       SystemChrome.setSystemUIOverlayStyle(
         isDark
             ? SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: Brightness.light,
-                statusBarBrightness: Brightness.dark,
-              )
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        )
             : SystemUiOverlayStyle(
-                statusBarColor: Colors.white,
-                statusBarIconBrightness: Brightness.dark,
-                statusBarBrightness: Brightness.light,
-              ),
+          statusBarColor: Colors.white,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+        ),
       );
 
       return Scaffold(
@@ -96,7 +96,7 @@ class LoginScreen extends StatelessWidget {
                 width: 32,
                 height: 32,
                 placeholderBuilder: (context) =>
-                    const CircularProgressIndicator(),
+                const CircularProgressIndicator(),
               ),
             );
           }),

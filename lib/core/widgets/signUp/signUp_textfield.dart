@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
@@ -9,14 +8,14 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 class SignupTextField extends StatelessWidget {
   final String label;
   final String hintText;
-  final String prefixIcon;
+  final IconData prefixIcon;
   final Widget? suffixIcon;
   final TextEditingController controller;
   final RxString? errorText;
   final Function(String)? onChanged;
   final bool obscureText;
   final VoidCallback? onSuffixTap;
-  final TextInputType keyboardType;
+  final bool enabled;
 
   const SignupTextField({
     super.key,
@@ -29,70 +28,64 @@ class SignupTextField extends StatelessWidget {
     this.onChanged,
     this.obscureText = false,
     this.onSuffixTap,
-    this.keyboardType = TextInputType.text,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: AppTextStyles.bodyText(context).copyWith(
-                    fontSize: AppResponsive.scaleSize(context, 14),
-                    fontWeight: FontWeight.w500)),
-            AppSpacing.vertical(context, 0.005),
-            TextField(
-              controller: controller,
-              onChanged: onChanged,
-              obscureText: obscureText,
-              keyboardType: keyboardType,
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: AppTextStyles.hintText(context),
-                prefixIcon: Padding(
-                  padding: EdgeInsets.all(AppResponsive.scaleSize(context, 10)),
-                  child: SvgPicture.asset(
-                    prefixIcon,
-                    width: AppResponsive.iconSize(context),
-                    height: AppResponsive.iconSize(context),
-                  ),
-                ),
-                suffixIcon: suffixIcon != null
-                    ? GestureDetector(
-                        onTap: onSuffixTap,
-                        child: suffixIcon,
-                      )
-                    : null,
-                filled: true,
-                fillColor: Color(0xfffafbfd),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppResponsive.radius(context)),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppResponsive.radius(context)),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 2),
-                ),
-              ),
-              style: AppTextStyles.bodyText(context).copyWith(
-                  fontSize: AppResponsive.scaleSize(context, 14),
-                  fontWeight: FontWeight.w500),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: AppTextStyles.bodyText(context)
+                .copyWith(fontSize: AppResponsive.scaleSize(context, 14))),
+        AppSpacing.vertical(context, 0.005),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          obscureText: obscureText,
+          enabled: enabled,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: AppTextStyles.hintText(context),
+            prefixIcon: Icon(prefixIcon, color: AppColors.black),
+            suffixIcon: suffixIcon != null
+                ? GestureDetector(
+                    onTap: onSuffixTap,
+                    child: suffixIcon,
+                  )
+                : null,
+            filled: true,
+            fillColor: AppColors.grey.withValues(alpha: 0.1),
+            enabledBorder: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(AppResponsive.radius(context)),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
-            if (errorText != null && errorText!.value.isNotEmpty)
-              Padding(
-                padding: AppSpacing.symmetric(context, h: 0, v: 0.005),
-                child: Text(
-                  errorText!.value,
-                  style: AppTextStyles.bodyText(context).copyWith(
-                      fontSize: AppResponsive.scaleSize(context, 12),
-                      color: AppColors.error),
-                ),
-              ),
-          ],
-        ));
+            focusedBorder: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(AppResponsive.radius(context)),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.5),
+            ),
+          ),
+          style: AppTextStyles.bodyText(context).copyWith(
+            fontSize: AppResponsive.scaleSize(context, 14),
+          ),
+        ),
+        if (errorText != null)
+          Obx(() => errorText!.value.isNotEmpty
+              ? Padding(
+                  padding: AppSpacing.symmetric(context, h: 0, v: 0.005),
+                  child: Text(
+                    errorText!.value,
+                    style: AppTextStyles.bodyText(context).copyWith(
+                        fontSize: AppResponsive.scaleSize(context, 12),
+                        color: AppColors.error),
+                  ),
+                )
+              : const SizedBox.shrink()),
+      ],
+    );
   }
 }

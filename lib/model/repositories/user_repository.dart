@@ -13,11 +13,49 @@ class UserRepository {
         'email': user.email,
         'photoURL': user.photoURL,
         'uid': user.uid,
+        'phoneNumber': user.phoneNumber,
+        'companyName': user.companyName,
+        'position': user.position,
+        'accountType': user.accountType,
+        'isEmailVerified': user.isEmailVerified,
         'createdAt': FieldValue.serverTimestamp(),
         'lastLoginAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Failed to save user data: $e');
+    }
+  }
+
+  // Save business account data
+  Future<void> saveBusinessAccount(UserModel user) async {
+    try {
+      await _firestore.collection('business_accounts').doc(user.uid).set({
+        'uid': user.uid,
+        'companyName': user.companyName,
+        'email': user.email,
+        'phoneNumber': user.phoneNumber,
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'active',
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception('Failed to save business account: $e');
+    }
+  }
+
+  // Save admin user data
+  Future<void> saveAdminUser(UserModel user) async {
+    try {
+      await _firestore.collection('admin_users').doc(user.uid).set({
+        'uid': user.uid,
+        'name': user.name,
+        'email': user.email,
+        'position': user.position,
+        'photoURL': user.photoURL,
+        'createdAt': FieldValue.serverTimestamp(),
+        'status': 'active',
+      }, SetOptions(merge: true));
+    } catch (e) {
+      throw Exception('Failed to save admin user: $e');
     }
   }
 
@@ -34,6 +72,32 @@ class UserRepository {
     }
   }
 
+  // Get business account data
+  Future<Map<String, dynamic>?> getBusinessAccount(String uid) async {
+    try {
+      final doc = await _firestore.collection('business_accounts').doc(uid).get();
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get business account: $e');
+    }
+  }
+
+  // Get admin user data
+  Future<Map<String, dynamic>?> getAdminUser(String uid) async {
+    try {
+      final doc = await _firestore.collection('admin_users').doc(uid).get();
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get admin user: $e');
+    }
+  }
+
   // Update user's last login time
   Future<void> updateLastLogin(String uid) async {
     try {
@@ -45,6 +109,29 @@ class UserRepository {
     }
   }
 
+  // Update user profile
+  Future<void> updateUserProfile(String uid, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('users').doc(uid).update(data);
+    } catch (e) {
+      throw Exception('Failed to update user profile: $e');
+    }
+  }
+
+  // Check if email exists
+  Future<bool> emailExists(String email) async {
+    try {
+      final query = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+      return query.docs.isNotEmpty;
+    } catch (e) {
+      throw Exception('Failed to check email existence: $e');
+    }
+  }
+
   // Create user model from Firebase User
   UserModel createUserFromFirebaseUser(User user) {
     return UserModel(
@@ -52,6 +139,48 @@ class UserRepository {
       name: user.displayName ?? 'Unknown',
       email: user.email ?? '',
       photoURL: user.photoURL,
+      createdAt: DateTime.now(),
+      lastLoginAt: DateTime.now(),
+      isEmailVerified: user.emailVerified,
+    );
+  }
+
+  // Create business user model
+  UserModel createBusinessUser({
+    required String uid,
+    required String email,
+    required String companyName,
+    required String phoneNumber,
+    String? photoURL,
+  }) {
+    return UserModel(
+      uid: uid,
+      name: companyName,
+      email: email,
+      photoURL: photoURL,
+      phoneNumber: phoneNumber,
+      companyName: companyName,
+      accountType: 'business',
+      createdAt: DateTime.now(),
+      lastLoginAt: DateTime.now(),
+    );
+  }
+
+  // Create admin user model
+  UserModel createAdminUser({
+    required String uid,
+    required String email,
+    required String name,
+    required String position,
+    String? photoURL,
+  }) {
+    return UserModel(
+      uid: uid,
+      name: name,
+      email: email,
+      photoURL: photoURL,
+      position: position,
+      accountType: 'admin',
       createdAt: DateTime.now(),
       lastLoginAt: DateTime.now(),
     );
