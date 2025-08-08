@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:minechat/controller/signUp_controller/signUp_controller.dart';
+
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
@@ -11,6 +11,8 @@ import 'package:minechat/core/widgets/signUp/signUp_profile_avatar_picker.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 
+import '../../../controller/signUp_controller/business_signup_controller.dart';
+
 class SignupBusinessAccount extends StatelessWidget {
   final String email;
 
@@ -18,13 +20,13 @@ class SignupBusinessAccount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SignupController());
+    final controller = Get.put(BusinessSignupController());
     final authService = FirebaseAuthService();
     final isUserAuthenticated = authService.currentUser != null;
 
     // Clear form data and set email when form is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.clearFormData();
+      controller.clearBusinessForm();
       if (email.isNotEmpty) {
         controller.emailCtrl.text = email;
         controller.isGoogleUser.value = true;
@@ -76,7 +78,7 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.01),
             Obx(
-              () => SignupTextField(
+                  () => SignupTextField(
                 label: AppTexts.signupPasswordLabel,
                 hintText: AppTexts.signupPasswordHintText,
                 prefixIcon: AppAssets.signupIconPassword,
@@ -98,7 +100,7 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.01),
             Obx(
-              () => SignupTextField(
+                  () => SignupTextField(
                 label: AppTexts.signupConfirmPasswordLabel,
                 hintText: AppTexts.signupConfirmPasswordHintText,
                 prefixIcon: AppAssets.signupIconPassword,
@@ -106,7 +108,8 @@ class SignupBusinessAccount extends StatelessWidget {
                 errorText: controller.confirmPasswordError,
                 obscureText: !controller.isConfirmPasswordVisible.value,
                 onChanged: (val) => controller.validateConfirmPassword(val),
-                onSuffixTap: () => controller.toggleConfirmPasswordVisibility(),
+                onSuffixTap: () =>
+                    controller.toggleConfirmPasswordVisibility(),
                 suffixIcon: IconButton(
                   icon: Icon(
                     controller.isConfirmPasswordVisible.value
@@ -120,7 +123,7 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.02),
             Obx(
-              () => AppLargeButton(
+                  () => AppLargeButton(
                 label: controller.isLoading.value
                     ? 'Creating Account...'
                     : AppTexts.signupButton,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:minechat/controller/signUp_controller/admin_signup_controller.dart';
 import 'package:minechat/controller/signUp_controller/signUp_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
@@ -17,19 +18,12 @@ class SignupAdminAccount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(SignupController());
+    final controller = Get.put(AdminSignupController());
     final authService = FirebaseAuthService();
     final isUserAuthenticated = authService.currentUser != null;
 
-    // Clear form data when form is opened
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.clearFormData();
-      // Pre-fill email if user is authenticated
-      if (isUserAuthenticated && authService.currentUser?.email != null) {
-        controller.emailCtrl.text = authService.currentUser!.email!;
-        controller.isGoogleUser.value = true;
-      }
-    });
+
+
 
     return Scaffold(
       appBar: AppBar(
@@ -59,7 +53,7 @@ class SignupAdminAccount extends StatelessWidget {
               hintText: AppTexts.signupAdminNameHintText,
               prefixIcon: AppAssets.signupIconAdmin,
               controller: controller.adminNameCtrl,
-              errorText: controller.adminNameError,
+              errorText: controller.adminNameError, // <-- pass RxString here
               onChanged: (val) => controller.validateAdminName(val),
             ),
             AppSpacing.vertical(context, 0.01),
@@ -68,7 +62,7 @@ class SignupAdminAccount extends StatelessWidget {
               hintText: AppTexts.signupAdminPositionHintText,
               prefixIcon: AppAssets.signupIconPosition,
               controller: controller.positionCtrl,
-              errorText: controller.positionError,
+              errorText: controller.positionError, // <-- pass RxString here
               onChanged: (val) => controller.validatePosition(val),
             ),
             AppSpacing.vertical(context, 0.01),
@@ -77,17 +71,17 @@ class SignupAdminAccount extends StatelessWidget {
               hintText: AppTexts.dummyEmailText,
               prefixIcon: AppAssets.signupIconEmail,
               controller: controller.emailCtrl,
-              errorText: controller.emailError,
+              errorText: controller.emailError, // <-- pass RxString here
               onChanged: (val) => controller.validateEmail(val),
             ),
             AppSpacing.vertical(context, 0.01),
             Obx(
-              () => SignupTextField(
+                  () => SignupTextField(
                 label: AppTexts.signupPasswordLabel,
                 hintText: AppTexts.signupPasswordHintText,
                 prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.passwordCtrl,
-                errorText: controller.passwordError,
+                errorText: controller.passwordError, // <-- RxString
                 obscureText: !controller.isPasswordVisible.value,
                 onChanged: (val) => controller.validatePassword(val),
                 onSuffixTap: () => controller.togglePasswordVisibility(),
@@ -104,12 +98,12 @@ class SignupAdminAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.01),
             Obx(
-              () => SignupTextField(
+                  () => SignupTextField(
                 label: AppTexts.signupConfirmPasswordLabel,
                 hintText: AppTexts.signupConfirmPasswordHintText,
                 prefixIcon: AppAssets.signupIconPassword,
                 controller: controller.confirmPasswordCtrl,
-                errorText: controller.confirmPasswordError,
+                errorText: controller.confirmPasswordError, // <-- RxString
                 obscureText: !controller.isConfirmPasswordVisible.value,
                 onChanged: (val) => controller.validateConfirmPassword(val),
                 onSuffixTap: () => controller.toggleConfirmPasswordVisibility(),
@@ -126,7 +120,7 @@ class SignupAdminAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.02),
             Obx(
-              () => AppLargeButton(
+                  () => AppLargeButton(
                 label: controller.isLoading.value
                     ? 'Creating Account...'
                     : AppTexts.signupButton,
