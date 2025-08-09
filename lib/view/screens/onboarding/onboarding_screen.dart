@@ -5,6 +5,7 @@ import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/widgets/onboarding/onboarding_lower_section.dart';
 import 'package:minechat/core/widgets/onboarding/onboarding_upper_section.dart';
+import 'package:minechat/view/screens/login/login_screen.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_google_screen.dart';
 
 class OnboardingScreen extends StatelessWidget {
@@ -46,7 +47,7 @@ class OnboardingScreen extends StatelessWidget {
                 subtitle: AppTexts.onboardingSubTitle,
                 footerText: AppTexts.onboardingFooter,
                 primaryButtonLabel: "Login",
-                onPrimaryPressed: () => print("Login pressed"),
+                onPrimaryPressed: () => Get.to(() => LoginScreen()),
                 secondaryButtonLabel: "Signup",
                 onSecondaryPressed: () =>
                     Get.to(() => const OnboardingGoogleScreen()),

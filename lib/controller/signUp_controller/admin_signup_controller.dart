@@ -259,7 +259,7 @@ class AdminSignupController extends GetxController {
             colorText: Colors.white,
           );
 
-          Get.offAllNamed('/login');
+          Get.offAllNamed('/otp');
         }
       }
     } catch (e) {

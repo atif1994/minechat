@@ -7,66 +7,77 @@ class AppLargeButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isEnabled;
-  final bool isLoading; // ✅ New
+  final bool isLoading;
 
   const AppLargeButton({
     super.key,
     required this.label,
     required this.onTap,
     this.isEnabled = true,
-    this.isLoading = false, // ✅ New
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final bool isButtonActive = isEnabled && !isLoading;
+    // ✅ Responsive metrics
+    final double vPad = AppResponsive.scaleSize(context, 14);
+    final double radius = AppResponsive.radius(context, factor: 1.2);
+    final double loaderSize = AppResponsive.scaleSize(context, 18);
+    final double gap = AppResponsive.scaleSize(context, 10);
+    final double font = AppResponsive.scaleSize(context, 16);
+
+    // ✅ Keep enable/disable logic
+    final bool buttonEnabled = isEnabled && !isLoading;
+
+    // Keep gradient visible while loading so spinner/text are readable
+    final bool showGradient = buttonEnabled || isLoading;
 
     return SizedBox(
       width: double.infinity,
       child: InkWell(
-        onTap: isButtonActive ? onTap : null,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: isButtonActive
+        onTap: buttonEnabled ? onTap : null,
+        borderRadius: BorderRadius.circular(radius),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          padding: EdgeInsets.symmetric(vertical: vPad),
+          decoration: showGradient
               ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(radius),
                 ).withAppGradient
               : BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Color(0xffffffff),
+                  borderRadius: BorderRadius.circular(radius),
                 ),
-          alignment: Alignment.center,
-          child: isLoading
-              ? Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
+          child: Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // ✅ Spinner on the LEFT when loading
+                if (isLoading) ...[
+                  SizedBox(
+                    width: loaderSize,
+                    height: loaderSize,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
-                    const SizedBox(width: 12),
-                    Text(
-                      label,
-                      style: AppTextStyles.buttonText(context).copyWith(
-                        fontSize: AppResponsive.scaleSize(context, 16),
-                        color: Colors.white,
-                      ),
-                    ),
-                  ],
-                )
-              : Text(
+                  ),
+                  SizedBox(width: gap),
+                ],
+                Text(
                   label,
                   style: AppTextStyles.buttonText(context).copyWith(
-                    fontSize: AppResponsive.scaleSize(context, 16),
-                    color: isEnabled ? Colors.white : const Color(0xffa8aebf),
+                    fontSize: font,
                     fontWeight: FontWeight.w600,
+                    color: (buttonEnabled || isLoading)
+                        ? Colors.white
+                        : const Color(0xffa8aebf),
                   ),
                 ),
+              ],
+            ),
+          ),
         ),
       ),
     );

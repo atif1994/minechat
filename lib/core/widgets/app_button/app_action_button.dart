@@ -3,12 +3,12 @@ import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 
-class OtpActionButton extends StatelessWidget {
+class AppActionButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final bool isPrimary;
 
-  const OtpActionButton({
+  const AppActionButton({
     super.key,
     required this.label,
     required this.onTap,

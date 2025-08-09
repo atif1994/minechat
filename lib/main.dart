@@ -7,6 +7,7 @@ import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
+import 'package:minechat/view/screens/login/login_screen.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
 import 'package:minechat/view/screens/otp/otp_screen.dart';
 import 'package:minechat/view/screens/splash/splash_screen.dart';
@@ -39,7 +40,8 @@ class MineChatApp extends StatelessWidget {
           initialRoute: '/',
           getPages: [
             GetPage(name: '/', page: () => const SplashScreen()),
-            GetPage(name: '/login', page: () => const OnboardingScreen()),
+            GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
+            GetPage(name: '/login', page: () => const LoginScreen()),
             GetPage(
                 name: '/business-signup',
                 page: () => const SignupBusinessAccount(email: '')),
