@@ -5,7 +5,7 @@ class AppTexts {
   //dummy
   static const String dummyEmailText = "example@gmail.com";
 
-  //onbaording screen
+  //onboarding screen
   static const String onboardingTitle =
       " AI Business Messaging App Scaling Revenue Growth";
   static const String onboardingSubTitle =
@@ -16,6 +16,18 @@ class AppTexts {
   static const String onboardingLoginButton = "Login";
   static const String onboardingSignupButton = "Signup";
   static const String onboardingGoogleButton = "Continue with Google";
+
+  //login screen
+  static const String loginHeaderTitle = "Login Minechat.ai";
+  static const String loginHeaderSubTitle =
+      "Minechat.ai Connections start here";
+  static const String loginForgotPasswordText = "Forgot Password?";
+  static const String loginButton = "Login";
+  static const String loginFooterFirstNormalText =
+      "By signing up, you agree to minechat.ai ";
+  static const String loginFooterFirstGestureText = "Terms & Conditions";
+  static const String loginFooterSecondNormalText = " and ";
+  static const String loginFooterSecondGestureText = "Privacy Policy";
 
   //signup screen
   static const String signupEmailLabel = "Email";

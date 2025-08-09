@@ -5,7 +5,7 @@ import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
-import 'package:minechat/core/widgets/otp/otp_action_button.dart';
+import 'package:minechat/core/widgets/app_button/app_action_button.dart';
 import 'package:minechat/core/widgets/otp/otp_input_boxes.dart';
 import 'package:minechat/core/widgets/otp/otp_timer.dart';
 import 'package:minechat/core/widgets/otp/otp_header.dart';
@@ -56,7 +56,7 @@ class OtpScreen extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const OtpTimer(),
-                            OtpActionButton(
+                            AppActionButton(
                               label: AppTexts.otpPasteButton,
                               isPrimary: true,
                               onTap: () => controller.pasteFromClipboard(),
@@ -80,7 +80,7 @@ class OtpScreen extends StatelessWidget {
                                 )),
                             AppSpacing.vertical(context, 0.015),
                             Center(
-                              child: OtpActionButton(
+                              child: AppActionButton(
                                 label: AppTexts.otpResendCodeButton,
                                 onTap: controller.resendOtp,
                               ),
