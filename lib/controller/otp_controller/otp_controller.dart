@@ -1,35 +1,64 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/core/services/otp_service.dart';
 
 class OtpController extends GetxController {
-  var otp = List.filled(6, '').obs;
-  var isButtonEnabled = false.obs;
-  var timerSeconds = 180.obs;
-  Timer? _timer;
+  // from arguments
+  late final String email;
 
+  final otp = List.filled(6, '').obs;
+  final isButtonEnabled = false.obs;
+  final timerSeconds = 180.obs;
+  final isSending = false.obs;
+  final isVerifying = false.obs;
+
+  Timer? _timer;
   late List<TextEditingController> textControllers;
   late List<FocusNode> focusNodes;
+
+  final _otpService = OtpService();
 
   @override
   void onInit() {
     super.onInit();
+    email = (Get.arguments?['email'] as String?) ?? '';
 
     textControllers = List.generate(6, (_) => TextEditingController());
     focusNodes = List.generate(6, (_) => FocusNode());
-
-    // Add listener to trigger UI rebuild when focus changes
     for (final node in focusNodes) {
       node.addListener(update);
     }
 
-    // Auto-focus first box
-    Future.delayed(Duration(milliseconds: 300), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       focusNodes.first.requestFocus();
     });
 
+    // Send OTP immediately
+    _sendInitialOtp();
     startTimer();
+  }
+
+  Future<void> _sendInitialOtp() async {
+    if (email.isEmpty) return;
+    await _safeSendOtp();
+  }
+
+  Future<void> _safeSendOtp() async {
+    try {
+      isSending.value = true;
+      await _otpService.sendOtp(email);
+      Get.snackbar('OTP Sent', 'A 6-digit code was sent to $email',
+          snackPosition: SnackPosition.BOTTOM);
+    } catch (e) {
+      Get.snackbar('Error', e.toString(),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+    } finally {
+      isSending.value = false;
+    }
   }
 
   void startTimer() {
@@ -46,7 +75,7 @@ class OtpController extends GetxController {
 
   void onOtpChanged(int index, String value) {
     otp[index] = value;
-    isButtonEnabled.value = otp.every((digit) => digit.isNotEmpty);
+    isButtonEnabled.value = otp.every((d) => d.isNotEmpty);
   }
 
   void handleBackspace(int index) {
@@ -56,7 +85,7 @@ class OtpController extends GetxController {
     } else if (index > 0) {
       focusNodes[index - 1].requestFocus();
     }
-    isButtonEnabled.value = otp.every((digit) => digit.isNotEmpty);
+    isButtonEnabled.value = otp.every((d) => d.isNotEmpty);
   }
 
   Future<void> pasteFromClipboard() async {
@@ -71,19 +100,54 @@ class OtpController extends GetxController {
   }
 
   String get formattedTime {
-    final minutes = (timerSeconds.value ~/ 60).toString().padLeft(2, '0');
-    final seconds = (timerSeconds.value % 60).toString().padLeft(2, '0');
-    return "$minutes:$seconds";
+    final m = (timerSeconds.value ~/ 60).toString().padLeft(2, '0');
+    final s = (timerSeconds.value % 60).toString().padLeft(2, '0');
+    return "$m:$s";
+  }
+
+  Future<void> verifyOtp() async {
+    final code = otp.join();
+    if (code.length != OtpService.codeLength) return;
+
+    try {
+      isVerifying.value = true;
+      final ok = await _otpService.verifyOtp(email: email, code: code);
+      if (!ok) {
+        Get.snackbar('Invalid Code', 'Please check the code and try again.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red,
+            colorText: Colors.white);
+        return;
+      }
+      Get.offAllNamed('/dashboard');
+    } catch (e) {
+      Get.snackbar('Verification Failed', e.toString(),
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white);
+    } finally {
+      isVerifying.value = false;
+    }
+  }
+
+  Future<void> resendOtp() async {
+    if (timerSeconds.value > 0) {
+      Get.snackbar('Please wait', 'You can resend in ${timerSeconds.value}s.',
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    await _safeSendOtp();
+    startTimer();
   }
 
   @override
   void onClose() {
     _timer?.cancel();
-    for (final node in focusNodes) {
-      node.dispose();
+    for (final n in focusNodes) {
+      n.dispose();
     }
-    for (final ctrl in textControllers) {
-      ctrl.dispose();
+    for (final c in textControllers) {
+      c.dispose();
     }
     super.onClose();
   }

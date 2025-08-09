@@ -5,6 +5,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
+import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
 import 'package:minechat/view/screens/otp/otp_screen.dart';
@@ -45,6 +46,7 @@ class MineChatApp extends StatelessWidget {
             GetPage(
                 name: '/admin-signup', page: () => const SignupAdminAccount()),
             GetPage(name: '/otp', page: () => const OtpScreen()),
+            GetPage(name: '/dashboard', page: () => const DashboardScreen()),
             GetPage(
                 name: '/forgot-password',
                 page: () => const ForgotPasswordScreen()),

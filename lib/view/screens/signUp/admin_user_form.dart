@@ -22,9 +22,6 @@ class SignupAdminAccount extends StatelessWidget {
     final authService = FirebaseAuthService();
     final isUserAuthenticated = authService.currentUser != null;
 
-
-
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
