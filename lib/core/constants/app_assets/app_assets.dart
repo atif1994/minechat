@@ -3,8 +3,8 @@ class AppAssets {
   // Main brand logos
   static const String minechatLogoWhite = 'assets/images/logos/logo_minechat_white.svg';
   static const String minechatLogoColored = 'assets/images/logos/logo_minechat_colored.svg';
-  static const String minechatLogoSmall = 'assets/images/logos/logo_minechat_small.svg';
-  static const String minechatlogo = 'assets/images/logos/minechat.svg';
+  static const String minechatChatbot = 'assets/images/logos/logo_chatbot.svg';
+  static const String minechatDashboard = 'assets/images/logos/logo_dashboard.svg';
   static const String lightDart = 'assets/images/logos/lightandDarkLogo.svg';
   static const String minechatLogoDummy = "assets/images/logos/dummy_logo.png";
   static const String darkMode = "assets/images/logos/darkmode.svg";
@@ -94,12 +94,12 @@ class AppAssets {
     'viber',
   ];
 
-  // Signup Screen Icons
+  // Icons
   static const String signupIconCompany = 'assets/images/icons/icon_company.svg';
   static const String signupIconPhone = 'assets/images/icons/icon_phone.svg';
   static const String signupIconAdmin = 'assets/images/icons/icon_admin.svg';
   static const String signupIconPosition = 'assets/images/icons/icon_position.svg';
   static const String signupIconEmail = 'assets/images/icons/icon_email.svg';
   static const String signupIconPassword = 'assets/images/icons/icon_password.svg';
-
+  static const String dashboardNotification = 'assets/images/icons/icon_notification.svg';
 }
