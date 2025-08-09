@@ -22,20 +22,11 @@ class SignupBusinessAccount extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(BusinessSignupController());
     final authService = FirebaseAuthService();
-    final isUserAuthenticated = authService.currentUser != null;
 
-    // Clear form data and set email when form is opened
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.clearBusinessForm();
-      if (email.isNotEmpty) {
-        controller.emailCtrl.text = email;
-        controller.isGoogleUser.value = true;
-      } else if (isUserAuthenticated &&
-          authService.currentUser?.email != null) {
-        controller.emailCtrl.text = authService.currentUser!.email!;
-        controller.isGoogleUser.value = true;
-      }
-    });
+    controller.initFormOnce(
+      emailFromRoute: email,
+      firebaseEmail: authService.currentUser?.email,
+    );
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -78,7 +69,7 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.01),
             Obx(
-                  () => SignupTextField(
+              () => SignupTextField(
                 label: AppTexts.signupPasswordLabel,
                 hintText: AppTexts.signupPasswordHintText,
                 prefixIcon: AppAssets.signupIconPassword,
@@ -100,7 +91,7 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.01),
             Obx(
-                  () => SignupTextField(
+              () => SignupTextField(
                 label: AppTexts.signupConfirmPasswordLabel,
                 hintText: AppTexts.signupConfirmPasswordHintText,
                 prefixIcon: AppAssets.signupIconPassword,
@@ -108,8 +99,7 @@ class SignupBusinessAccount extends StatelessWidget {
                 errorText: controller.confirmPasswordError,
                 obscureText: !controller.isConfirmPasswordVisible.value,
                 onChanged: (val) => controller.validateConfirmPassword(val),
-                onSuffixTap: () =>
-                    controller.toggleConfirmPasswordVisibility(),
+                onSuffixTap: () => controller.toggleConfirmPasswordVisibility(),
                 suffixIcon: IconButton(
                   icon: Icon(
                     controller.isConfirmPasswordVisible.value
@@ -123,7 +113,7 @@ class SignupBusinessAccount extends StatelessWidget {
             ),
             AppSpacing.vertical(context, 0.02),
             Obx(
-                  () => AppLargeButton(
+              () => AppLargeButton(
                 label: controller.isLoading.value
                     ? 'Creating Account...'
                     : AppTexts.signupButton,

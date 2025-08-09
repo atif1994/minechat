@@ -22,7 +22,8 @@ class BusinessSignupController extends GetxController {
 
   final isLoading = false.obs;
   final profileImageUrl = ''.obs;
-  final isGoogleUser = false.obs; // if user logged in with Google (readonly mode)
+  final isGoogleUser =
+      false.obs; // if user logged in with Google (readonly mode)
 
   final isPasswordVisible = false.obs;
   final isConfirmPasswordVisible = false.obs;
@@ -32,10 +33,28 @@ class BusinessSignupController extends GetxController {
   final FirebaseAuthService _authService = FirebaseAuthService();
   final UserRepository _userRepository = UserRepository();
 
+  bool _isInitialized = false;
+
   @override
   void onInit() {
     super.onInit();
     _checkForGoogleUser();
+  }
+
+  void initFormOnce({String? emailFromRoute, String? firebaseEmail}) {
+    if (_isInitialized) return;
+
+    clearBusinessForm();
+
+    if ((emailFromRoute ?? '').isNotEmpty) {
+      emailCtrl.text = emailFromRoute!;
+      isGoogleUser.value = true;
+    } else if ((firebaseEmail ?? '').isNotEmpty) {
+      emailCtrl.text = firebaseEmail!;
+      isGoogleUser.value = true;
+    }
+
+    _isInitialized = true;
   }
 
   void validateCompanyName(String value) {
@@ -80,7 +99,8 @@ class BusinessSignupController extends GetxController {
     if (value.trim().isEmpty) {
       passwordError.value = "Password is required";
     } else if (!_isValidPassword(value.trim())) {
-      passwordError.value = "Min 8 chars, include upper, lower, number & symbol";
+      passwordError.value =
+          "Min 8 chars, include upper, lower, number & symbol";
     } else {
       passwordError.value = '';
     }
@@ -111,7 +131,8 @@ class BusinessSignupController extends GetxController {
         phoneError.value.isEmpty &&
         emailError.value.isEmpty &&
         (isGoogleUser.value ||
-            (passwordError.value.isEmpty && confirmPasswordError.value.isEmpty));
+            (passwordError.value.isEmpty &&
+                confirmPasswordError.value.isEmpty));
   }
 
   Future<void> createBusinessAccount() async {
@@ -154,7 +175,8 @@ class BusinessSignupController extends GetxController {
         email: emailCtrl.text.trim(),
         companyName: companyNameCtrl.text.trim(),
         phoneNumber: phoneCtrl.text.trim(),
-        photoURL: profileImageUrl.value.isNotEmpty ? profileImageUrl.value : null,
+        photoURL:
+            profileImageUrl.value.isNotEmpty ? profileImageUrl.value : null,
       );
 
       await _userRepository.saveUser(businessUser);
@@ -177,16 +199,12 @@ class BusinessSignupController extends GetxController {
         'email': emailCtrl.text.trim(),
         'password': passwordCtrl.text.trim(),
       });
-
     } catch (e) {
       _handleFirebaseErrors(e, 'Failed to create business account');
     } finally {
       isLoading.value = false;
     }
   }
-
-
-
 
   void _checkForGoogleUser() {
     final loginController = Get.find<LoginController>();
@@ -203,7 +221,9 @@ class BusinessSignupController extends GetxController {
       }
 
       // Optionally disable password fields in UI based on isGoogleUser flag
-    } else if (currentFirebaseUser != null && currentFirebaseUser.providerData.any((p) => p.providerId == 'google.com')) {
+    } else if (currentFirebaseUser != null &&
+        currentFirebaseUser.providerData
+            .any((p) => p.providerId == 'google.com')) {
       isGoogleUser.value = true;
       emailCtrl.text = currentFirebaseUser.email ?? '';
       // Set other fields if needed

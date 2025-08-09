@@ -45,7 +45,7 @@ class OtpScreen extends StatelessWidget {
                       OtpHeader(
                         title: AppTexts.otpHeaderTitle,
                         subtitle: AppTexts.otpHeaderSubTitle,
-                        email: AppTexts.dummyEmailText,
+                        email: controller.email,
                       ),
                       AppSpacing.vertical(context, 0.03),
                       const OtpInputBoxes(),
@@ -70,17 +70,19 @@ class OtpScreen extends StatelessWidget {
                         child: Column(
                           children: [
                             Obx(() => AppLargeButton(
-                                  label: AppTexts.otpVerifyCodeButton,
-                                  isEnabled: controller.isButtonEnabled.value,
-                                  onTap: () {
-                                    // verify OTP logic
-                                  },
+                                  label: controller.isVerifying.value
+                                      ? 'Verifying...'
+                                      : AppTexts.otpVerifyCodeButton,
+                                  isEnabled: controller.isButtonEnabled.value &&
+                                      !controller.isVerifying.value,
+                                  isLoading: controller.isVerifying.value,
+                                  onTap: controller.verifyOtp,
                                 )),
                             AppSpacing.vertical(context, 0.015),
                             Center(
                               child: OtpActionButton(
                                 label: AppTexts.otpResendCodeButton,
-                                onTap: () => controller.startTimer(),
+                                onTap: controller.resendOtp,
                               ),
                             ),
                           ],

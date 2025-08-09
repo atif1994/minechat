@@ -219,13 +219,14 @@ class AdminSignupController extends GetxController {
 
         Get.snackbar(
           'Success',
-          'Admin account created successfully!',
+          'Admin account created successfully! Please verify your email.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.green,
           colorText: Colors.white,
         );
 
-        Get.offAllNamed('/login');
+        Get.offAllNamed('/otp', arguments: {'email': emailCtrl.text.trim()});
+
       } else {
         final userCredential = await _authService.signUpWithEmailAndPassword(
           email: emailCtrl.text.trim(),
