@@ -1,0 +1,41 @@
+import 'package:flutter/material.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
+
+class SectionContainer extends StatelessWidget {
+  final Widget child;
+  final EdgeInsets? padding;
+  final EdgeInsets? margin;
+
+  const SectionContainer({
+    super.key,
+    required this.child,
+    this.padding,
+    this.margin,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final radius = AppResponsive.radius(context, factor: 1.2);
+    return Container(
+      constraints: BoxConstraints(
+        minHeight: AppResponsive.scaleSize(context, 88),
+      ),
+      margin: margin ??
+          EdgeInsets.only(bottom: AppResponsive.scaleSize(context, 14)),
+      padding: padding ?? EdgeInsets.all(AppResponsive.scaleSize(context, 14)),
+      decoration: BoxDecoration(
+        color: Color(0xFFFFFFFF),
+        borderRadius: BorderRadius.circular(radius),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0A0A0A).withOpacity(0.03),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE9EEF5)),
+      ),
+      child: child,
+    );
+  }
+}

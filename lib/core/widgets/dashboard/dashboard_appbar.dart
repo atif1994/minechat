@@ -4,9 +4,9 @@ import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String brandMarkSvg;
+  final String brandMarkPng;
   final String notificationIconSvg;
-  final String chatbotSvg;
+  final String chatbotPng;
   final ImageProvider avatarImage;
 
   final VoidCallback? onTapNotifications;
@@ -17,9 +17,9 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   const DashboardAppBar({
     super.key,
-    required this.brandMarkSvg,
+    required this.brandMarkPng,
     required this.notificationIconSvg,
-    required this.chatbotSvg,
+    required this.chatbotPng,
     required this.avatarImage,
     this.onTapNotifications,
     this.onTapChatbot,
@@ -37,8 +37,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
     final double brandHeight = AppResponsive.scaleSize(context, 22);
     final double bellSize = AppResponsive.scaleSize(context, 26);
     final double unreadDot = AppResponsive.scaleSize(context, 8);
-    final double botSide = AppResponsive.scaleSize(context, 34);
-    final double botIcon = AppResponsive.scaleSize(context, 18);
+    final double botIcon = AppResponsive.scaleSize(context, 34);
     final double botRadius = AppResponsive.radius(context, factor: 0.9);
     final double avatar = AppResponsive.scaleSize(context, 28);
     final double gapSm = AppResponsive.scaleSize(context, 10);
@@ -57,8 +56,8 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 /// LEADING — brand mark (SVG that already includes the text)
-                SvgPicture.asset(
-                  brandMarkSvg,
+                Image.asset(
+                  brandMarkPng,
                   height: brandHeight,
                   fit: BoxFit.contain,
                 ),
@@ -102,21 +101,10 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
                     InkWell(
                       onTap: onTapChatbot,
                       borderRadius: BorderRadius.circular(botRadius),
-                      child: Container(
-                        width: botSide,
-                        height: botSide,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(botRadius),
-                        ).withAppGradient,
-                        // uses your gradient extension
-                        child: SvgPicture.asset(
-                          chatbotSvg,
-                          width: botIcon,
-                          height: botIcon,
-                          colorFilter: const ColorFilter.mode(
-                              Colors.white, BlendMode.srcIn),
-                        ),
+                      child: Image.asset(
+                        chatbotPng,
+                        height: botIcon,
+                        width: botIcon,
                       ),
                     ),
                     SizedBox(width: gapSm),
@@ -124,7 +112,6 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
                     // Profile avatar
                     InkWell(
                       onTap: onTapAvatar,
-                      customBorder: const CircleBorder(),
                       child: CircleAvatar(
                         radius: avatar / 2,
                         backgroundImage: avatarImage,

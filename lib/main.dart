@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
@@ -22,6 +23,7 @@ void main() async {
 
   // Controllers Initialization
   Get.put(LoginController());
+  Get.put(DashboardController());
 
   runApp(const MineChatApp());
 }
