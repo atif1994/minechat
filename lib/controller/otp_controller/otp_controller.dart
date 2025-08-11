@@ -119,7 +119,7 @@ class OtpController extends GetxController {
             colorText: Colors.white);
         return;
       }
-      Get.offAllNamed('/dashboard');
+      Get.offAllNamed('/root-bottom-nav-bar');
     } catch (e) {
       Get.snackbar('Verification Failed', e.toString(),
           snackPosition: SnackPosition.BOTTOM,

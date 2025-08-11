@@ -1,11 +1,11 @@
 class AppTexts {
-  //app name
+  // App Name
   static const String appName = "minechat.ai";
 
-  //dummy
+  // Dummy
   static const String dummyEmailText = "example@gmail.com";
 
-  //onboarding screen
+  // Onboarding Screen
   static const String onboardingTitle =
       " AI Business Messaging App Scaling Revenue Growth";
   static const String onboardingSubTitle =
@@ -17,7 +17,7 @@ class AppTexts {
   static const String onboardingSignupButton = "Signup";
   static const String onboardingGoogleButton = "Continue with Google";
 
-  //login screen
+  // Login Screen
   static const String loginHeaderTitle = "Login Minechat.ai";
   static const String loginHeaderSubTitle =
       "Minechat.ai Connections start here";
@@ -29,7 +29,7 @@ class AppTexts {
   static const String loginFooterSecondNormalText = " and ";
   static const String loginFooterSecondGestureText = "Privacy Policy";
 
-  //signup screen
+  // Signup Screen
   static const String signupEmailLabel = "Email";
   static const String signupPasswordLabel = "Password";
   static const String signupPasswordHintText = "Enter password";
@@ -37,9 +37,8 @@ class AppTexts {
   static const String signupConfirmPasswordHintText = "Re-enter password";
   static const String signupButton = "Create Account";
 
-  ///signup screen => business account
 
-  //signup screen => business account
+  // Signup Screen => Business Account
   static const String signupBusinessHeaderTitle = "Create Business Account";
   static const String signupBusinessHeaderSubTitle = "Company Logo";
   static const String signupBusinessCompanyNameLabel = "Company Name";
@@ -48,7 +47,7 @@ class AppTexts {
   static const String signupBusinessPhoneNumberLabel = "Phone Number";
   static const String signupBusinessPhoneNumberHintText = "+1 234567890";
 
-  //signup screen => business account
+  // Signup Screen => Business Account
   static const String signupAdminHeaderTitle = "Create Admin User Profile";
   static const String signupAdminHeaderSubTitle = "Profile Photo";
   static const String signupAdminNameLabel = "Admin Name";
@@ -56,16 +55,23 @@ class AppTexts {
   static const String signupAdminPositionLabel = "Position";
   static const String signupAdminPositionHintText = "Enter your position";
 
-  //otp screen
+  // Otp Screen
   static const String otpHeaderTitle = "Enter Your OTP";
   static const String otpHeaderSubTitle = "Enter the code that we have sent to";
   static const String otpPasteButton = "Paste";
   static const String otpVerifyCodeButton = "Verify Code";
   static const String otpResendCodeButton = "Resend Code";
 
-  //forgot screen
+  // Forgot Screen
   static const String forgotPasswordHeaderTitle = "Forgot Password";
   static const String forgotPasswordHeaderSubTitle =
       "Enter your email to reset your new password";
   static const String forgotPasswordButton = "Reset Password";
+
+  // Bottom Navigation Bar
+  static const String bottomNavBarHomeLabel = "Home";
+  static const String bottomNavBarChatLabel = "Chat";
+  static const String bottomNavBarSetupLabel = "Setup";
+  static const String bottomNavBarCRMLabel = "CRM";
+  static const String bottomNavBarAccountsLabel = "Accounts";
 }
