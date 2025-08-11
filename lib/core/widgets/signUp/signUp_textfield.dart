@@ -6,6 +6,8 @@ import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
+import '../../../controller/theme_controller/theme_controller.dart';
+
 class SignupTextField extends StatelessWidget {
   final String label;
   final String hintText;
@@ -34,6 +36,8 @@ class SignupTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Obx(() => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,6 +60,7 @@ class SignupTextField extends StatelessWidget {
                     prefixIcon,
                     width: AppResponsive.iconSize(context),
                     height: AppResponsive.iconSize(context),
+                    color: isDark ? Colors.white : Colors.black,
                   ),
                 ),
                 suffixIcon: suffixIcon != null
@@ -65,7 +70,7 @@ class SignupTextField extends StatelessWidget {
                       )
                     : null,
                 filled: true,
-                fillColor: Color(0xfffafbfd),
+                fillColor:isDark? AppColors.black:Color(0xfffafbfd),
                 enabledBorder: OutlineInputBorder(
                   borderRadius:
                       BorderRadius.circular(AppResponsive.radius(context)),

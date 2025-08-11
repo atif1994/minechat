@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
@@ -12,6 +13,7 @@ import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 
 import '../../../controller/signUp_controller/business_signup_controller.dart';
+import '../../../controller/theme_controller/theme_controller.dart';
 
 class SignupBusinessAccount extends StatelessWidget {
   final String email;
@@ -27,10 +29,11 @@ class SignupBusinessAccount extends StatelessWidget {
       emailFromRoute: email,
       firebaseEmail: authService.currentUser?.email,
     );
-
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Scaffold(
       body: SingleChildScrollView(
-        padding: AppSpacing.all(context, factor: 2),
+        padding: AppSpacing.all(context, factor: 3),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -83,7 +86,7 @@ class SignupBusinessAccount extends StatelessWidget {
                     controller.isPasswordVisible.value
                         ? Iconsax.eye_slash
                         : Iconsax.eye,
-                    color: Colors.black,
+                    color:isDark?AppColors.white: Colors.black,
                   ),
                   onPressed: controller.togglePasswordVisibility,
                 ),
