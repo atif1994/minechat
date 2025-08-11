@@ -10,6 +10,7 @@ import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dar
 import 'package:minechat/view/screens/login/login_screen.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
 import 'package:minechat/view/screens/otp/otp_screen.dart';
+import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scree.dart';
 import 'package:minechat/view/screens/splash/splash_screen.dart';
 import 'package:minechat/view/screens/signUp/business_account_form.dart';
 import 'package:minechat/view/screens/signUp/admin_user_form.dart';
@@ -18,6 +19,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await GetStorage.init();
+
+  // Controllers Initialization
+  Get.put(LoginController());
 
   runApp(const MineChatApp());
 }
@@ -28,7 +32,6 @@ class MineChatApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeController themeController = Get.put(ThemeController());
-    final LoginController loginController = Get.put(LoginController());
 
     return Obx(() => GetMaterialApp(
           debugShowCheckedModeBanner: false,
@@ -48,6 +51,9 @@ class MineChatApp extends StatelessWidget {
             GetPage(
                 name: '/admin-signup', page: () => const SignupAdminAccount()),
             GetPage(name: '/otp', page: () => const OtpScreen()),
+            GetPage(
+                name: '/root-bottom-nav-bar',
+                page: () => RootBottomNavScreen()),
             GetPage(name: '/dashboard', page: () => const DashboardScreen()),
             GetPage(
                 name: '/forgot-password',
