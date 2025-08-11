@@ -315,7 +315,7 @@ class LoginController extends GetxController {
 
   void _navigateBasedOnAccountType(UserModel user) {
     // You currently direct all types to /login; keep your logic as-is.
-    Get.offAllNamed('/dashboard');
+    Get.offAllNamed('/root-bottom-nav-bar');
   }
 
   @override

@@ -104,8 +104,9 @@ class LoginScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Obx(() => AppLargeButton(
-                                  label: AppTexts.loginButton,
-                                  isEnabled: controller.canSubmit,
+                                  label: controller.isLoading.value
+                                      ? 'Logging in...'
+                                      : AppTexts.loginButton,
                                   isLoading: controller.isLoading.value,
                                   onTap: controller.loginWithEmailAndPassword,
                                 )),
