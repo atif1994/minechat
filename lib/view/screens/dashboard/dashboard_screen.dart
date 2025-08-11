@@ -1,25 +1,64 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/dashboard/dashboard_appbar.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_header.dart';
+import 'package:minechat/core/widgets/dashboard/faq_card.dart';
+import 'package:minechat/core/widgets/dashboard/messages_per_hour_card.dart';
+import 'package:minechat/core/widgets/dashboard/messages_sent_card.dart';
+import 'package:minechat/core/widgets/dashboard/stat_grid.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure the controller is available exactly once.
+    if (!Get.isRegistered<DashboardController>()) {
+      Get.put(DashboardController(), permanent: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0XFFf4f6fc),
       appBar: DashboardAppBar(
-        brandMarkSvg: AppAssets.minechatDashboard,
+        brandMarkPng: AppAssets.minechatDashboard,
         notificationIconSvg: AppAssets.dashboardNotification,
-        chatbotSvg: AppAssets.mineChatCamera,
-        avatarImage: const AssetImage(AppAssets.minechatLogoDummy),
+        chatbotPng: AppAssets.minechatChatbot,
+        avatarImage: const AssetImage(AppAssets.minechatProfileAvatarLogoDummy),
         hasUnreadNotifications: true,
         onTapNotifications: () {},
         onTapChatbot: () {},
         onTapAvatar: () {},
       ),
-      body: Center(
-        child: Text("This is Dashboard"),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: AppSpacing.all(context, factor: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              DashboardHeader(),
+              AppSpacing.vertical(context, 0.02),
+              StatGrid(),
+              AppSpacing.vertical(context, 0.01),
+              MessagesSentCard(),
+              AppSpacing.vertical(context, 0.01),
+              FaqCard(),
+              AppSpacing.vertical(context, 0.01),
+              MessagesPerHourCard(),
+            ],
+          ),
+        ),
       ),
     );
   }

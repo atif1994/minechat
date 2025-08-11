@@ -26,8 +26,8 @@ class RootBottomNavScreen extends StatelessWidget {
   static const _items = <AppNavItem>[
     AppNavItem(
       label: AppTexts.bottomNavBarHomeLabel,
-      iconPath: AppAssets.bottomNavBarHome,
       activeIconPath: AppAssets.bottomNavBarActiveHome,
+      iconPath: AppAssets.bottomNavBarHome,
     ),
     AppNavItem(
       label: AppTexts.bottomNavBarChatLabel,

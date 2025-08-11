@@ -5,11 +5,13 @@ class AppAssets {
       'assets/images/logos/logo_minechat_white.svg';
   static const String minechatLogoColored =
       'assets/images/logos/logo_minechat_colored.svg';
-  static const String minechatChatbot = 'assets/images/logos/logo_chatbot.svg';
+  static const String minechatChatbot = 'assets/images/icons/icon_chatbot.png';
   static const String minechatDashboard =
-      'assets/images/logos/logo_dashboard.svg';
+      'assets/images/logos/logo_dashboard.png';
   static const String lightDart = 'assets/images/logos/lightandDarkLogo.svg';
   static const String minechatLogoDummy = "assets/images/logos/dummy_logo.png";
+  static const String minechatProfileAvatarLogoDummy =
+      "assets/images/logos/dummy_profile_avatar_logo.png";
   static const String darkMode = "assets/images/logos/darkmode.svg";
 
   // ===== SOCIAL MEDIA ICONS =====
@@ -139,4 +141,10 @@ class AppAssets {
       'assets/images/icons/icon_accounts.svg';
   static const String bottomNavBarActiveAccounts =
       'assets/images/icons/icon_active_accounts.svg';
+
+  // Icons => Dashboard
+  static const String dashboardCalendar =
+      'assets/images/icons/icon_dashboard_calendar.svg';
+  static const String dashboardArrowRightUp =
+      'assets/images/icons/icon_dashboard_arrow_right_up.svg';
 }
