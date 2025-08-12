@@ -45,10 +45,10 @@ class DashboardHeader extends StatelessWidget {
               children: [
                 Obx(() => Text(
                       c.dateRange.value,
-                      style: AppTextStyles.poppinsRegular(context).copyWith(
-                        fontSize: AppResponsive.scaleSize(context, 12.5),
-                        color: const Color(0xFF111827),
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.bodyText(context).copyWith(
+                        fontSize: AppResponsive.scaleSize(context, 10),
+                        color: const Color(0xFF0A0A0A),
+                        fontWeight: FontWeight.w400,
                       ),
                     )),
                 AppSpacing.horizontal(context, 0.02),

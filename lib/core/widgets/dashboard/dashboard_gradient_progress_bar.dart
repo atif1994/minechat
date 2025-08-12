@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 
-class GradientProgressBar extends StatelessWidget {
+class DashboardProgressBar extends StatelessWidget {
   final double percent; // 0..100
   final bool useGradient; // false to use solid grey
 
-  const GradientProgressBar({
+  const DashboardProgressBar({
     super.key,
     required this.percent,
     this.useGradient = true,

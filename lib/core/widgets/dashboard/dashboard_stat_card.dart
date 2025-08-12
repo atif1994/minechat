@@ -5,10 +5,10 @@ import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/model/data/dashboard/stat_item.dart';
 
-class StatCard extends StatelessWidget {
+class DashboardStatCard extends StatelessWidget {
   final StatItem item;
 
-  const StatCard({super.key, required this.item});
+  const DashboardStatCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {

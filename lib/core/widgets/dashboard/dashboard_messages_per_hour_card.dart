@@ -4,17 +4,18 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
-import 'package:minechat/core/widgets/dashboard/section_container.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_right_arrow_icon.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_section_container.dart';
 
-class MessagesPerHourCard extends StatelessWidget {
-  const MessagesPerHourCard({super.key});
+class DashboardMessagesPerHourCard extends StatelessWidget {
+  const DashboardMessagesPerHourCard({super.key});
 
   @override
   Widget build(BuildContext context) {
     final c = Get.find<DashboardController>();
     final iconSize = AppResponsive.scaleSize(context, 14);
 
-    return SectionContainer(
+    return DashboardSectionContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -23,22 +24,13 @@ class MessagesPerHourCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text('Message Received Per Hour',
-                    style: AppTextStyles.poppinsRegular(context).copyWith(
-                      fontSize: AppResponsive.scaleSize(context, 13.5),
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF111827),
+                    style: AppTextStyles.bodyText(context).copyWith(
+                      fontSize: AppResponsive.scaleSize(context, 14),
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF0A0A0A),
                     )),
               ),
-              Container(
-                width: iconSize * 1.6,
-                height: iconSize * 1.6,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3F6FC),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(Icons.north_east,
-                    size: iconSize, color: const Color(0xFF9AA3AF)),
-              ),
+              DashboardRightArrowIcon(onTapArrow: () {})
             ],
           ),
           SizedBox(height: AppResponsive.scaleSize(context, 12)),

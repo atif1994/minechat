@@ -3,8 +3,8 @@ import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
-class HumanAIPercentage extends StatelessWidget {
-  const HumanAIPercentage({
+class DashboardHumanAIPercentage extends StatelessWidget {
+  const DashboardHumanAIPercentage({
     super.key,
     required this.context,
     required this.label,

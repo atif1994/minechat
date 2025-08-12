@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
+import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 
-class SectionContainer extends StatelessWidget {
+class DashboardSectionContainer extends StatelessWidget {
   final Widget child;
-  final EdgeInsets? padding;
-  final EdgeInsets? margin;
 
-  const SectionContainer({
+  const DashboardSectionContainer({
     super.key,
     required this.child,
-    this.padding,
-    this.margin,
   });
 
   @override
@@ -20,9 +17,6 @@ class SectionContainer extends StatelessWidget {
       constraints: BoxConstraints(
         minHeight: AppResponsive.scaleSize(context, 88),
       ),
-      margin: margin ??
-          EdgeInsets.only(bottom: AppResponsive.scaleSize(context, 14)),
-      padding: padding ?? EdgeInsets.all(AppResponsive.scaleSize(context, 14)),
       decoration: BoxDecoration(
         color: Color(0xFFFFFFFF),
         borderRadius: BorderRadius.circular(radius),
@@ -33,8 +27,9 @@ class SectionContainer extends StatelessWidget {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: const Color(0xFFE9EEF5)),
+        border: Border.all(color: const Color(0xFFE9EEF1)),
       ),
+      padding: AppSpacing.symmetric(context, h: 0.04, v: 0.01),
       child: child,
     );
   }
