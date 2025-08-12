@@ -147,4 +147,6 @@ class AppAssets {
       'assets/images/icons/icon_dashboard_calendar.svg';
   static const String dashboardArrowRightUp =
       'assets/images/icons/icon_dashboard_arrow_right_up.svg';
+  static const String dashboardFaq =
+      'assets/images/icons/icon_dashboard_faq.svg';
 }

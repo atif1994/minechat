@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
-import 'stat_card.dart';
+import 'dashboard_stat_card.dart';
 
-class StatGrid extends StatelessWidget {
-  const StatGrid({super.key});
+class DashboardStatGrid extends StatelessWidget {
+  const DashboardStatGrid({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class StatGrid extends StatelessWidget {
           crossAxisSpacing: gap,
           childAspectRatio: 1.9,
         ),
-        itemBuilder: (_, i) => StatCard(item: c.stats[i]),
+        itemBuilder: (_, i) => DashboardStatCard(item: c.stats[i]),
       );
     });
   }

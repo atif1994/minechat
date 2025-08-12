@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/dashboard/dashboard_appbar.dart';
 import 'package:minechat/core/widgets/dashboard/dashboard_header.dart';
-import 'package:minechat/core/widgets/dashboard/faq_card.dart';
-import 'package:minechat/core/widgets/dashboard/messages_per_hour_card.dart';
-import 'package:minechat/core/widgets/dashboard/messages_sent_card.dart';
-import 'package:minechat/core/widgets/dashboard/stat_grid.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_faq_card.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_messages_per_hour_card.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_messages_sent_card.dart';
+import 'package:minechat/core/widgets/dashboard/dashboard_stat_grid.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -43,19 +44,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: AppSpacing.all(context, factor: 2),
+          padding: AppSpacing.all(context, factor: 2).copyWith(top: AppResponsive.scaleSize(context, 8)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               DashboardHeader(),
               AppSpacing.vertical(context, 0.02),
-              StatGrid(),
+              DashboardStatGrid(),
               AppSpacing.vertical(context, 0.01),
-              MessagesSentCard(),
+              DashboardMessagesSentCard(),
               AppSpacing.vertical(context, 0.01),
-              FaqCard(),
+              DashboardFaqCard(),
               AppSpacing.vertical(context, 0.01),
-              MessagesPerHourCard(),
+              DashboardMessagesPerHourCard(),
             ],
           ),
         ),
