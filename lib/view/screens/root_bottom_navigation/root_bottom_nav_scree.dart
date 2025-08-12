@@ -7,6 +7,8 @@ import 'package:minechat/core/widgets/app_bottom_nav_bar/app_bottom_nav_bar.dart
 import 'package:minechat/core/widgets/app_bottom_nav_bar/nav_item.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 
+import '../setup/set_up.dart';
+
 class RootBottomNavScreen extends StatelessWidget {
   RootBottomNavScreen({super.key});
 
@@ -17,7 +19,7 @@ class RootBottomNavScreen extends StatelessWidget {
   final List<Widget> _pages = const [
     DashboardScreen(), // Home
     Placeholder(), // Chat
-    Placeholder(), // Setup
+    AIAssistantSetupScreen() ,// Setup
     Placeholder(), // CRM
     Placeholder(), // Accounts
   ];
