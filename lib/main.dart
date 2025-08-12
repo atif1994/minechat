@@ -44,7 +44,7 @@ class MineChatApp extends StatelessWidget {
               themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           initialRoute: '/',
           getPages: [
-            GetPage(name: '/', page: () => const SplashScreen()),
+            GetPage(name: '/', page: () =>  RootBottomNavScreen()),
             GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
             GetPage(name: '/login', page: () => const LoginScreen()),
             GetPage(
