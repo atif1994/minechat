@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:minechat/core/services/otp_service.dart';
+import 'package:minechat/core/services/otp_service/otp_service.dart';
 
 class OtpController extends GetxController {
   // from arguments
@@ -105,6 +105,32 @@ class OtpController extends GetxController {
     return "$m:$s";
   }
 
+  // Future<void> verifyOtp() async {
+  //   final code = otp.join();
+  //   if (code.length != OtpService.codeLength) return;
+  //
+  //   try {
+  //     isVerifying.value = true;
+  //     final ok = await _otpService.verifyOtp(email: email, code: code);
+  //     if (!ok) {
+  //       Get.snackbar('Invalid Code', 'Please check the code and try again.',
+  //           snackPosition: SnackPosition.BOTTOM,
+  //           backgroundColor: Colors.red,
+  //           colorText: Colors.white);
+  //       return;
+  //     }
+  //     Get.offAllNamed('/root-bottom-nav-bar');
+  //   } catch (e) {
+  //     Get.snackbar('Verification Failed', e.toString(),
+  //         snackPosition: SnackPosition.BOTTOM,
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white);
+  //   } finally {
+  //     isVerifying.value = false;
+  //   }
+  // }
+
+  // Only need to update the verifyOtp method to handle navigation better:
   Future<void> verifyOtp() async {
     final code = otp.join();
     if (code.length != OtpService.codeLength) return;
@@ -119,7 +145,9 @@ class OtpController extends GetxController {
             colorText: Colors.white);
         return;
       }
-      Get.offAllNamed('/root-bottom-nav-bar');
+      // Success - navigate based on your app flow
+      Get.offAllNamed(
+          '/root-bottom-nav-bar'); // Changed from root-bottom-nav-bar
     } catch (e) {
       Get.snackbar('Verification Failed', e.toString(),
           snackPosition: SnackPosition.BOTTOM,
