@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
@@ -14,6 +15,7 @@ class AccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    final loginController = Get.find<LoginController>();
     return Scaffold(
       appBar: AccountAppBar(title: 'Account'),
       body: SafeArea(
@@ -59,13 +61,16 @@ class AccountScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        AccountOptionTile(
-                          title: 'Manage User Profiles',
-                          showProfileImage: true,
-                          profileImageUrl: 'https://example.com/admin.jpg',
-                          trailingSvgPath: AppAssets.accountArrowRight,
-                          onTap: () {},
-                        ),
+                        Obx(() {
+                          final user = loginController.currentUser.value;
+                          return AccountOptionTile(
+                            title: 'Manage User Profiles',
+                            showProfileImage: true,
+                            profileImageUrl: user?.photoURL ?? '',
+                            trailingSvgPath: AppAssets.accountArrowRight,
+                            onTap: () {},
+                          );
+                        }),
                         Divider(
                           thickness: 0.8,
                           height: 0,

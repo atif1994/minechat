@@ -10,9 +10,11 @@ import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SignupProfileAvatarPicker extends StatefulWidget {
-  final VoidCallback? onImagePicked;
+  final void Function(File)? onImageSelected;
+  final bool showError;
 
-  const SignupProfileAvatarPicker({super.key, this.onImagePicked});
+  const SignupProfileAvatarPicker(
+      {super.key, this.onImageSelected, this.showError = false});
 
   @override
   State<SignupProfileAvatarPicker> createState() =>
@@ -57,10 +59,13 @@ class _SignupProfileAvatarPickerState extends State<SignupProfileAvatarPicker> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
+      final imageFile = File(picked.path);
       setState(() {
-        _selectedImage = File(picked.path);
+        _selectedImage = imageFile;
       });
-      if (widget.onImagePicked != null) widget.onImagePicked!();
+      if (widget.onImageSelected != null) {
+        widget.onImageSelected!(File(picked.path));
+      }
     }
   }
 
