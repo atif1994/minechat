@@ -149,4 +149,14 @@ class AppAssets {
       'assets/images/icons/icon_dashboard_arrow_right_up.svg';
   static const String dashboardFaq =
       'assets/images/icons/icon_dashboard_faq.svg';
+
+  // Icons => Account
+  static const String accountArrowRight =
+      'assets/images/icons/icon_account_arrow_right.svg';
+  static const String accountContactUs =
+      'assets/images/icons/icon_account_contact_us.svg';
+  static const String accountSubscription =
+      'assets/images/icons/icon_account_subscription.svg';
+  static const String accountLogout =
+      'assets/images/icons/icon_account_logout.svg';
 }

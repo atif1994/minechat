@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/bottom_nav_controller/bottom_nav_controller.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/widgets/app_bottom_nav_bar/app_bottom_nav_bar.dart';
 import 'package:minechat/core/widgets/app_bottom_nav_bar/nav_item.dart';
+import 'package:minechat/view/screens/account/account_screen.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 
 import '../setup/set_up.dart';
@@ -19,9 +21,9 @@ class RootBottomNavScreen extends StatelessWidget {
   final List<Widget> _pages = const [
     DashboardScreen(), // Home
     Placeholder(), // Chat
-    AIAssistantSetupScreen() ,// Setup
+    AIAssistantSetupScreen(), // Setup
     Placeholder(), // CRM
-    Placeholder(), // Accounts
+    AccountScreen(), // Accounts
   ];
 
   // Supply your real asset paths here (SVG or PNG)
@@ -55,6 +57,9 @@ class RootBottomNavScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+
     return Obx(() {
       final index = ctrl.currentIndex.value;
 
@@ -69,7 +74,7 @@ class RootBottomNavScreen extends StatelessWidget {
           currentIndex: index,
           onTap: ctrl.changeTab,
         ),
-        backgroundColor: const Color(0xFFFFFFFF),
+        backgroundColor: isDark ? Color(0XFF1D1D1D) : Color(0xFFFFFFFF),
       );
     });
   }
