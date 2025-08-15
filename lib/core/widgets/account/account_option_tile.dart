@@ -6,7 +6,7 @@ import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
-import 'package:minechat/core/widgets/account/account_business_profile_image_avatar.dart';
+import 'package:minechat/core/widgets/account/account_profile_image_avatar.dart';
 
 class AccountOptionTile extends StatelessWidget {
   final String title;
@@ -36,8 +36,8 @@ class AccountOptionTile extends StatelessWidget {
       // tile color will inherit from parent
       leading: showProfileImage
           ? AccountProfileImageAvatar(
-              radiusFactor: 2,
-              imagePath: AppAssets.minechatProfileAvatarLogoDummy,
+              imageUrl: '',
+              size: AppResponsive.radius(context, factor: 5),
             )
           : (leadingSvgPath != null
               ? SvgPicture.asset(

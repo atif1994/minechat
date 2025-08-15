@@ -41,7 +41,10 @@ class SignupBusinessAccount extends StatelessWidget {
             SignupHeader(
               title: AppTexts.signupBusinessHeaderTitle,
               subtitle: AppTexts.signupBusinessHeaderSubTitle,
-              avatar: const SignupProfileAvatarPicker(),
+              avatar: Obx(() => SignupProfileAvatarPicker(
+                    onImageSelected: (file) => controller.setProfileImage(file),
+                    showError: controller.isImageMissing.value,
+                  )),
             ),
             AppSpacing.vertical(context, 0.02),
             SignupTextField(
@@ -86,7 +89,7 @@ class SignupBusinessAccount extends StatelessWidget {
                     controller.isPasswordVisible.value
                         ? Iconsax.eye_slash
                         : Iconsax.eye,
-                    color:isDark?AppColors.white: Colors.black,
+                    color: isDark ? AppColors.white : Colors.black,
                   ),
                   onPressed: controller.togglePasswordVisibility,
                 ),

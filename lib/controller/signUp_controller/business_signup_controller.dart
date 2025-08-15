@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
@@ -34,6 +37,8 @@ class BusinessSignupController extends GetxController {
   final UserRepository _userRepository = UserRepository();
 
   bool _isInitialized = false;
+  File? _profileImageFile;
+  RxBool isImageMissing = false.obs;
 
   @override
   void onInit() {
@@ -55,6 +60,11 @@ class BusinessSignupController extends GetxController {
     }
 
     _isInitialized = true;
+  }
+
+  void setProfileImage(File image) {
+    _profileImageFile = image;
+    isImageMissing.value = false;
   }
 
   void validateCompanyName(String value) {
@@ -147,54 +157,85 @@ class BusinessSignupController extends GetxController {
       return;
     }
 
+    if (_profileImageFile == null) {
+      Get.snackbar(
+        'Missing Profile Image',
+        'Please select a profile image to continue.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      isImageMissing.value = true;
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      final user = _firebaseAuth.currentUser;
+      final currentUser = _authService.currentUser;
 
-      if (user == null) {
-        throw Exception('No user is currently signed in');
+      if (currentUser == null) {
+        throw Exception('No authenticated user found. Please sign in again.');
       }
 
-      // Link email & password to existing Google account
-      final credential = EmailAuthProvider.credential(
-        email: emailCtrl.text.trim(),
-        password: passwordCtrl.text.trim(),
+      // 🔐 Link email/password to Google user
+      if (isGoogleUser.value) {
+        final email = emailCtrl.text.trim();
+        final password = passwordCtrl.text.trim();
+
+        final credential = EmailAuthProvider.credential(
+          email: email,
+          password: password,
+        );
+
+        try {
+          await currentUser.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'provider-already-linked') {
+            // Already linked, ignore
+          } else if (e.code == 'credential-already-in-use') {
+            throw Exception('This email is already linked to another account.');
+          } else {
+            throw Exception('Failed to link email/password: ${e.message}');
+          }
+        }
+      }
+
+      // 📤 Upload profile image
+      final photoURL = await _userRepository.uploadProfileImage(
+        _profileImageFile!,
+        currentUser.uid,
+        'business',
       );
 
-      await user.linkWithCredential(credential);
-
-      // ✅ Print email and password after linking
-      print('✅ New user created and linked with credentials:');
-      print('📧 Email: ${emailCtrl.text.trim()}');
-      print('🔑 Password: ${passwordCtrl.text.trim()}');
-
-      // Create business user in Firestore
+      // 🧠 Create business user model
       final businessUser = _userRepository.createBusinessUser(
-        uid: user.uid,
-        email: emailCtrl.text.trim(),
+        uid: currentUser.uid,
+        email: currentUser.email ?? emailCtrl.text.trim(),
         companyName: companyNameCtrl.text.trim(),
         phoneNumber: phoneCtrl.text.trim(),
-        photoURL:
-            profileImageUrl.value.isNotEmpty ? profileImageUrl.value : null,
+        photoURL: photoURL,
       );
 
-      await _userRepository.saveUser(businessUser);
-      await _userRepository.saveBusinessAccount(businessUser);
-
+      // 🔄 Update Firebase user display info
       await _authService.updateProfile(
-        displayName: businessUser.companyName,
+        displayName: businessUser.name,
         photoURL: businessUser.photoURL,
       );
 
+      // 💾 Save to Firestore
+      await _userRepository.saveUser(businessUser);
+      await _userRepository.saveBusinessAccount(businessUser);
+
       Get.snackbar(
         'Success',
-        'Business account created and email/password linked!',
+        'Business account created successfully!',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
 
+      // 🚀 Proceed to next screen
       Get.offAllNamed('/admin-signup', arguments: {
         'email': emailCtrl.text.trim(),
         'password': passwordCtrl.text.trim(),

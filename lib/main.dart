@@ -52,7 +52,7 @@ class MineChatApp extends StatelessWidget {
               themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           initialRoute: '/',
           getPages: [
-            GetPage(name: '/', page: () => RootBottomNavScreen()),
+            GetPage(name: '/', page: () =>  RootBottomNavScreen()),
             GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
             GetPage(name: '/login', page: () => const LoginScreen()),
             GetPage(
@@ -69,7 +69,7 @@ class MineChatApp extends StatelessWidget {
                 name: '/forgot-password',
                 page: () => const ForgotPasswordScreen()),
           ],
-          home: RootBottomNavScreen(),
+          home: const SplashScreen(),
         ));
   }
 }

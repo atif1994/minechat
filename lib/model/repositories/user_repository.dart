@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../data/user_model.dart';
 
 class UserRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Save user data to Firestore
   Future<void> saveUser(UserModel user) async {
@@ -23,6 +27,20 @@ class UserRepository {
       }, SetOptions(merge: true));
     } catch (e) {
       throw Exception('Failed to save user data: $e');
+    }
+  }
+
+  // Upload profile image (common for both admin and business)
+  Future<String> uploadProfileImage(File imageFile, String userId, String accountType) async {
+    try {
+      final path = 'profile_images/${accountType}_profile/$userId.jpg';
+      final ref = _storage.ref().child(path);
+
+      await ref.putFile(imageFile);
+      final downloadUrl = await ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw Exception('Failed to upload image: $e');
     }
   }
 
