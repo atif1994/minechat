@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
+import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
-
 import '../../../core/constants/app_assets/app_assets.dart';
+import '../../../core/utils/helpers/app_responsive/app_responsive.dart';
 import 'ai_testing_screen.dart';
+import 'ai_knowledge_screen.dart';
+import 'channel_screen.dart';
 
 class AIAssistantSetupScreen extends StatelessWidget {
   const AIAssistantSetupScreen({super.key});
@@ -16,131 +18,165 @@ class AIAssistantSetupScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(AIAssistantController());
 
+    final indexMap = {
+      "AI Assistant": 0,
+      "AI Knowledge": 1,
+      "Channels": 2, // ✅ Fixed name to match breadcrumb
+    };
+
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('AI Assistant'),
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back),
-      //     onPressed: () => Get.back(),
-      //   ),
-      // ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return SingleChildScrollView(
-          padding: AppSpacing.all(context, factor: 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(height: 40,),
-              // Breadcrumbs
-              _buildBreadcrumbs(context),
-              AppSpacing.vertical(context, 0.02),
-
-              // AI Assistant Name
-              SignupTextField(
-                label: 'Name',
-                hintText: 'Enter AI assistant name',
-                prefixIcon: AppAssets.signupIconEmail,
-                controller: controller.nameCtrl,
-                errorText: controller.nameError,
-                onChanged: (val) => controller.validateName(val),
-              ),
-              AppSpacing.vertical(context, 0.01),
-
-              // Intro Message
-              SignupTextField(
-                label: 'Intro Message',
-                hintText: 'Enter Intro Message',
-                prefixIcon: AppAssets.signupIconEmail,
-                controller: controller.introMessageCtrl,
-                errorText: controller.introMessageError,
-                onChanged: (val) => controller.validateIntroMessage(val),
-              ),
-              AppSpacing.vertical(context, 0.01),
-
-              // Short Description
-              SignupTextField(
-                label: 'Short Description',
-                hintText: 'Enter Description',
-                prefixIcon: AppAssets.signupIconEmail,
-                controller: controller.shortDescriptionCtrl,
-                errorText: controller.shortDescriptionError,
-                onChanged: (val) => controller.validateShortDescription(val),
-              ),
-              AppSpacing.vertical(context, 0.01),
-
-              // AI Guidelines
-              _buildAIGuidelinesField(controller),
-              AppSpacing.vertical(context, 0.01),
-
-              // Response Length
-              _buildResponseLengthSelector(controller),
-              AppSpacing.vertical(context, 0.02),
-
-              // Action Buttons
-              _buildActionButtons(controller,context),
-            ],
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 40,),
+          // Breadcrumb Navigation
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildBreadcrumbs(context, controller),
           ),
-        );
-      }),
-    );
-  }
-  Widget _buildBreadcrumbs(BuildContext context) {
-    TextStyle linkStyle = TextStyle(fontSize: 12, color: Colors.blue);
-    TextStyle separatorStyle = TextStyle(fontSize: 12, color: Colors.grey[600]);
 
-    return Wrap(
-      children: [
-        GestureDetector(
-          onTap: () {
-
-          },
-          child: Text('Setup', style: linkStyle),
-        ),
-
-        Text(' > ', style: separatorStyle),
-        GestureDetector(
-          onTap: (){  Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => AITestingScreen()),
-          );},
-          child: Text('AI Assistant', style: linkStyle),
-        ),
-        Text(' > ', style: separatorStyle),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => AITestingScreen()),
-            );
-          },
-          child: Text('AI Knowledge', style: linkStyle),
-        ),
-        Text(' > ', style: separatorStyle),
-        GestureDetector(
-          onTap: () => Navigator.pushNamed(context, '/business-info'),
-          child: Text('Channels', style: linkStyle),
-        ),
-      ],
+          // Main content - keeps all pages alive
+          Expanded(
+            child: Obx(() => IndexedStack(
+              index: indexMap[controller.currentStep.value] ?? 0,
+              children: [
+                _buildAIAssistantForm(controller, context),
+                AIKnowledgeScreen(controller: controller),
+                ChannelsScreen(controller: controller),
+              ],
+            )),
+          ),
+        ],
+      ),
     );
   }
 
+  // ---------------------- AI Assistant Form ----------------------
+  Widget _buildAIAssistantForm(
+      AIAssistantController controller, BuildContext context) {
+    return SingleChildScrollView(
+      padding: AppSpacing.all(context, factor: 1),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Ai Assistant",style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: AppResponsive.scaleSize(context, 14),
+              fontWeight: FontWeight.w500),),
+          AppSpacing.vertical(context, 0.01),
+          SignupTextField(
+            label: 'Name',
+            hintText: 'Enter AI assistant name',
+            prefixIcon: AppAssets.signupIconEmail,
+            controller: controller.nameCtrl,
+            errorText: controller.nameError,
+            onChanged: controller.validateName,
+          ),
+          AppSpacing.vertical(context, 0.01),
+          SignupTextField(
+            label: 'Intro Message',
+            hintText: 'Enter Intro Message',
+            prefixIcon: AppAssets.signupIconEmail,
+            controller: controller.introMessageCtrl,
+            errorText: controller.introMessageError,
+            onChanged: controller.validateIntroMessage,
+          ),
+          AppSpacing.vertical(context, 0.01),
+          SignupTextField(
+            label: 'Short Description',
+            hintText: 'Enter Description',
+            prefixIcon: AppAssets.signupIconEmail,
+            controller: controller.shortDescriptionCtrl,
+            errorText: controller.shortDescriptionError,
+            onChanged: controller.validateShortDescription,
+          ),
+          AppSpacing.vertical(context, 0.01),
+          _buildAIGuidelinesField(controller),
+          AppSpacing.vertical(context, 0.01),
+          _buildResponseLengthSelector(controller),
+          AppSpacing.vertical(context, 0.02),
+          _buildActionButtons(controller, context),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------- Breadcrumbs ----------------------
+  Widget _buildBreadcrumbs(
+      BuildContext context, AIAssistantController controller) {
+    TextStyle activeStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w600,
+      color: Colors.red[400],
+    );
+    TextStyle linkStyle = TextStyle(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      color: Colors.grey[800],
+    );
+    TextStyle inactiveStyle = TextStyle(
+      fontSize: 12,
+      fontWeight: FontWeight.normal,
+      color: Colors.grey[500],
+    );
+    TextStyle separatorStyle = TextStyle(
+      fontSize: 12,
+      color: Colors.grey[400],
+    );
+
+    return Obx(() {
+      return Wrap(
+        children: [
+          Text(
+            'Setup',
+            style:TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: AppColors.black,
+            )  // Always active style since it's the main title
+          ),
+          Text(' > ', style: separatorStyle),
+          GestureDetector(
+            onTap: () => controller.currentStep.value = "AI Assistant",
+            child: Text(
+              'AI Assistant',
+              style: controller.currentStep.value == "AI Assistant"
+                  ? activeStyle
+                  : linkStyle,
+            ),
+          ),
+          Text(' > ', style: separatorStyle),
+          GestureDetector(
+            onTap: () => controller.currentStep.value = "AI Knowledge",
+            child: Text(
+              'AI Knowledge',
+              style: controller.currentStep.value == "AI Knowledge"
+                  ? activeStyle
+                  : inactiveStyle,
+            ),
+          ),
+          Text(' > ', style: separatorStyle),
+          GestureDetector(
+            onTap: () => controller.currentStep.value = "Channels",
+            child: Text(
+              'Channels',
+              style: controller.currentStep.value == "Channels"
+                  ? activeStyle
+                  : inactiveStyle,
+            ),
+          ),
+        ],
+      );
+    });
+  }
+
+  // ---------------------- AI Guidelines ----------------------
   Widget _buildAIGuidelinesField(AIAssistantController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'AI Guidelines',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Container(
@@ -154,13 +190,12 @@ class AIAssistantSetupScreen extends StatelessWidget {
           ),
           child: TextField(
             controller: controller.aiGuidelinesCtrl,
-            onChanged: (val) => controller.validateAIGuidelines(val),
+            onChanged: controller.validateAIGuidelines,
             maxLines: 4,
-            decoration: InputDecoration(
-              hintText: 'Enter AI guidelines and behavior instructions...',
-              hintStyle: TextStyle(color: Colors.grey[500]),
+            decoration: const InputDecoration(
+              hintText: 'Enter AI guidelines...',
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
+              contentPadding: EdgeInsets.all(16),
             ),
           ),
         ),
@@ -169,27 +204,21 @@ class AIAssistantSetupScreen extends StatelessWidget {
             padding: const EdgeInsets.only(top: 8, left: 16),
             child: Text(
               controller.aiGuidelinesError.value,
-              style: const TextStyle(
-                color: Colors.red,
-                fontSize: 12,
-              ),
+              style: const TextStyle(color: Colors.red, fontSize: 12),
             ),
           ),
       ],
     );
   }
 
+  // ---------------------- Response Length ----------------------
   Widget _buildResponseLengthSelector(AIAssistantController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'Response Length',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 8),
         Container(
@@ -199,22 +228,30 @@ class AIAssistantSetupScreen extends StatelessWidget {
           ),
           child: Row(
             children: controller.responseLengthOptions.map((option) {
-              final isSelected = controller.selectedResponseLength.value == option;
+              final isSelected =
+                  controller.selectedResponseLength.value == option;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () => controller.selectedResponseLength.value = option,
+                  onTap: () =>
+                  controller.selectedResponseLength.value = option,
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.transparent,
+                      color: isSelected
+                          ? AppColors.primary
+                          : Colors.transparent,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
                       option,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.grey[700],
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected
+                            ? Colors.white
+                            : Colors.grey[700],
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                       ),
                     ),
                   ),
@@ -227,10 +264,12 @@ class AIAssistantSetupScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(AIAssistantController controller,context) {
+  // ---------------------- Buttons ----------------------
+  Widget _buildActionButtons(
+      AIAssistantController controller, BuildContext context) {
     return Row(
       children: [
-        // Save Button
+        // Save
         Expanded(
           child: Container(
             height: 48,
@@ -239,7 +278,9 @@ class AIAssistantSetupScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton(
-              onPressed: controller.isSaving.value ? null : controller.saveAIAssistant,
+              onPressed: controller.isSaving.value
+                  ? null
+                  : controller.saveAIAssistant,
               child: controller.isSaving.value
                   ? const SizedBox(
                 width: 20,
@@ -257,8 +298,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-
-        // Test AI Button
+        // Test AI
         Expanded(
           child: Container(
             height: 48,
@@ -267,28 +307,23 @@ class AIAssistantSetupScreen extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton.icon(
-              onPressed:  () {
-                // Navigate to AITestingScreen
+              onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => AITestingScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const AITestingScreen()),
                 );
               },
-              icon:
-                   const Icon(
-                Icons.smart_toy,
-                color: Colors.white,
-                size: 20,
-              ),
-              label: Text(
+              icon: const Icon(Icons.smart_toy,
+                  color: Colors.white, size: 20),
+              label: const Text(
                 'Test AI',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-            )
-            ,
+            ),
           ),
         ),
       ],

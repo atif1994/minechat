@@ -9,6 +9,7 @@ import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 
 import '../setup/set_up.dart';
 
+
 class RootBottomNavScreen extends StatelessWidget {
   RootBottomNavScreen({super.key});
 
@@ -16,12 +17,12 @@ class RootBottomNavScreen extends StatelessWidget {
       Get.put(BottomNavController(), permanent: true);
 
   // Replace these with your real pages
-  final List<Widget> _pages = const [
-    DashboardScreen(), // Home
-    Placeholder(), // Chat
-    AIAssistantSetupScreen() ,// Setup
-    Placeholder(), // CRM
-    Placeholder(), // Accounts
+  final List<Widget> _pages = [
+    const DashboardScreen(), // Home
+    const Placeholder(), // Chat
+    AIAssistantSetupScreen(), // Setup
+    const Placeholder(), // CRM
+    const Placeholder(), // Accounts
   ];
 
   // Supply your real asset paths here (SVG or PNG)

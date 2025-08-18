@@ -15,6 +15,9 @@ import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scr
 import 'package:minechat/view/screens/splash/splash_screen.dart';
 import 'package:minechat/view/screens/signUp/business_account_form.dart';
 import 'package:minechat/view/screens/signUp/admin_user_form.dart';
+import 'package:minechat/view/screens/setup/ai_knowledge_screen.dart';
+import 'package:minechat/view/screens/setup/products_services_screen.dart';
+import 'package:minechat/view/screens/setup/faqs_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +47,7 @@ class MineChatApp extends StatelessWidget {
               themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           initialRoute: '/',
           getPages: [
-            GetPage(name: '/', page: () =>  RootBottomNavScreen()),
+            GetPage(name: '/', page: () =>  SplashScreen()),
             GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
             GetPage(name: '/login', page: () => const LoginScreen()),
             GetPage(
@@ -60,6 +63,13 @@ class MineChatApp extends StatelessWidget {
             GetPage(
                 name: '/forgot-password',
                 page: () => const ForgotPasswordScreen()),
+
+        GetPage(
+            name: '/products-services',
+            page: () => const ProductsServicesScreen()),
+        GetPage(
+            name: '/faqs',
+            page: () => const FAQsScreen()),
           ],
           home: const SplashScreen(),
         ));

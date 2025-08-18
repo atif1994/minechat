@@ -8,7 +8,7 @@ import '../../model/repositories/ai_assistant_repository.dart';
 
 class AIAssistantController extends GetxController {
   final AIAssistantRepository _repository = AIAssistantRepository();
-
+  var currentStep = "AI Assistant".obs; // default active step
   // Form Controllers
   final nameCtrl = TextEditingController();
   final introMessageCtrl = TextEditingController();
@@ -44,7 +44,14 @@ class AIAssistantController extends GetxController {
   Future<void> loadCurrentAIAssistant() async {
     try {
       isLoading.value = true;
+      
+      // Debug: Print current user ID
+      final userId = getCurrentUserId();
+      print('DEBUG: Current User ID: $userId');
+      
       final assistant = await _repository.getCurrentUserAIAssistant();
+      print('DEBUG: Assistant loaded: ${assistant?.name}');
+      
       if (assistant != null) {
         currentAIAssistant.value = assistant;
         nameCtrl.text = assistant.name;
@@ -52,8 +59,12 @@ class AIAssistantController extends GetxController {
         shortDescriptionCtrl.text = assistant.shortDescription;
         aiGuidelinesCtrl.text = assistant.aiGuidelines;
         selectedResponseLength.value = assistant.responseLength;
+        print('DEBUG: Assistant data loaded successfully');
+      } else {
+        print('DEBUG: No assistant found for user: $userId');
       }
     } catch (e) {
+      print('DEBUG: Error loading assistant: $e');
       if (!e.toString().contains('User not authenticated')) {
         Get.snackbar('Error', 'Failed to load AI assistant: $e');
       }
@@ -122,15 +133,23 @@ class AIAssistantController extends GetxController {
   }
   Future<AIAssistantModel?> getCurrentUserAIAssistant() async {
     final userId = getCurrentUserId();
-    if (userId == null) throw Exception("User not authenticated");
+    if (userId.isEmpty) throw Exception("User not authenticated");
 
     final doc = await FirebaseFirestore.instance
         .collection('ai_assistants')
-        .doc(userId)
+        .where('userId', isEqualTo: userId)
+        .orderBy('updatedAt', descending: true)
+        .limit(1)
         .get();
 
-    if (!doc.exists) return null;
-    return AIAssistantModel.fromMap(doc.data()!);
+    if (doc.docs.isNotEmpty) {
+      final docData = doc.docs.first;
+      return AIAssistantModel.fromMap({
+        'id': docData.id,
+        ...docData.data(),
+      });
+    }
+    return null;
   }
 
 

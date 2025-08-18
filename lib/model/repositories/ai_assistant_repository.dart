@@ -31,15 +31,26 @@ class AIAssistantRepository {
   Future<AIAssistantModel?> getCurrentUserAIAssistant() async {
     try {
       final userId = getCurrentUserId();
+      print('DEBUG REPO: Searching for user ID: $userId');
+      
       final querySnapshot = await _firestore
           .collection('ai_assistants')
           .where('userId', isEqualTo: userId)
-          .orderBy('updatedAt', descending: true)
-          .limit(1)
           .get();
 
+      print('DEBUG REPO: Found ${querySnapshot.docs.length} documents');
+      
       if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
+        // Sort manually to get the most recent
+        final docs = querySnapshot.docs.toList();
+        docs.sort((a, b) {
+          final aTime = DateTime.parse(a.data()['updatedAt']);
+          final bTime = DateTime.parse(b.data()['updatedAt']);
+          return bTime.compareTo(aTime); // Descending order
+        });
+        
+        final doc = docs.first;
+        print('DEBUG REPO: Document data: ${doc.data()}');
         return AIAssistantModel.fromMap({
           'id': doc.id,
           ...doc.data(),
@@ -47,6 +58,7 @@ class AIAssistantRepository {
       }
       return null;
     } catch (e) {
+      print('DEBUG REPO: Error: $e');
       throw Exception('Failed to get AI Assistant: $e');
     }
   }

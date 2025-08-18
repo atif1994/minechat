@@ -9,9 +9,10 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import '../../../controller/theme_controller/theme_controller.dart';
 
 class SignupTextField extends StatelessWidget {
-  final String label;
-  final String hintText;
-  final String prefixIcon;
+  final String? label;
+  final String? labelText; // For backward compatibility
+  final String? hintText;
+  final String? prefixIcon;
   final Widget? suffixIcon;
   final TextEditingController controller;
   final RxString? errorText;
@@ -22,9 +23,10 @@ class SignupTextField extends StatelessWidget {
 
   const SignupTextField({
     super.key,
-    required this.label,
-    required this.hintText,
-    required this.prefixIcon,
+    this.label,
+    this.labelText, // For backward compatibility
+    this.hintText,
+    this.prefixIcon,
     this.suffixIcon,
     required this.controller,
     this.errorText,
@@ -38,14 +40,18 @@ class SignupTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
+    final displayLabel = label ?? labelText ?? '';
+    
     return Obx(() => Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label,
-                style: AppTextStyles.bodyText(context).copyWith(
-                    fontSize: AppResponsive.scaleSize(context, 14),
-                    fontWeight: FontWeight.w500)),
-            AppSpacing.vertical(context, 0.005),
+            if (displayLabel.isNotEmpty)
+              Text(displayLabel,
+                  style: AppTextStyles.bodyText(context).copyWith(
+                      fontSize: AppResponsive.scaleSize(context, 14),
+                      fontWeight: FontWeight.w500)),
+            if (displayLabel.isNotEmpty)
+              AppSpacing.vertical(context, 0.005),
             TextField(
               controller: controller,
               onChanged: onChanged,
@@ -54,15 +60,15 @@ class SignupTextField extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: AppTextStyles.hintText(context),
-                prefixIcon: Padding(
+                prefixIcon: prefixIcon != null ? Padding(
                   padding: EdgeInsets.all(AppResponsive.scaleSize(context, 10)),
                   child: SvgPicture.asset(
-                    prefixIcon,
+                    prefixIcon!,
                     width: AppResponsive.iconSize(context),
                     height: AppResponsive.iconSize(context),
                     color: isDark ? Colors.white : Colors.black,
                   ),
-                ),
+                ) : null,
                 suffixIcon: suffixIcon != null
                     ? GestureDetector(
                         onTap: onSuffixTap,
