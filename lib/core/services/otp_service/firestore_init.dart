@@ -28,7 +28,7 @@ class FirestoreInitializer {
     const templateId = 'otp';
     final templateRef = _firestore.collection('mailTemplates').doc(templateId);
 
-    // Check if exists first to prevent overwriting
+    // Email Sending Template
     final exists = (await templateRef.get()).exists;
     if (!exists) {
       await templateRef.set({
