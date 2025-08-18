@@ -76,9 +76,10 @@ class OtpScreen extends StatelessWidget {
                                   isEnabled: controller.isButtonEnabled.value &&
                                       !controller.isVerifying.value,
                                   isLoading: controller.isVerifying.value,
-                                  onTap: (){
-                                    Get.toNamed('/root-bottom-nav-bar');
-                                  },
+                                  onTap: controller.verifyOtp,
+                                  // onTap: (){
+                                  //   Get.toNamed('/root-bottom-nav-bar');
+                                  // },
                                 )),
                             AppSpacing.vertical(context, 0.015),
                             Center(

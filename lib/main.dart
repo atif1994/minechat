@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -5,6 +7,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/services/otp_service/firestore_init.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
@@ -22,6 +25,11 @@ import 'package:minechat/view/screens/setup/faqs_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Initialize collections in background without waiting
+  unawaited(FirestoreInitializer.initializeCollections().catchError(
+      (e) => print('Background Firebase Collection Initialization Error: $e')));
+
   await GetStorage.init();
 
   // Controllers Initialization

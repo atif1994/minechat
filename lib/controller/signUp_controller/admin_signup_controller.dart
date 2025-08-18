@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
@@ -36,6 +39,9 @@ class AdminSignupController extends GetxController {
   final phoneCtrl = TextEditingController();
   var showPasswordFields = false.obs;
 
+  File? _profileImageFile;
+  RxBool isImageMissing = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -53,11 +59,18 @@ class AdminSignupController extends GetxController {
 
     // Otherwise, if user is already logged in (Google or Firebase), prefill email
     final authUser = _authService.currentUser;
-    if ((emailCtrl.text.isEmpty) && authUser != null && authUser.email != null) {
+    if ((emailCtrl.text.isEmpty) &&
+        authUser != null &&
+        authUser.email != null) {
       emailCtrl.text = authUser.email!;
       isGoogleUser.value = true;
     }
     _checkForGoogleUser();
+  }
+
+  void setProfileImage(File image) {
+    _profileImageFile = image;
+    isImageMissing.value = false;
   }
 
   // Toggle visibility
@@ -178,6 +191,7 @@ class AdminSignupController extends GetxController {
         confirmPasswordError.value.isEmpty;
   }
 
+
   // Admin account creation
   Future<void> createAdminAccount() async {
     if (!validateAdminForm()) {
@@ -191,83 +205,67 @@ class AdminSignupController extends GetxController {
       return;
     }
 
+    if (_profileImageFile == null) {
+      Get.snackbar(
+        'Missing Profile Image',
+        'Please select a profile image to continue.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
 
-      final currentFirebaseUser = _authService.currentUser;
+      final currentUser = _authService.currentUser;
 
-      if (currentFirebaseUser != null) {
-        final adminUser = _userRepository.createAdminUser(
-          uid: currentFirebaseUser.uid,
-          email: emailCtrl.text.trim(),
-          name: adminNameCtrl.text.trim(),
-          position: positionCtrl.text.trim(),
-          photoURL:
-          profileImageUrl.value.isNotEmpty ? profileImageUrl.value : null,
-        );
-
-        await _authService.updateProfile(
-          displayName: adminUser.name,
-          photoURL: adminUser.photoURL,
-        );
-
-        await _userRepository.saveUser(adminUser);
-        await _userRepository.saveAdminUser(adminUser);
-
-        final loginController = Get.find<LoginController>();
-        loginController.currentUser.value = adminUser;
-
-        Get.snackbar(
-          'Success',
-          'Admin account created successfully! Please verify your email.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-        );
-
-        Get.offAllNamed('/otp', arguments: {'email': emailCtrl.text.trim()});
-
-      } else {
-        final userCredential = await _authService.signUpWithEmailAndPassword(
-          email: emailCtrl.text.trim(),
-          password: passwordCtrl.text.trim(),
-        );
-
-        if (userCredential.user != null) {
-          final adminUser = _userRepository.createAdminUser(
-            uid: userCredential.user!.uid,
-            email: emailCtrl.text.trim(),
-            name: adminNameCtrl.text.trim(),
-            position: positionCtrl.text.trim(),
-            photoURL:
-            profileImageUrl.value.isNotEmpty ? profileImageUrl.value : null,
-          );
-
-          await _userRepository.saveUser(adminUser);
-          await _userRepository.saveAdminUser(adminUser);
-
-          await _authService.updateProfile(
-            displayName: adminUser.name,
-            photoURL: adminUser.photoURL,
-          );
-
-          Get.snackbar(
-            'Success',
-            'Admin account created successfully! Please verify your email.',
-            snackPosition: SnackPosition.BOTTOM,
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-          );
-
-          Get.offAllNamed('/otp');
-        }
+      if (currentUser == null) {
+        throw Exception('No authenticated user found. Please sign in again.');
       }
+
+      final photoURL = await _userRepository.uploadProfileImage(
+        _profileImageFile!,
+        currentUser.uid,
+        'admin',
+      );
+
+      final adminUser = _userRepository.createAdminUser(
+        uid: currentUser.uid,
+        email: currentUser.email ?? emailCtrl.text.trim(),
+        name: adminNameCtrl.text.trim(),
+        position: positionCtrl.text.trim(),
+        photoURL: photoURL,
+      );
+
+      await _authService.updateProfile(
+        displayName: adminUser.name,
+        photoURL: adminUser.photoURL,
+      );
+
+      await _userRepository.saveUser(adminUser);
+      await _userRepository.saveAdminUser(adminUser);
+
+      final loginController = Get.find<LoginController>();
+      loginController.currentUser.value = adminUser;
+
+      Get.snackbar(
+        'Success',
+        'Admin account created successfully! Please verify your email.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+
+      Get.offAllNamed('/otp', arguments: {'email': currentUser.email});
     } catch (e) {
       _handleFirebaseErrors(e, 'Failed to create admin account');
     } finally {
       isLoading.value = false;
     }
   }
+
 
   void setProfileImageUrl(String url) {
     profileImageUrl.value = url;
@@ -278,7 +276,7 @@ class AdminSignupController extends GetxController {
 
     if (e.toString().contains('email-already-in-use')) {
       errorMessage =
-      'An account with this email already exists. Please use a different email or try signing in.';
+          'An account with this email already exists. Please use a different email or try signing in.';
     } else if (e.toString().contains('weak-password')) {
       errorMessage = 'Password is too weak. Please use a stronger password';
     } else if (e.toString().contains('invalid-email')) {

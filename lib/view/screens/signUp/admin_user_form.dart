@@ -41,7 +41,10 @@ class SignupAdminAccount extends StatelessWidget {
             SignupHeader(
               title: AppTexts.signupAdminHeaderTitle,
               subtitle: AppTexts.signupAdminHeaderSubTitle,
-              avatar: const SignupProfileAvatarPicker(),
+              avatar: Obx(() => SignupProfileAvatarPicker(
+                    onImageSelected: (file) => controller.setProfileImage(file),
+                    showError: controller.isImageMissing.value,
+                  )),
             ),
             AppSpacing.vertical(context, 0.02),
             SignupTextField(
