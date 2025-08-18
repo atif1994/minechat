@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:minechat/controller/product_controller/product_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';

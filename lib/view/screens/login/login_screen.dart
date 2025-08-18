@@ -10,6 +10,7 @@ import 'package:minechat/core/widgets/app_button/app_action_button.dart';
 import 'package:minechat/core/widgets/login/login_footer.dart';
 import 'package:minechat/core/widgets/login/login_header.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
+import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -83,10 +84,9 @@ class LoginScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           AppActionButton(
-                            label: AppTexts.loginForgotPasswordText,
-                            isPrimary: true,
-                            onTap: () {},
-                          ),
+                              label: AppTexts.loginForgotPasswordText,
+                              isPrimary: true,
+                              onTap: () => Get.to(ForgotPasswordScreen())),
                         ],
                       ),
 

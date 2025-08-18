@@ -1,9 +1,9 @@
 import 'dart:io';
 
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
+import 'package:minechat/core/services/otp_service/otp_service.dart';
 import 'package:minechat/model/repositories/user_repository.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 
@@ -12,6 +12,7 @@ class AdminSignupController extends GetxController {
 
   final FirebaseAuthService _authService = FirebaseAuthService();
   final UserRepository _userRepository = UserRepository();
+  final _otp = OtpService();
 
   // Text controllers
   final adminNameCtrl = TextEditingController();
@@ -191,7 +192,7 @@ class AdminSignupController extends GetxController {
         confirmPasswordError.value.isEmpty;
   }
 
-
+  // Admin account creation
   // Admin account creation
   Future<void> createAdminAccount() async {
     if (!validateAdminForm()) {
@@ -220,17 +221,18 @@ class AdminSignupController extends GetxController {
       isLoading.value = true;
 
       final currentUser = _authService.currentUser;
-
       if (currentUser == null) {
         throw Exception('No authenticated user found. Please sign in again.');
       }
 
+      // Upload profile image
       final photoURL = await _userRepository.uploadProfileImage(
         _profileImageFile!,
         currentUser.uid,
         'admin',
       );
 
+      // Build and save admin user
       final adminUser = _userRepository.createAdminUser(
         uid: currentUser.uid,
         email: currentUser.email ?? emailCtrl.text.trim(),
@@ -247,25 +249,39 @@ class AdminSignupController extends GetxController {
       await _userRepository.saveUser(adminUser);
       await _userRepository.saveAdminUser(adminUser);
 
+      // Reflect in LoginController
       final loginController = Get.find<LoginController>();
       loginController.currentUser.value = adminUser;
 
+      // ➜ Send OTP via server callable (merged OtpService)
+      final email = (currentUser.email ?? emailCtrl.text.trim()).trim();
+      if (email.isEmpty) {
+        throw Exception('No email available for OTP.');
+      }
+
+      await OtpService().sendOtp(email: email);
+
+      // Success snackbar
       Get.snackbar(
-        'Success',
-        'Admin account created successfully! Please verify your email.',
+        'Email sent',
+        'We emailed a 6-digit code to $email.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
+        backgroundColor: Colors.green.shade100,
+        colorText: Colors.black,
       );
 
-      Get.offAllNamed('/otp', arguments: {'email': currentUser.email});
+      // Navigate to OTP screen; prevent OTP screen from re-sending immediately
+      Get.offAllNamed('/otp', arguments: {
+        'email': email,
+        'purpose': 'signup',
+        'skipInitialSend': true,
+      });
     } catch (e) {
       _handleFirebaseErrors(e, 'Failed to create admin account');
     } finally {
       isLoading.value = false;
     }
   }
-
 
   void setProfileImageUrl(String url) {
     profileImageUrl.value = url;

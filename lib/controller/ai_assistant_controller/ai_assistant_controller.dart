@@ -84,7 +84,6 @@ class AIAssistantController extends GetxController {
     try {
       isSaving.value = true;
       final userId = _repository.getCurrentUserId();
-      if (userId == null) throw Exception("User not logged in");
 
       final assistant = AIAssistantModel(
         id: userId, // ✅ Always use UID so no duplicates
@@ -208,7 +207,7 @@ class AIAssistantController extends GetxController {
   String _applyResponseLength(String response, String length) {
     switch (length) {
       case 'Short':
-        return response.split('.').first + '.';
+        return '${response.split('.').first}.';
       case 'Long':
         return "$response Let me know if you'd like to go deeper.";
       default:

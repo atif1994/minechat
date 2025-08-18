@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
-import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
-import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/account/account_profile_image_avatar.dart';
 

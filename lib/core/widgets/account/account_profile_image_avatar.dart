@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
-import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 
 class AccountProfileImageAvatar extends StatelessWidget {
@@ -8,10 +7,10 @@ class AccountProfileImageAvatar extends StatelessWidget {
   final double size;
 
   const AccountProfileImageAvatar({
-    Key? key,
+    super.key,
     required this.imageUrl,
     required this.size,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

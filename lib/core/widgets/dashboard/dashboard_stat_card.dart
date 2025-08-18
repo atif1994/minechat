@@ -100,7 +100,7 @@ class DashboardStatCard extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: percentText + ' ',
+                      text: '$percentText ',
                       style: AppTextStyles.bodyText(context).copyWith(
                           fontWeight: FontWeight.w400,
                           fontSize: AppResponsive.scaleSize(context, 10),

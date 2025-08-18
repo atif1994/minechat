@@ -1,38 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/core/services/otp_service/otp_service.dart';
 
 class ForgotPasswordController extends GetxController {
   final emailCtrl = TextEditingController();
-  final RxString emailError = ''.obs; // ✅ RxString instead of just String
+  final RxString emailError = ''.obs;
+  final _otp = OtpService();
 
   void validateEmail(String value) {
-    if (value.trim().isEmpty) {
+    final v = value.trim();
+    if (v.isEmpty) {
       emailError.value = 'Email is required';
-    } else if (!GetUtils.isEmail(value.trim())) {
+    } else if (!GetUtils.isEmail(v)) {
       emailError.value = 'Enter a valid email address';
     } else {
-      emailError.value = ''; // ✅ No error
+      emailError.value = '';
     }
   }
 
-  void submit() {
+  Future<void> submit() async {
     validateEmail(emailCtrl.text);
-    if (emailError.value.isEmpty) {
+    if (emailError.value.isNotEmpty) {
+      Get.snackbar('Error', emailError.value,
+          snackPosition: SnackPosition.BOTTOM);
+      return;
+    }
+    try {
+      final email = emailCtrl.text.trim();
+      await _otp.sendOtp(email: email);
+
       Get.snackbar(
-        'Success',
-        'Password reset link sent!',
+        'Email sent',
+        'We emailed a 6-digit code to $email.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.green.shade100,
-        colorText: Colors.black,
       );
-    } else {
-      Get.snackbar(
-        'Error',
-        emailError.value,
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red.shade100,
-        colorText: Colors.black,
-      );
+
+      Get.toNamed('/otp', arguments: {
+        'email': email,
+        'purpose': 'forgot',
+        'skipInitialSend': true,
+      });
+    } catch (e) {
+      Get.snackbar('Failed', e.toString(), snackPosition: SnackPosition.BOTTOM);
     }
   }
 

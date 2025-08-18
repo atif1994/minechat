@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
 
 import '../../../model/data/chat_mesage_model.dart';

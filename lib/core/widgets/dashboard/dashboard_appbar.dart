@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
-import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 
 class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String brandMarkPng;

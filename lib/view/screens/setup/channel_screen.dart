@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import '../../../controller/ai_assistant_controller/ai_assistant_controller.dart';
 
 

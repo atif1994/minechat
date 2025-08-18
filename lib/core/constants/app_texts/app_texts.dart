@@ -67,6 +67,7 @@ class AppTexts {
   static const String forgotPasswordHeaderSubTitle =
       "Enter your email to reset your new password";
   static const String forgotPasswordButton = "Reset Password";
+  static const String newPasswordButton = "Continue";
 
   // Bottom Navigation Bar
   static const String bottomNavBarHomeLabel = "Home";
