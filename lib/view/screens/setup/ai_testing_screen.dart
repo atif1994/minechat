@@ -6,8 +6,31 @@ import 'package:minechat/controller/ai_assistant_controller/ai_assistant_control
 import '../../../model/data/chat_mesage_model.dart';
 
 
-class AITestingScreen extends StatelessWidget {
+class AITestingScreen extends StatefulWidget {
   const AITestingScreen({super.key});
+
+  @override
+  State<AITestingScreen> createState() => _AITestingScreenState();
+}
+
+class _AITestingScreenState extends State<AITestingScreen> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +108,13 @@ class AITestingScreen extends StatelessWidget {
   }
 
   Widget _buildChatMessages(AIAssistantController controller) {
+    // Auto-scroll to bottom when new messages are added
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToBottom();
+    });
+
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: controller.chatMessages.length,
       itemBuilder: (context, index) {
