@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "minechat-29605"
+  },
+  "targets": {},
+  "etags": {
+    "minechat-29605": {
+      "extensionInstances": {
+        "firestore-send-email": "c8215a230ad176c10e990dd5ed80c621ccd2bcc3d07897add98ad09309795386"
+      }
+    }
+  },
+  "dataconnectEmulatorConfig": {}
+}

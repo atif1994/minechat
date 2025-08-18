@@ -6,7 +6,6 @@ import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
-import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 
 class DashboardHeader extends StatelessWidget {
   final VoidCallback? onDateTap;
