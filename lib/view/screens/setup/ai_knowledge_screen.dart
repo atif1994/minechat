@@ -4,6 +4,8 @@ import 'package:minechat/controller/ai_knowledge_controller/ai_knowledge_control
 import 'package:minechat/controller/product_controller/product_controller.dart';
 import 'package:minechat/controller/faq_controller/faq_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
+import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 // Import your 3 separate screens
@@ -29,23 +31,34 @@ class AIKnowledgeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-
+          AppSpacing.vertical(context, 0.02),
 
           // Top Tabs
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _buildTab('Business Information', 0, knowledgeController,context),
-                const SizedBox(width: 20),
-                _buildTab('Products & Services', 1, knowledgeController,context),
-                const SizedBox(width: 20),
-                _buildTab('FAQs', 2, knowledgeController,context),
-              ],
+            child: Container(
+height: AppResponsive.screenHeight(context) * 0.04,
+              width: AppResponsive.screenWidth(context),
+              decoration: BoxDecoration(
+                color: AppColors.g2
+
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16),
+                child: Row(
+                  children: [
+                    _buildTab('Business Information', 0, knowledgeController,context),
+                    const SizedBox(width: 20),
+                    _buildTab('Products & Services', 1, knowledgeController,context),
+                    const SizedBox(width: 20),
+                    _buildTab('FAQs', 2, knowledgeController,context),
+                  ],
+                ),
+              ),
             ),
           ),
 
-          const SizedBox(height: 20),
+          AppSpacing.vertical(context, 0.015),
 
           // Main Content
           Expanded(
@@ -65,17 +78,28 @@ class AIKnowledgeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTab(String title, int index, AIKnowledgeController controller,context) {
-    final isSelected = controller.selectedTabIndex.value == index;
+  Widget _buildTab(
+      String title,
+      int index,
+      AIKnowledgeController controller,
+      context,
+      ) {
     return GestureDetector(
       onTap: () => controller.selectedTabIndex.value = index,
-      child: Text(
-        title,
-        style: AppTextStyles.poppinsRegular(context).copyWith(color: isSelected ? AppColors.secondary : Colors.grey[600] ))
+      child: Obx(() {
+        final isSelected = controller.selectedTabIndex.value == index;
+        return Text(
+          title,
+          style: AppTextStyles.poppinsRegular(context).copyWith(
+            color: isSelected ? AppColors.secondary : Colors.grey[600],
+            decoration: isSelected ? TextDecoration.underline:TextDecoration.none,
+            decorationColor: isSelected ? AppColors.secondary:Colors.transparent,   // underline color
+            decorationThickness: 2,
 
-
-
-      );
-
+          ),
+        );
+      }),
+    );
   }
+
 }

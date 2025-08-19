@@ -18,11 +18,18 @@ class AIKnowledgeRepository {
   // Save AI Knowledge
   Future<void> saveAIKnowledge(AIKnowledgeModel aiKnowledge) async {
     try {
+      print('Repository: Starting saveAIKnowledge');
+      print('Repository: Document ID: ${aiKnowledge.id}');
+      print('Repository: Data to save: ${aiKnowledge.toMap()}');
+      
       await _firestore
           .collection('ai_knowledge')
           .doc(aiKnowledge.id)
           .set(aiKnowledge.toMap());
+      
+      print('Repository: Data saved successfully to Firestore');
     } catch (e) {
+      print('Repository: Error saving to Firestore: $e');
       throw Exception('Failed to save AI Knowledge: $e');
     }
   }

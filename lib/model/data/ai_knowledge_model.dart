@@ -11,6 +11,7 @@ class AIKnowledgeModel {
   final String policy;
   final String additionalNotes;
   final String thankYouMessage;
+  final String uploadedFileUrl; // Firebase Storage URL for uploaded file
   final String userId;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -27,6 +28,7 @@ class AIKnowledgeModel {
     required this.policy,
     required this.additionalNotes,
     required this.thankYouMessage,
+    required this.uploadedFileUrl,
     required this.userId,
     required this.createdAt,
     required this.updatedAt,
@@ -45,6 +47,7 @@ class AIKnowledgeModel {
       'policy': policy,
       'additionalNotes': additionalNotes,
       'thankYouMessage': thankYouMessage,
+      'uploadedFileUrl': uploadedFileUrl,
       'userId': userId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
@@ -64,6 +67,7 @@ class AIKnowledgeModel {
       policy: map['policy'] ?? '',
       additionalNotes: map['additionalNotes'] ?? '',
       thankYouMessage: map['thankYouMessage'] ?? '',
+      uploadedFileUrl: map['uploadedFileUrl'] ?? '',
       userId: map['userId'] ?? '',
       createdAt: DateTime.parse(map['createdAt']),
       updatedAt: DateTime.parse(map['updatedAt']),
@@ -82,6 +86,7 @@ class AIKnowledgeModel {
     String? policy,
     String? additionalNotes,
     String? thankYouMessage,
+    String? uploadedFileUrl,
     String? userId,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -98,6 +103,7 @@ class AIKnowledgeModel {
       policy: policy ?? this.policy,
       additionalNotes: additionalNotes ?? this.additionalNotes,
       thankYouMessage: thankYouMessage ?? this.thankYouMessage,
+      uploadedFileUrl: uploadedFileUrl ?? this.uploadedFileUrl,
       userId: userId ?? this.userId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
