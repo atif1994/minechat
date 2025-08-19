@@ -24,7 +24,7 @@ class AccountAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       backgroundColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
       elevation: 0,
-      actionsPadding: AppSpacing.symmetric(context, v: 0, h: 0.03),
+      // actionsPadding: AppSpacing.symmetric(context, v: 0, h: 0.03),
       actions: const [AppThemeToggleButton()],
     );
   }
