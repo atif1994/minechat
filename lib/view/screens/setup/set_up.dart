@@ -31,7 +31,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
           SizedBox(height: 40,),
           // Breadcrumb Navigation
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.only(left: 16,right: 16,top: 16),
             child: _buildBreadcrumbs(context, controller),
           ),
 
