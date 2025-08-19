@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 
 import '../../../controller/ai_knowledge_controller/ai_knowledge_controller.dart';
 import '../../../core/utils/helpers/app_spacing/app_spacing.dart';
+import '../../../core/widgets/app_button/app_save_ai_button.dart';
 import '../../../core/widgets/signUp/signUp_textfield.dart';
+import 'ai_business_information.dart';
 
 class BusinessInformation extends StatelessWidget {
   const BusinessInformation({super.key});
@@ -140,12 +145,30 @@ class BusinessInformation extends StatelessWidget {
         AppSpacing.vertical(context, 0.02),
 
         // Action Buttons
-        _buildActionButtons(controller, context),
+        TwoButtonsRow(
+          isSaving: controller.isSaving,          // your RxBool
+          onSave: controller.saveAIKnowledge,     // your save function
+          secondLabel: "Test AI",                 // text for second button
+          secondIcon: Icons.smart_toy,            // icon for second button
+          onSecondTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AIBusinessInformation(),
+              ),
+            );
+          },
+        ),
+        
+        // Temporary Test Button
+        AppSpacing.vertical(context, 0.02),
+
       ],
     );
   }
 
-  Widget _buildFileUploadSection(dynamic controller, BuildContext context) {
+  Widget _buildFileUploadSection(
+      AIKnowledgeController controller, BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -165,225 +188,76 @@ class BusinessInformation extends StatelessWidget {
               color: Colors.grey[700],
             ),
           ),
-          AppSpacing.vertical(context, 0.01),
+          const SizedBox(height: 12),
+
           GestureDetector(
-            // onTap: () => _showFileUploadOptions(context, controller),
+            onTap: () => controller.pickFile(),
             child: Container(
               width: double.infinity,
               height: 120,
               decoration: BoxDecoration(
-                border: Border.all(
-                    color: Colors.grey[300]!, style: BorderStyle.solid),
+                border: Border.all(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.upload_file, color: Colors.grey[400], size: 40),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: Colors.red[400],
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'Upload file',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          AppSpacing.vertical(context, 0.01),
-
-          // Upload Progress (example)
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              child: Obx(() {
+                if (controller.selectedFileName.value.isNotEmpty) {
+                  // Show uploaded file name
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      const Icon(Icons.insert_drive_file,
+                          size: 40, color: Colors.blueGrey),
+                      const SizedBox(height: 8),
                       Text(
-                        'Dashboard prototype FINAL.fig',
-                        style: TextStyle(
+                        controller.selectedFileName.value,
+                        style: const TextStyle(
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                         ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
-                        '4.2 MB',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(
-                        value: 0.8,
-                        backgroundColor: Colors.grey[300],
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                            Colors.red[400]!),
-                      ),
+
                     ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.close, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.vertical(context, 0.01),
-
-          // Upload Failed Message
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.red[50],
-              border: Border.all(color: Colors.red[200]!),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red[400], size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Upload failed, please try again',
-                    style: TextStyle(
-                      color: Colors.red[400],
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () {},
-                  icon: Icon(Icons.refresh, color: Colors.red[400], size: 16),
-                  label: Text(
-                    'Upload again',
-                    style: TextStyle(
-                      color: Colors.red[400],
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          AppSpacing.vertical(context, 0.01),
-
-          // Previously Uploaded File
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  );
+                } else {
+                  // Default design (no file picked yet)
+                  return Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        'Dashboard prototype FINAL.fig',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      SvgPicture.asset(
+                        AppAssets.uploadFile,
+                        height: 40,
+                        width: 40,
                       ),
-                      Text(
-                        '4.2 MB',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.secondary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Text(
+                          'Upload file',
+                          style: TextStyle(
+                            color: AppColors.g3,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: Icon(Icons.delete, color: Colors.grey[600]),
-                ),
-              ],
+                  );
+                }
+              }),
             ),
           ),
         ],
       ),
     );
   }
-  Widget _buildActionButtons(dynamic controller, BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.red[400]!),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextButton(
-                  onPressed: () => Get.back(),
-                  child: Text(
-                    'Save',
-                    style: TextStyle(
-                      color: Colors.red[400],
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.red[400],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextButton.icon(
-                  onPressed: () {
-                    // TODO: Implement Test AI functionality
-                    Get.snackbar('Info', 'Test AI functionality coming soon!');
-                  },
-                  icon: Icon(
-                    Icons.smart_toy,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                  label: Text(
-                    'Test AI',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+
+
+
+
 }

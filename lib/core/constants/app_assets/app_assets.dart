@@ -159,4 +159,8 @@ class AppAssets {
       'assets/images/icons/icon_account_subscription.svg';
   static const String accountLogout =
       'assets/images/icons/icon_account_logout.svg';
+
+  //Icon => SetUp
+  static const String uploadFile =
+      'assets/images/setup/file_upload.svg';
 }

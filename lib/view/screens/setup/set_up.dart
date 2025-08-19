@@ -7,6 +7,7 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import '../../../core/constants/app_assets/app_assets.dart';
 import '../../../core/utils/helpers/app_responsive/app_responsive.dart';
+import '../../../core/widgets/app_button/app_save_ai_button.dart';
 import 'ai_testing_screen.dart';
 import 'ai_knowledge_screen.dart';
 import 'channel_screen.dart';
@@ -94,7 +95,22 @@ class AIAssistantSetupScreen extends StatelessWidget {
           AppSpacing.vertical(context, 0.01),
           _buildResponseLengthSelector(controller),
           AppSpacing.vertical(context, 0.02),
-          _buildActionButtons(controller, context),
+          // Example usage inside your widget
+          TwoButtonsRow(
+            isSaving: controller.isSaving,          // your RxBool
+            onSave: controller.saveAIAssistant,     // your save function
+            secondLabel: "Test AI",                 // text for second button
+            secondIcon: Icons.smart_toy,            // icon for second button
+            onSecondTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AITestingScreen(),
+                ),
+              );
+            },
+          )
+
         ],
       ),
     );
@@ -106,7 +122,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
     TextStyle activeStyle = TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.w600,
-      color: Colors.red[400],
+      color: AppColors.secondary,
     );
     TextStyle linkStyle = TextStyle(
       fontSize: 14,
@@ -264,69 +280,5 @@ class AIAssistantSetupScreen extends StatelessWidget {
     );
   }
 
-  // ---------------------- Buttons ----------------------
-  Widget _buildActionButtons(
-      AIAssistantController controller, BuildContext context) {
-    return Row(
-      children: [
-        // Save
-        Expanded(
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.primary),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TextButton(
-              onPressed: controller.isSaving.value
-                  ? null
-                  : controller.saveAIAssistant,
-              child: controller.isSaving.value
-                  ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-                  : const Text(
-                'Save',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        // Test AI
-        Expanded(
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TextButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AITestingScreen()),
-                );
-              },
-              icon: const Icon(Icons.smart_toy,
-                  color: Colors.white, size: 20),
-              label: const Text(
-                'Test AI',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+
 }
