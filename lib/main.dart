@@ -9,7 +9,9 @@ import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/services/otp_service/firestore_init.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
+import 'package:minechat/view/screens/account/account_screen.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
+import 'package:minechat/view/screens/edit_profile/admin_edit_profile_screen.dart';
 import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
 import 'package:minechat/view/screens/forgot_password/new_password_screen.dart';
 import 'package:minechat/view/screens/login/login_screen.dart';
@@ -72,12 +74,16 @@ class MineChatApp extends StatelessWidget {
                 name: '/forgot-password',
                 page: () => const ForgotPasswordScreen()),
             GetPage(
-                name: '/new-password',
-                page: () => const NewPasswordScreen()),
+                name: '/new-password', page: () => const NewPasswordScreen()),
             GetPage(
                 name: '/products-services',
                 page: () => const ProductsServicesScreen()),
             GetPage(name: '/faqs', page: () => const FAQsScreen()),
+            GetPage(name: '/account', page: () => const AccountScreen()),
+            GetPage(
+              name: '/admin-edit-profile',
+              page: () => AdminEditProfileScreen(),
+            ),
           ],
           home: const SplashScreen(),
         ));
