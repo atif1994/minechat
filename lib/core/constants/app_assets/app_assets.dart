@@ -114,6 +114,8 @@ class AppAssets {
       'assets/images/icons/icon_notification.svg';
 
   // Icons => Signup Form
+  static const String signupUploadImage =
+      'assets/images/icons/icon_upload_image.svg';
   static const String signupIconCompany =
       'assets/images/icons/icon_company.svg';
   static const String signupIconPhone = 'assets/images/icons/icon_phone.svg';
@@ -153,6 +155,8 @@ class AppAssets {
   // Icons => Account
   static const String accountArrowRight =
       'assets/images/icons/icon_account_arrow_right.svg';
+  static const String accountEditUserProfile =
+      'assets/images/icons/icon_account_edit_user_profile.svg';
   static const String accountContactUs =
       'assets/images/icons/icon_account_contact_us.svg';
   static const String accountSubscription =

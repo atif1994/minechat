@@ -8,6 +8,10 @@ class AppLargeButton extends StatelessWidget {
   final VoidCallback onTap;
   final bool isEnabled;
   final bool isLoading;
+  final bool useGradient;
+  final Color? solidColor;
+  final Color? borderColor;
+  final Color? textColor;
 
   const AppLargeButton({
     super.key,
@@ -15,22 +19,33 @@ class AppLargeButton extends StatelessWidget {
     required this.onTap,
     this.isEnabled = true,
     this.isLoading = false,
+    this.useGradient = true,
+    this.solidColor,
+    this.borderColor,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Responsive metrics
     final double vPad = AppResponsive.scaleSize(context, 14);
     final double radius = AppResponsive.radius(context, factor: 1.2);
     final double loaderSize = AppResponsive.scaleSize(context, 18);
     final double gap = AppResponsive.scaleSize(context, 10);
     final double font = AppResponsive.scaleSize(context, 16);
 
-    // ✅ Keep enable/disable logic
     final bool buttonEnabled = isEnabled && !isLoading;
 
-    // Keep gradient visible while loading so spinner/text are readable
-    final bool showGradient = buttonEnabled || isLoading;
+    final BoxDecoration baseDecoration = BoxDecoration(
+      borderRadius: BorderRadius.circular(radius),
+      color: useGradient ? null : (solidColor ?? Colors.white),
+      border: borderColor != null ? Border.all(color: borderColor!) : null,
+    );
+
+    final decoration =
+        useGradient ? baseDecoration.withAppGradient : baseDecoration;
+
+    final Color effectiveTextColor = textColor ??
+        ((useGradient || isLoading) ? Colors.white : const Color(0xff222222));
 
     return SizedBox(
       width: double.infinity,
@@ -41,19 +56,12 @@ class AppLargeButton extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
           padding: EdgeInsets.symmetric(vertical: vPad),
-          decoration: showGradient
-              ? BoxDecoration(
-                  borderRadius: BorderRadius.circular(radius),
-                ).withAppGradient
-              : BoxDecoration(
-                  borderRadius: BorderRadius.circular(radius),
-                ),
+          decoration: decoration,
           child: Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // ✅ Spinner on the LEFT when loading
                 if (isLoading) ...[
                   SizedBox(
                     width: loaderSize,
@@ -70,8 +78,8 @@ class AppLargeButton extends StatelessWidget {
                   style: AppTextStyles.buttonText(context).copyWith(
                     fontSize: font,
                     fontWeight: FontWeight.w600,
-                    color: (buttonEnabled || isLoading)
-                        ? Colors.white
+                    color: buttonEnabled || isLoading
+                        ? effectiveTextColor
                         : const Color(0xffa8aebf),
                   ),
                 ),
