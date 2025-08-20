@@ -21,6 +21,8 @@ import 'package:minechat/view/screens/signUp/business_account_form.dart';
 import 'package:minechat/view/screens/signUp/admin_user_form.dart';
 import 'package:minechat/view/screens/setup/products_services_screen.dart';
 import 'package:minechat/view/screens/setup/faqs_screen.dart';
+import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
+import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,8 +78,8 @@ class MineChatApp extends StatelessWidget {
                 page: () => const NewPasswordScreen()),
             GetPage(
                 name: '/products-services',
-                page: () => const ProductsServicesScreen()),
-            GetPage(name: '/faqs', page: () => const FAQsScreen()),
+                page: () => ProductsServicesScreen(controller: Get.put(ProductsServicesController()))),
+            GetPage(name: '/faqs', page: () => FAQsScreen(controller: Get.put(FAQsController()))),
           ],
           home: const SplashScreen(),
         ));

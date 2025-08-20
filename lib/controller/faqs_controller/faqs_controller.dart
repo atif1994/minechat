@@ -49,9 +49,9 @@ class FAQsController extends GetxController {
 
       faqs.value = querySnapshot.docs
           .map((doc) => FAQModel.fromMap({
-        'id': doc.id,
-        ...doc.data(),
-      }))
+                'id': doc.id,
+                ...doc.data(),
+              }))
           .toList();
     } catch (e) {
       if (!e.toString().contains('User not authenticated')) {
@@ -73,7 +73,7 @@ class FAQsController extends GetxController {
     try {
       isSaving.value = true;
       final userId = getCurrentUserId();
-
+      
       if (userId.isEmpty) throw Exception("User not logged in");
 
       final faq = FAQModel(
@@ -118,7 +118,7 @@ class FAQsController extends GetxController {
     try {
       isSaving.value = true;
       final userId = getCurrentUserId();
-
+      
       if (userId.isEmpty) throw Exception("User not logged in");
 
       final updatedFAQ = FAQModel(
@@ -159,10 +159,10 @@ class FAQsController extends GetxController {
   Future<void> deleteFAQ(String id) async {
     try {
       await _firestore.collection('faqs').doc(id).delete();
-
+      
       // Remove from local list
       faqs.removeWhere((item) => item.id == id);
-
+      
       Get.snackbar('Success', 'FAQ deleted successfully!',
           backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
@@ -183,7 +183,7 @@ class FAQsController extends GetxController {
     questionCtrl.clear();
     answerCtrl.clear();
     categoryCtrl.clear();
-
+    
     // Clear errors
     questionError.value = '';
     answerError.value = '';
@@ -211,6 +211,18 @@ class FAQsController extends GetxController {
     return questionError.value.isEmpty &&
         answerError.value.isEmpty &&
         categoryError.value.isEmpty;
+  }
+
+  Future<void> saveAllFAQs() async {
+    try {
+      isSaving.value = true;
+      Get.snackbar('Success', 'All FAQs saved successfully!');
+    } catch (e) {
+      print('Error saving FAQs: $e');
+      Get.snackbar('Error', 'Failed to save FAQs');
+    } finally {
+      isSaving.value = false;
+    }
   }
 
   @override

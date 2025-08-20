@@ -46,7 +46,16 @@ class _AIBusinessInformationState extends State<AIBusinessInformation> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Get.back(),
         ),
-
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              // Test OpenAI connection
+              controller.sendMessage("Hello, can you introduce yourself?");
+            },
+            tooltip: 'Test AI Connection',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -60,6 +69,37 @@ class _AIBusinessInformationState extends State<AIBusinessInformation> {
             }),
           ),
 
+          // Loading Indicator
+          Obx(() {
+            if (controller.isLoading.value) {
+              return Container(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'AI is thinking...',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+          
           // Message Input Area
           _buildMessageInput(controller),
         ],
@@ -278,14 +318,14 @@ class _AIBusinessInformationState extends State<AIBusinessInformation> {
           // ),
 
           // Send Button
-          Container(
-            decoration: const BoxDecoration(
-              color: Colors.blue,
+          Obx(() => Container(
+            decoration: BoxDecoration(
+              color: controller.isLoading.value ? Colors.grey : Colors.blue,
               shape: BoxShape.circle,
             ),
             child: IconButton(
               icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: () {
+              onPressed: controller.isLoading.value ? null : () {
                 final message = textController.text.trim();
                 if (message.isNotEmpty) {
                   controller.sendMessage(message);
@@ -293,7 +333,7 @@ class _AIBusinessInformationState extends State<AIBusinessInformation> {
                 }
               },
             ),
-          ),
+          )),
         ],
       ),
     );
