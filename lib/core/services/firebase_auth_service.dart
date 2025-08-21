@@ -15,10 +15,10 @@ class FirebaseAuthService {
         email: email,
         password: password,
       );
-      
+
       // Send email verification
       await userCredential.user?.sendEmailVerification();
-      
+
       return userCredential;
     } catch (e) {
       throw _handleAuthException(e);
@@ -51,7 +51,8 @@ class FirebaseAuthService {
       }
 
       // Obtain the auth details from the request
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
@@ -136,9 +137,29 @@ class FirebaseAuthService {
     }
   }
 
+  // Re-authenticate Account while Deleting Account
+  Future<void> reauthenticateWithPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw 'No authenticated user.';
+      final cred =
+          EmailAuthProvider.credential(email: email, password: password);
+      await user.reauthenticateWithCredential(cred);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   // Getters
   User? get currentUser => _auth.currentUser;
+
   Stream<User?> get authStateChanges => _auth.authStateChanges();
+
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
   // Error Handling
@@ -181,7 +202,7 @@ class FirebaseAuthService {
           return 'Authentication failed: ${e.message}';
       }
     }
-    
+
     // Handle string-based errors (like the reCAPTCHA error you're seeing)
     String errorString = e.toString();
     if (errorString.contains('email address is already in use')) {
@@ -191,7 +212,7 @@ class FirebaseAuthService {
     } else if (errorString.contains('sign_in_failed')) {
       return 'Sign-in failed. Please try again.';
     }
-    
+
     return 'An unexpected error occurred: $e';
   }
 }

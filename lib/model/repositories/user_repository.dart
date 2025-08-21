@@ -31,7 +31,8 @@ class UserRepository {
   }
 
   // Upload profile image (common for both admin and business)
-  Future<String> uploadProfileImage(File imageFile, String userId, String accountType) async {
+  Future<String> uploadProfileImage(
+      File imageFile, String userId, String accountType) async {
     try {
       final path = 'profile_images/${accountType}_profile/$userId.jpg';
       final ref = _storage.ref().child(path);
@@ -52,6 +53,7 @@ class UserRepository {
         'companyName': user.companyName,
         'email': user.email,
         'phoneNumber': user.phoneNumber,
+        'photoURL': user.photoURL,
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'active',
       }, SetOptions(merge: true));
@@ -93,7 +95,8 @@ class UserRepository {
   // Get business account data
   Future<Map<String, dynamic>?> getBusinessAccount(String uid) async {
     try {
-      final doc = await _firestore.collection('business_accounts').doc(uid).get();
+      final doc =
+          await _firestore.collection('business_accounts').doc(uid).get();
       if (doc.exists) {
         return doc.data();
       }
@@ -202,5 +205,35 @@ class UserRepository {
       createdAt: DateTime.now(),
       lastLoginAt: DateTime.now(),
     );
+  }
+
+  // Delete User Data when Deleting Account
+  Future<void> deleteUserEverywhere(String uid) async {
+    try {
+      // Firestore docs (ignore if not found)
+      await _firestore
+          .collection('admin_users')
+          .doc(uid)
+          .delete()
+          .catchError((_) {});
+      await _firestore
+          .collection('business_accounts')
+          .doc(uid)
+          .delete()
+          .catchError((_) {});
+      await _firestore.collection('users').doc(uid).delete().catchError((_) {});
+
+      // Storage profile images (both possible locations)
+      for (final path in [
+        'profile_images/admin_profile/$uid.jpg',
+        'profile_images/business_profile/$uid.jpg',
+      ]) {
+        try {
+          await _storage.ref().child(path).delete();
+        } catch (_) {}
+      }
+    } catch (e) {
+      throw Exception('Failed to delete user data: $e');
+    }
   }
 }

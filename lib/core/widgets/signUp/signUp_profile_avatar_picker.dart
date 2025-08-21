@@ -86,8 +86,11 @@ class _SignupProfileAvatarPickerState extends State<SignupProfileAvatarPicker> {
               backgroundImage:
                   _selectedImage != null ? FileImage(_selectedImage!) : null,
               child: _selectedImage == null
-                  ? SvgPicture.asset(AppAssets.logoMinechatSmall,
-                      fit: BoxFit.cover)
+                  ? SvgPicture.asset(
+                      AppAssets.blankAdminProfile,
+                      fit: BoxFit.cover,
+                      width: AppResponsive.scaleSize(context, 50),
+                    )
                   : null,
             ),
             Positioned(
