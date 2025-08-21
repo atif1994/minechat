@@ -5,7 +5,7 @@ import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
 
-class LogoutAlertDialogue extends StatelessWidget {
+class LogoutAlertDialog extends StatelessWidget {
   final String title;
   final String message;
   final String cancelLabel;
@@ -13,7 +13,7 @@ class LogoutAlertDialogue extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback? onCancel;
 
-  const LogoutAlertDialogue({
+  const LogoutAlertDialog({
     super.key,
     this.title = 'Logout',
     this.message = 'Are you sure you want to Logout ?',
@@ -35,7 +35,7 @@ class LogoutAlertDialogue extends StatelessWidget {
     bool barrierDismissible = true,
   }) {
     return Get.dialog<T>(
-      LogoutAlertDialogue(
+      LogoutAlertDialog(
         onConfirm: onConfirm,
         onCancel: onCancel,
         title: title,
@@ -92,9 +92,11 @@ class LogoutAlertDialogue extends StatelessWidget {
                       onCancel?.call();
                     },
                     useGradient: false,
-                    solidColor: Colors.white,
-                    borderColor: const Color(0xFFE5E7EB),
-                    textColor: const Color(0xFF222222),
+                    solidColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+                    borderColor: isDark
+                        ? Color(0XFFFFFF1F).withValues(alpha: 0.12)
+                        : Color(0XFFF0F1F5),
+                    textColor: isDark ? Color(0xFFFFFFFF) : Color(0xFF0A0A0A),
                   ),
                 ),
                 AppSpacing.horizontal(context, 0.02),

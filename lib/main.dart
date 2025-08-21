@@ -13,6 +13,7 @@ import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/view/screens/account/account_screen.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 import 'package:minechat/view/screens/edit_profile/admin_edit_profile_screen.dart';
+import 'package:minechat/view/screens/edit_profile/business_edit_profile_screen.dart';
 import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
 import 'package:minechat/view/screens/forgot_password/new_password_screen.dart';
 import 'package:minechat/view/screens/login/login_screen.dart';
@@ -75,13 +76,17 @@ class MineChatApp extends StatelessWidget {
                 page: () => const ForgotPasswordScreen()),
             GetPage(
                 name: '/new-password', page: () => const NewPasswordScreen()),
-            // GetPage(
-            //     name: '/products-services',
             GetPage(name: '/account', page: () => const AccountScreen()),
             GetPage(
               name: '/admin-edit-profile',
               page: () => AdminEditProfileScreen(),
             ),
+            GetPage(
+              name: '/business-edit-profile',
+              page: () => BusinessEditProfileScreen(),
+            ),
+            // GetPage(
+            //     name: '/products-services',
           ],
           home: const SplashScreen(),
         ));

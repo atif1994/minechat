@@ -117,7 +117,11 @@ class _EditProfileAvatarPickerState extends State<EditProfileAvatarPicker> {
 
             // placeholder logo
             if (!hasNetwork && _selectedImage == null)
-              SvgPicture.asset(AppAssets.logoMinechatSmall, fit: BoxFit.cover),
+              SvgPicture.asset(
+                AppAssets.blankAdminProfile,
+                fit: BoxFit.cover,
+                width: size - 50,
+              ),
 
             // bottom-right svg button
             Positioned(

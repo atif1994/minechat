@@ -51,8 +51,10 @@ class AppAssets {
   static const String gridPatternLower = 'assets/images/grids/grid_lower.svg';
 
   // ===== THEME-SPECIFIC GETTERS =====
-  static const String logoMinechatSmall =
-      'assets/images/logos/logo_minechat_small.svg';
+  static const String blankAdminProfile =
+      'assets/images/logos/blank_admin_profile.svg';
+  static const String blankBusinessProfile =
+      'assets/images/logos/blank_business_profile.svg';
 
   // Main logo getter
   static String getMinechatLogo(bool isDark) {
@@ -163,8 +165,11 @@ class AppAssets {
       'assets/images/icons/icon_account_subscription.svg';
   static const String accountLogout =
       'assets/images/icons/icon_account_logout.svg';
+  static const String accountDeleteProfileLight =
+      'assets/images/icons/icon_light_delete_profile.svg';
+  static const String accountDeleteProfileDark =
+      'assets/images/icons/icon_dark_delete_profile.svg';
 
   //Icon => SetUp
-  static const String uploadFile =
-      'assets/images/setup/file_upload.svg';
+  static const String uploadFile = 'assets/images/setup/file_upload.svg';
 }
