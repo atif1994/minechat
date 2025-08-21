@@ -5,15 +5,23 @@ import 'package:get/get.dart';
 import 'package:minechat/model/data/ai_assistant_model.dart';
 import '../../model/data/chat_mesage_model.dart';
 import '../../model/repositories/ai_assistant_repository.dart';
+import '../../core/services/openai_service.dart';
+import '../../model/data/ai_knowledge_model.dart';
+import '../../model/data/product_service_model.dart';
+import '../../model/data/faq_model.dart';
+import '../../model/repositories/ai_knowledge_repository.dart';
 
 class AIAssistantController extends GetxController {
   final AIAssistantRepository _repository = AIAssistantRepository();
+  final AIKnowledgeRepository _knowledgeRepository = AIKnowledgeRepository();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   var currentStep = "AI Assistant".obs; // default active step
   // Form Controllers
   final nameCtrl = TextEditingController();
   final introMessageCtrl = TextEditingController();
   final shortDescriptionCtrl = TextEditingController();
   final aiGuidelinesCtrl = TextEditingController();
+  final messageController = TextEditingController();
 
   // Reactive States
   var selectedResponseLength = 'Short'.obs;
@@ -29,6 +37,11 @@ class AIAssistantController extends GetxController {
   // Chat & Assistant Data
   var currentAIAssistant = Rx<AIAssistantModel?>(null);
   var chatMessages = <ChatMessageModel>[].obs;
+  
+  // Knowledge Data
+  var businessInfo = Rx<AIKnowledgeModel?>(null);
+  var productsServices = <ProductServiceModel>[].obs;
+  var faqs = <FAQModel>[].obs;
 
   final List<String> responseLengthOptions = ['Short', 'Normal', 'Long'];
 
@@ -36,6 +49,7 @@ class AIAssistantController extends GetxController {
   void onInit() {
     super.onInit();
     loadCurrentAIAssistant();
+    loadAllKnowledgeData();
   }
   String getCurrentUserId() {
     return FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -115,10 +129,51 @@ class AIAssistantController extends GetxController {
     if (message.trim().isEmpty) return;
 
     addMessage(message, MessageType.user);
-    await Future.delayed(const Duration(milliseconds: 400));
+    messageController.clear(); // Clear the input field
+    
+    // Show loading indicator
+    isLoading.value = true;
+    
+    try {
+      final assistant = currentAIAssistant.value;
+      if (assistant == null) {
+        addMessage("I'm not yet configured. Please set me up first.", MessageType.ai);
+        return;
+      }
 
-    final aiResponse = generateAIResponse(message);
-    addMessage(aiResponse, MessageType.ai);
+      // Debug: Print current knowledge data
+      print('DEBUG: Sending message to AI with:');
+      print('DEBUG: - ${productsServices.length} products');
+      print('DEBUG: - ${faqs.length} FAQs');
+      print('DEBUG: - Business info: ${businessInfo.value != null ? "loaded" : "not loaded"}');
+      
+      if (productsServices.isNotEmpty) {
+        print('DEBUG: Products:');
+        for (var product in productsServices) {
+          print('DEBUG:   - ${product.name}: ${product.description}');
+        }
+      }
+
+      // Call OpenAI API with enhanced knowledge
+      final aiResponse = await OpenAIService.generateResponseWithKnowledge(
+        userMessage: message,
+        assistantName: assistant.name,
+        introMessage: assistant.introMessage,
+        shortDescription: assistant.shortDescription,
+        aiGuidelines: assistant.aiGuidelines,
+        responseLength: assistant.responseLength,
+        businessInfo: businessInfo.value,
+        productsServices: productsServices,
+        faqs: faqs,
+      );
+      
+      addMessage(aiResponse, MessageType.ai);
+    } catch (e) {
+      print('Error generating AI response: $e');
+      addMessage("Sorry, I encountered an error. Please try again.", MessageType.ai);
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   void addMessage(String message, MessageType type) {
@@ -149,6 +204,56 @@ class AIAssistantController extends GetxController {
       });
     }
     return null;
+  }
+
+  /// Load all knowledge data for AI responses
+  Future<void> loadAllKnowledgeData() async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) return;
+
+      // Load Business Information
+      final businessData = await _knowledgeRepository.getCurrentUserAIKnowledge();
+      if (businessData != null) {
+        businessInfo.value = businessData;
+      }
+
+      // Load Products & Services
+      final productsSnapshot = await _firestore
+          .collection('products_services')
+          .where('userId', isEqualTo: userId)
+          .get();
+      
+      productsServices.value = productsSnapshot.docs
+          .map((doc) => ProductServiceModel.fromMap({
+                'id': doc.id,
+                ...doc.data(),
+              }))
+          .toList();
+
+      // Load FAQs
+      final faqsSnapshot = await _firestore
+          .collection('faqs')
+          .where('userId', isEqualTo: userId)
+          .get();
+      
+      faqs.value = faqsSnapshot.docs
+          .map((doc) => FAQModel.fromMap({
+                'id': doc.id,
+                ...doc.data(),
+              }))
+          .toList();
+
+      print('DEBUG: Loaded ${productsServices.length} products and ${faqs.length} FAQs');
+
+    } catch (e) {
+      print('Error loading knowledge data: $e');
+    }
+  }
+
+  /// Refresh knowledge data - can be called from other controllers
+  Future<void> refreshKnowledgeData() async {
+    await loadAllKnowledgeData();
   }
 
 
@@ -253,6 +358,7 @@ class AIAssistantController extends GetxController {
     introMessageCtrl.dispose();
     shortDescriptionCtrl.dispose();
     aiGuidelinesCtrl.dispose();
+    messageController.dispose();
     super.onClose();
   }
 }

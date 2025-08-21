@@ -5,25 +5,26 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 
-import '../../../controller/ai_knowledge_controller/ai_knowledge_controller.dart';
+import '../../../controller/business_info_controller/business_info_controller.dart';
 import '../../../core/utils/helpers/app_spacing/app_spacing.dart';
 import '../../../core/widgets/app_button/app_save_ai_button.dart';
 import '../../../core/widgets/signUp/signUp_textfield.dart';
 import 'ai_business_information.dart';
 
 class BusinessInformation extends StatelessWidget {
-  const BusinessInformation({super.key});
+  final BusinessInfoController controller;
+  
+  const BusinessInformation({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final knowledgeController = Get.put(AIKnowledgeController());
     return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.only(left: 16,right: 16),
           child: Column(
             children: [
-              _buildBusinessInformationTab(knowledgeController, context)
+              _buildBusinessInformationTab(controller, context)
             ],
           ),
         ),
@@ -31,7 +32,7 @@ class BusinessInformation extends StatelessWidget {
     );
   }
 
-  Widget _buildBusinessInformationTab(AIKnowledgeController controller,
+  Widget _buildBusinessInformationTab(BusinessInfoController controller,
       BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,7 +64,7 @@ class BusinessInformation extends StatelessWidget {
         SignupTextField(
           labelText: 'Phone Number',
           hintText: 'Enter phone number',
-          prefixIcon: 'assets/icons/phone.png',
+                        prefixIcon: 'assets/images/icons/icon_phone.svg',
           // optional
           controller: controller.phoneCtrl,
           errorText: controller.phoneError,
@@ -147,7 +148,7 @@ class BusinessInformation extends StatelessWidget {
         // Action Buttons
         TwoButtonsRow(
           isSaving: controller.isSaving,          // your RxBool
-          onSave: controller.saveAIKnowledge,     // your save function
+          onSave: controller.saveBusinessInfo,     // your save function
           secondLabel: "Test AI",                 // text for second button
           secondIcon: Icons.smart_toy,            // icon for second button
           onSecondTap: () {
@@ -168,7 +169,7 @@ class BusinessInformation extends StatelessWidget {
   }
 
   Widget _buildFileUploadSection(
-      AIKnowledgeController controller, BuildContext context) {
+      BusinessInfoController controller, BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),

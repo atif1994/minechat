@@ -1,0 +1,14 @@
+Q: What is MineChat?
+A: MineChat is an AI-powered chatbot application that helps businesses automate customer support and communication.
+
+Q: How does MineChat work?
+A: MineChat uses artificial intelligence to understand customer queries and provide relevant responses based on your business information, products, and FAQs.
+
+Q: What file formats are supported for FAQ upload?
+A: MineChat supports .txt and .csv file formats for uploading FAQ data.
+
+Q: Can I customize the AI responses?
+A: Yes, you can customize AI responses by providing your business information, products, services, and frequently asked questions.
+
+Q: Is MineChat secure?
+A: Yes, MineChat uses Firebase authentication and secure cloud storage to protect your data and customer information.

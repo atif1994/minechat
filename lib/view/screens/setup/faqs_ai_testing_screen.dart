@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
-
+import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
 import '../../../model/data/chat_mesage_model.dart';
 
-
-class AITestingScreen extends StatefulWidget {
-  const AITestingScreen({super.key});
+class FAQsAITestingScreen extends StatefulWidget {
+  final FAQsController faqsController;
+  
+  const FAQsAITestingScreen({super.key, required this.faqsController});
 
   @override
-  State<AITestingScreen> createState() => _AITestingScreenState();
+  State<FAQsAITestingScreen> createState() => _FAQsAITestingScreenState();
 }
 
-class _AITestingScreenState extends State<AITestingScreen> {
+class _FAQsAITestingScreenState extends State<FAQsAITestingScreen> {
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh AI knowledge data when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<AIAssistantController>().refreshKnowledgeData();
+    });
+  }
 
   @override
   void dispose() {
@@ -37,7 +47,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Testing'),
+        title: const Text('FAQ AI Testing'),
         backgroundColor: Colors.red,
         elevation: 0,
         leading: IconButton(
@@ -48,18 +58,9 @@ class _AITestingScreenState extends State<AITestingScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              // Test OpenAI connection
-              controller.sendMessage("Hello, can you introduce yourself?");
+              controller.refreshKnowledgeData();
             },
-            tooltip: 'Test AI Connection',
-          ),
-          IconButton(
-            icon: const Icon(Icons.lightbulb_outline),
-            onPressed: () {
-              // Test knowledge integration
-              controller.sendMessage("Tell me about your business information and products");
-            },
-            tooltip: 'Test Knowledge Integration',
+            tooltip: 'Refresh FAQ Data',
           ),
         ],
       ),
@@ -74,7 +75,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
               return _buildChatMessages(controller);
             }),
           ),
-
+          
           // Loading Indicator
           Obx(() {
             if (controller.isLoading.value) {
@@ -118,7 +119,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           if (controller.currentAIAssistant.value != null)
             Container(
               padding: const EdgeInsets.all(16),
@@ -149,6 +149,14 @@ class _AITestingScreenState extends State<AITestingScreen> {
                 ],
               ),
             ),
+          const SizedBox(height: 24),
+          Text(
+            'Ask me anything about your FAQs!',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );
@@ -173,7 +181,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
 
   Widget _buildMessageBubble(ChatMessageModel message, int index) {
     final isUser = message.type == MessageType.user;
-
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -243,7 +251,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
 
   Widget _buildMessageInput(AIAssistantController controller) {
     final textController = TextEditingController();
-
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -259,15 +267,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
       ),
       child: Row(
         children: [
-          // Emoji Button
-          // IconButton(
-          //   icon: const Icon(Icons.emoji_emotions_outlined),
-          //   onPressed: () {
-          //     // TODO: Implement emoji picker
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-
           // Message Input Field
           Expanded(
             child: Container(
@@ -278,7 +277,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
               child: TextField(
                 controller: textController,
                 decoration: const InputDecoration(
-                  hintText: 'Send a message',
+                  hintText: 'Ask about your FAQs...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -293,36 +292,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
               ),
             ),
           ),
-
-          // const SizedBox(width: 8),
-          //
-          // // Attachment Button
-          // IconButton(
-          //   icon: const Icon(Icons.attach_file),
-          //   onPressed: () {
-          //     // TODO: Implement file attachment
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-          //
-          // // Image Button
-          // IconButton(
-          //   icon: const Icon(Icons.image),
-          //   onPressed: () {
-          //     // TODO: Implement image picker
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-          //
-          // // Voice Button
-          // IconButton(
-          //   icon: const Icon(Icons.mic),
-          //   onPressed: () {
-          //     // TODO: Implement voice recording
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-
+          
           // Send Button
           Obx(() => Container(
             decoration: BoxDecoration(
@@ -348,7 +318,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-
+    
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_knowledge_controller/ai_knowledge_controller.dart';
-import 'package:minechat/controller/product_controller/product_controller.dart';
-import 'package:minechat/controller/faq_controller/faq_controller.dart';
+import 'package:minechat/controller/business_info_controller/business_info_controller.dart';
+import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
+import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
@@ -23,8 +24,9 @@ class AIKnowledgeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Init controllers
-    final productController = Get.put(ProductController());
-    final faqController = Get.put(FAQController());
+    final businessInfoController = Get.put(BusinessInfoController());
+    final productsServicesController = Get.put(ProductsServicesController());
+    final faqsController = Get.put(FAQsController());
     final knowledgeController = Get.put(AIKnowledgeController());
 
     return Scaffold(
@@ -65,11 +67,11 @@ height: AppResponsive.screenHeight(context) * 0.04,
             child: Obx(() {
               return IndexedStack(
                 index: knowledgeController.selectedTabIndex.value,
-                children: const [
-                  BusinessInformation(),
-                  ProductsServicesScreen(),
-                  FAQsScreen(),
-                ],
+                              children: [
+                BusinessInformation(controller: businessInfoController),
+                ProductsServicesScreen(controller: productsServicesController),
+                FAQsScreen(controller: faqsController),
+              ],
               );
             }),
           ),

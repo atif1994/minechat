@@ -1,19 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
-
+import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
 import '../../../model/data/chat_mesage_model.dart';
 
-
-class AITestingScreen extends StatefulWidget {
-  const AITestingScreen({super.key});
+class ProductsServicesAITestingScreen extends StatefulWidget {
+  final ProductsServicesController productsController;
+  
+  const ProductsServicesAITestingScreen({
+    super.key, 
+    required this.productsController,
+  });
 
   @override
-  State<AITestingScreen> createState() => _AITestingScreenState();
+  State<ProductsServicesAITestingScreen> createState() => _ProductsServicesAITestingScreenState();
 }
 
-class _AITestingScreenState extends State<AITestingScreen> {
+class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITestingScreen> {
   final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    // Refresh knowledge data when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final aiController = Get.find<AIAssistantController>();
+      await aiController.refreshKnowledgeData();
+    });
+  }
 
   @override
   void dispose() {
@@ -37,7 +51,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Testing'),
+        title: const Text('AI Testing - Products & Services'),
         backgroundColor: Colors.red,
         elevation: 0,
         leading: IconButton(
@@ -47,19 +61,10 @@ class _AITestingScreenState extends State<AITestingScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              // Test OpenAI connection
-              controller.sendMessage("Hello, can you introduce yourself?");
+            onPressed: () async {
+              await controller.refreshKnowledgeData();
             },
-            tooltip: 'Test AI Connection',
-          ),
-          IconButton(
-            icon: const Icon(Icons.lightbulb_outline),
-            onPressed: () {
-              // Test knowledge integration
-              controller.sendMessage("Tell me about your business information and products");
-            },
-            tooltip: 'Test Knowledge Integration',
+            tooltip: 'Refresh Data',
           ),
         ],
       ),
@@ -118,7 +123,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           if (controller.currentAIAssistant.value != null)
             Container(
               padding: const EdgeInsets.all(16),
@@ -259,15 +263,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
       ),
       child: Row(
         children: [
-          // Emoji Button
-          // IconButton(
-          //   icon: const Icon(Icons.emoji_emotions_outlined),
-          //   onPressed: () {
-          //     // TODO: Implement emoji picker
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-
           // Message Input Field
           Expanded(
             child: Container(
@@ -278,7 +273,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
               child: TextField(
                 controller: textController,
                 decoration: const InputDecoration(
-                  hintText: 'Send a message',
+                  hintText: 'Ask about products and services...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -293,35 +288,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
               ),
             ),
           ),
-
-          // const SizedBox(width: 8),
-          //
-          // // Attachment Button
-          // IconButton(
-          //   icon: const Icon(Icons.attach_file),
-          //   onPressed: () {
-          //     // TODO: Implement file attachment
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-          //
-          // // Image Button
-          // IconButton(
-          //   icon: const Icon(Icons.image),
-          //   onPressed: () {
-          //     // TODO: Implement image picker
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-          //
-          // // Voice Button
-          // IconButton(
-          //   icon: const Icon(Icons.mic),
-          //   onPressed: () {
-          //     // TODO: Implement voice recording
-          //   },
-          //   color: Colors.grey[600],
-          // ),
 
           // Send Button
           Obx(() => Container(

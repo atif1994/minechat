@@ -1,20 +1,15 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:minechat/model/data/ai_knowledge_model.dart';
 import '../../model/repositories/ai_knowledge_repository.dart';
 
-class AIKnowledgeController extends GetxController {
+class BusinessInfoController extends GetxController {
   final AIKnowledgeRepository _repository = AIKnowledgeRepository();
   final FirebaseStorage _storage = FirebaseStorage.instance;
-
-  // Tab Management
-  var selectedTabIndex = 0.obs;
 
   // Loading States
   var isLoading = false.obs;
@@ -45,25 +40,23 @@ class AIKnowledgeController extends GetxController {
   var additionalNotesError = ''.obs;
   var thankYouMessageError = ''.obs;
 
-
-
   // File tracking
-  var selectedBusinessFile = ''.obs;
-  var selectedFAQFile = ''.obs;
-  var uploadedFileUrl = ''.obs; // Firebase Storage URL
+  var selectedFileName = ''.obs;
+  var selectedFilePath = ''.obs;
+  var uploadedFileUrl = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
-    loadAIKnowledge();
+    loadBusinessInfo();
   }
 
   String getCurrentUserId() {
     return FirebaseAuth.instance.currentUser?.uid ?? '';
   }
 
-  /// Load existing AI Knowledge
-  Future<void> loadAIKnowledge() async {
+  /// Load existing Business Information
+  Future<void> loadBusinessInfo() async {
     try {
       isLoading.value = true;
       final aiKnowledge = await _repository.getCurrentUserAIKnowledge();
@@ -85,47 +78,32 @@ class AIKnowledgeController extends GetxController {
         if (aiKnowledge.uploadedFileUrl.isNotEmpty) {
           selectedFileName.value = extractFileNameFromUrl(aiKnowledge.uploadedFileUrl);
         }
-
-
       }
     } catch (e) {
       if (!e.toString().contains('User not authenticated')) {
-        Get.snackbar('Error', 'Failed to load AI Knowledge: $e');
+        Get.snackbar('Error', 'Failed to load Business Information: $e');
       }
     } finally {
       isLoading.value = false;
     }
   }
-  var selectedFileName = ''.obs;
-  var selectedFilePath = ''.obs;
 
   Future<void> pickFile() async {
     try {
-      // Open file picker with more specific configuration
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.any,
         allowMultiple: false,
-        withData: false, // Don't load file data into memory
-        withReadStream: false, // Don't create read stream
-        lockParentWindow: true, // Lock parent window on web
+        withData: false,
+        withReadStream: false,
+        lockParentWindow: true,
       );
 
       if (result != null && result.files.isNotEmpty) {
-        // Get the picked file
         final file = result.files.single;
-
-        // Update the observable variables to reflect in UI
         selectedFileName.value = file.name;
         selectedFilePath.value = file.path ?? '';
-
-        print("Picked file: ${file.name}");
-        print("Path: ${file.path}");
-        print("Size: ${file.size} bytes");
-
-        // Upload file to Firebase Storage
         await uploadFileToFirebase(file);
 
-        // Show success message
         Get.snackbar(
           'Success',
           'File selected and uploaded: ${file.name}',
@@ -133,13 +111,8 @@ class AIKnowledgeController extends GetxController {
           colorText: Colors.white,
           duration: const Duration(seconds: 2),
         );
-      } else {
-        print("User canceled the picker or no file selected");
       }
     } catch (e) {
-      print("File picking error: $e");
-
-      // More specific error handling
       String errorMessage = 'Failed to pick file';
       if (e.toString().contains('MissingPluginException')) {
         errorMessage = 'File picker plugin not available. Please restart the app.';
@@ -159,7 +132,6 @@ class AIKnowledgeController extends GetxController {
     }
   }
 
-  /// Upload file to Firebase Storage
   Future<void> uploadFileToFirebase(PlatformFile file) async {
     try {
       isUploadingFile.value = true;
@@ -167,32 +139,23 @@ class AIKnowledgeController extends GetxController {
       final userId = getCurrentUserId();
       if (userId.isEmpty) throw Exception("User not logged in");
 
-      // Create a unique file name with timestamp
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final fileName = '${userId}_${timestamp}_${file.name}';
       
-      // Create storage reference
-      final storageRef = _storage.ref().child('ai_knowledge_files/$fileName');
+      final storageRef = _storage.ref().child('business_info_files/$fileName');
       
-      // Upload file
       if (file.path != null) {
         final fileToUpload = File(file.path!);
         final uploadTask = storageRef.putFile(fileToUpload);
         
-        // Monitor upload progress
         uploadTask.snapshotEvents.listen((TaskSnapshot snapshot) {
           final progress = snapshot.bytesTransferred / snapshot.totalBytes;
           print('Upload progress: ${(progress * 100).toStringAsFixed(2)}%');
         });
         
-        // Wait for upload to complete
         final snapshot = await uploadTask;
-        
-        // Get download URL
         final downloadUrl = await snapshot.ref.getDownloadURL();
         uploadedFileUrl.value = downloadUrl;
-        
-        print('File uploaded successfully: $downloadUrl');
         
         Get.snackbar(
           'Upload Success',
@@ -205,7 +168,6 @@ class AIKnowledgeController extends GetxController {
         throw Exception("File path is null");
       }
     } catch (e) {
-      print('Upload error: $e');
       Get.snackbar(
         'Upload Error',
         'Failed to upload file: $e',
@@ -217,13 +179,10 @@ class AIKnowledgeController extends GetxController {
       isUploadingFile.value = false;
     }
   }
-  /// Save AI Knowledge
-  Future<void> saveAIKnowledge() async {
-    print('=== Starting saveAIKnowledge ===');
-    print('Save button clicked!');
-    
+
+  /// Save Business Information
+  Future<void> saveBusinessInfo() async {
     if (!_validateForm()) {
-      print('Validation failed');
       Get.snackbar('Validation Error', 'Please fix the errors in the form',
           backgroundColor: Colors.red, colorText: Colors.white);
       return;
@@ -232,23 +191,8 @@ class AIKnowledgeController extends GetxController {
     try {
       isSaving.value = true;
       final userId = getCurrentUserId();
-      print('User ID: $userId');
       
       if (userId.isEmpty) throw Exception("User not logged in");
-
-      // Print all form data for debugging
-      print('Form Data:');
-      print('Business Name: ${businessNameCtrl.text.trim()}');
-      print('Phone: ${phoneCtrl.text.trim()}');
-      print('Address: ${addressCtrl.text.trim()}');
-      print('Email: ${emailCtrl.text.trim()}');
-      print('Company Story: ${companyStoryCtrl.text.trim()}');
-      print('Payment Details: ${paymentDetailsCtrl.text.trim()}');
-      print('Discounts: ${discountsCtrl.text.trim()}');
-      print('Policy: ${policyCtrl.text.trim()}');
-      print('Additional Notes: ${additionalNotesCtrl.text.trim()}');
-      print('Thank You Message: ${thankYouMessageCtrl.text.trim()}');
-      print('Uploaded File URL: ${uploadedFileUrl.value}');
 
       final aiKnowledge = AIKnowledgeModel(
         id: userId,
@@ -262,44 +206,29 @@ class AIKnowledgeController extends GetxController {
         policy: policyCtrl.text.trim(),
         additionalNotes: additionalNotesCtrl.text.trim(),
         thankYouMessage: thankYouMessageCtrl.text.trim(),
-        uploadedFileUrl: uploadedFileUrl.value, // Include the uploaded file URL
-
+        uploadedFileUrl: uploadedFileUrl.value,
         userId: userId,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
 
-      print('AI Knowledge Model created successfully');
-      print('Model data: ${aiKnowledge.toMap()}');
-
-      print('Calling repository saveAIKnowledge...');
       await _repository.saveAIKnowledge(aiKnowledge);
-      print('Repository save completed successfully');
 
-      Get.snackbar('Success', 'AI Knowledge saved successfully!',
+      Get.snackbar('Success', 'Business Information saved successfully!',
           backgroundColor: Colors.green, colorText: Colors.white);
-      
-      print('=== saveAIKnowledge completed successfully ===');
     } catch (e) {
-      print('Error in saveAIKnowledge: $e');
-      print('Error stack trace: ${StackTrace.current}');
-      Get.snackbar('Error', 'Failed to save AI Knowledge: $e',
+      Get.snackbar('Error', 'Failed to save Business Information: $e',
           backgroundColor: Colors.red, colorText: Colors.white);
     } finally {
       isSaving.value = false;
     }
   }
 
-
-
-
   void clearFile() async {
-    // Delete file from Firebase Storage if it exists
     if (uploadedFileUrl.value.isNotEmpty) {
       try {
         final storageRef = _storage.refFromURL(uploadedFileUrl.value);
         await storageRef.delete();
-        print('File deleted from Firebase Storage');
       } catch (e) {
         print('Error deleting file from Firebase Storage: $e');
       }
@@ -310,50 +239,12 @@ class AIKnowledgeController extends GetxController {
     uploadedFileUrl.value = '';
   }
 
-  /// Test method to verify save functionality
-  Future<void> testSave() async {
-    print('=== Test Save Method Called ===');
-    try {
-      // Create a simple test model
-      final testModel = AIKnowledgeModel(
-        id: getCurrentUserId(),
-        businessName: 'Test Business',
-        phone: '1234567890',
-        address: 'Test Address',
-        email: 'test@test.com',
-        companyStory: 'Test Story',
-        paymentDetails: 'Test Payment',
-        discounts: 'Test Discounts',
-        policy: 'Test Policy',
-        additionalNotes: 'Test Notes',
-        thankYouMessage: 'Test Thank You',
-        uploadedFileUrl: 'test_url',
-        userId: getCurrentUserId(),
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
-
-      print('Test model created: ${testModel.toMap()}');
-      await _repository.saveAIKnowledge(testModel);
-      print('Test save successful!');
-      
-      Get.snackbar('Test Success', 'Test save completed successfully!',
-          backgroundColor: Colors.green, colorText: Colors.white);
-    } catch (e) {
-      print('Test save failed: $e');
-      Get.snackbar('Test Error', 'Test save failed: $e',
-          backgroundColor: Colors.red, colorText: Colors.white);
-    }
-  }
-
-  /// Extract filename from Firebase Storage URL
   String extractFileNameFromUrl(String url) {
     try {
       final uri = Uri.parse(url);
       final pathSegments = uri.pathSegments;
       if (pathSegments.isNotEmpty) {
         final fileName = pathSegments.last;
-        // Remove query parameters and decode URL
         final cleanFileName = Uri.decodeComponent(fileName.split('?').first);
         return cleanFileName;
       }
@@ -362,6 +253,7 @@ class AIKnowledgeController extends GetxController {
     }
     return 'Uploaded File';
   }
+
   /// Validation Methods
   void validateBusinessName(String value) {
     businessNameError.value = value.trim().isEmpty ? "Business name is required" : '';
@@ -409,11 +301,7 @@ class AIKnowledgeController extends GetxController {
     thankYouMessageError.value = value.trim().isEmpty ? "Thank you message is required" : '';
   }
 
-
-
   bool _validateForm() {
-    print('=== Starting form validation ===');
-    
     validateBusinessName(businessNameCtrl.text);
     validatePhone(phoneCtrl.text);
     validateAddress(addressCtrl.text);
@@ -425,7 +313,7 @@ class AIKnowledgeController extends GetxController {
     validateAdditionalNotes(additionalNotesCtrl.text);
     validateThankYouMessage(thankYouMessageCtrl.text);
 
-    final isValid = businessNameError.value.isEmpty &&
+    return businessNameError.value.isEmpty &&
         phoneError.value.isEmpty &&
         addressError.value.isEmpty &&
         emailError.value.isEmpty &&
@@ -435,22 +323,6 @@ class AIKnowledgeController extends GetxController {
         policyError.value.isEmpty &&
         additionalNotesError.value.isEmpty &&
         thankYouMessageError.value.isEmpty;
-
-    print('Validation errors:');
-    print('Business Name Error: ${businessNameError.value}');
-    print('Phone Error: ${phoneError.value}');
-    print('Address Error: ${addressError.value}');
-    print('Email Error: ${emailError.value}');
-    print('Company Story Error: ${companyStoryError.value}');
-    print('Payment Details Error: ${paymentDetailsError.value}');
-    print('Discounts Error: ${discountsError.value}');
-    print('Policy Error: ${policyError.value}');
-    print('Additional Notes Error: ${additionalNotesError.value}');
-    print('Thank You Message Error: ${thankYouMessageError.value}');
-    print('Form is valid: $isValid');
-    print('=== Form validation completed ===');
-
-    return isValid;
   }
 
   @override
@@ -465,9 +337,6 @@ class AIKnowledgeController extends GetxController {
     policyCtrl.dispose();
     additionalNotesCtrl.dispose();
     thankYouMessageCtrl.dispose();
-
-
-
     super.onClose();
   }
 }
