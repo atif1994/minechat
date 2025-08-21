@@ -22,11 +22,6 @@ import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scr
 import 'package:minechat/view/screens/splash/splash_screen.dart';
 import 'package:minechat/view/screens/signUp/business_account_form.dart';
 import 'package:minechat/view/screens/signUp/admin_user_form.dart';
-import 'package:minechat/view/screens/setup/products_services_screen.dart';
-import 'package:minechat/view/screens/setup/faqs_screen.dart';
-import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
-import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -80,9 +75,13 @@ class MineChatApp extends StatelessWidget {
                 page: () => const ForgotPasswordScreen()),
             GetPage(
                 name: '/new-password', page: () => const NewPasswordScreen()),
+            // GetPage(
+            //     name: '/products-services',
+            GetPage(name: '/account', page: () => const AccountScreen()),
             GetPage(
-                name: '/products-services',
-
+              name: '/admin-edit-profile',
+              page: () => AdminEditProfileScreen(),
+            ),
           ],
           home: const SplashScreen(),
         ));

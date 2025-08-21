@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
-import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/view/screens/setup/products_services_ai_testing_screen.dart';

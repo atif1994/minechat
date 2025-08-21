@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
-import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/view/screens/setup/faqs_ai_testing_screen.dart';
