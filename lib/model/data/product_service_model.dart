@@ -1,5 +1,3 @@
-import 'package:get/get.dart';
-
 class ProductServiceModel {
   final String id;
   final String name;
@@ -10,7 +8,7 @@ class ProductServiceModel {
   final String userId;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final RxString? selectedImage; // For image upload functionality
+  final String? selectedImage; // ✅ Plain string, not Rx
 
   ProductServiceModel({
     required this.id,
@@ -36,7 +34,7 @@ class ProductServiceModel {
       'userId': userId,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
-      'selectedImage': selectedImage?.value ?? '',
+      'selectedImage': selectedImage ?? '',
     };
   }
 
@@ -49,13 +47,13 @@ class ProductServiceModel {
       category: map['category'] ?? '',
       features: map['features'] ?? '',
       userId: map['userId'] ?? '',
-      createdAt: map['createdAt'] != null 
-          ? DateTime.parse(map['createdAt'].toString())
+      createdAt: map['createdAt'] != null
+          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      updatedAt: map['updatedAt'] != null 
-          ? DateTime.parse(map['updatedAt'].toString())
+      updatedAt: map['updatedAt'] != null
+          ? DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      selectedImage: RxString(map['selectedImage'] ?? ''),
+      selectedImage: map['selectedImage'], // ✅ plain string
     );
   }
 
@@ -69,7 +67,7 @@ class ProductServiceModel {
     String? userId,
     DateTime? createdAt,
     DateTime? updatedAt,
-    RxString? selectedImage,
+    String? selectedImage,
   }) {
     return ProductServiceModel(
       id: id ?? this.id,

@@ -7,6 +7,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/controller/auth_controller/auth_controller.dart';
 import 'package:minechat/core/services/otp_service/firestore_init.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
@@ -24,6 +25,7 @@ import 'package:minechat/view/screens/setup/faqs_screen.dart';
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
 import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
@@ -37,6 +39,7 @@ void main() async {
   // Controllers Initialization
   Get.put(LoginController());
   Get.put(DashboardController());
+  Get.put(AuthController());
 
   runApp(const MineChatApp());
 }
@@ -80,6 +83,7 @@ class MineChatApp extends StatelessWidget {
                 name: '/products-services',
                 page: () => ProductsServicesScreen(controller: Get.put(ProductsServicesController()))),
             GetPage(name: '/faqs', page: () => FAQsScreen(controller: Get.put(FAQsController()))),
+
           ],
           home: const SplashScreen(),
         ));

@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
+import 'package:minechat/controller/auth_controller/auth_controller.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 import 'package:minechat/model/repositories/user_repository.dart';
 
@@ -234,11 +235,10 @@ class BusinessSignupController extends GetxController {
         colorText: Colors.white,
       );
 
-      // 🚀 Proceed to next screen
-      Get.offAllNamed('/admin-signup', arguments: {
-        'email': emailCtrl.text.trim(),
-        'password': passwordCtrl.text.trim(),
-      });
+      // Mark onboarding as completed and let AuthController handle navigation
+      final authController = Get.find<AuthController>();
+      authController.markOnboardingCompleted();
+      // AuthController will automatically navigate to the appropriate screen
     } catch (e) {
       _handleFirebaseErrors(e, 'Failed to create business account');
     } finally {

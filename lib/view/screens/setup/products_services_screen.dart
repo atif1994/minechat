@@ -8,7 +8,6 @@ import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/view/screens/setup/products_services_ai_testing_screen.dart';
 
 import '../../../core/constants/app_assets/app_assets.dart';
-import '../../../model/data/product_service_model.dart';
 import 'dart:io';
 
 class ProductsServicesScreen extends StatelessWidget {
@@ -74,31 +73,10 @@ class ProductsServicesScreen extends StatelessWidget {
             _buildImageUploadSection(context),
             AppSpacing.vertical(context, 0.02),
 
-            // Add More Button
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.red[400]!),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextButton.icon(
-                onPressed: () => controller.addProductService(),
-                icon: Icon(Icons.add, color: Colors.red[400], size: 20),
-                label: Text(
-                  'Add More',
-                  style: TextStyle(
-                    color: Colors.red[400],
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            AppSpacing.vertical(context, 0.02),
 
-            // Products List
-            Obx(() => Column(
-              children: controller.productsServices.map((product) => _buildProductCard(product, controller, context)).toList(),
-            )),
+            
+
+            AppSpacing.vertical(context, 0.02),
 
             // Action Buttons Row
             Row(
@@ -146,6 +124,8 @@ class ProductsServicesScreen extends StatelessWidget {
                 ),
               ],
             ),
+            
+
           ],
         ),
       ),
@@ -270,79 +250,7 @@ class ProductsServicesScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard(ProductServiceModel product, ProductsServicesController controller, BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            product.name,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            product.description,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Text(
-                'Price: ${product.price}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.green[600],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Text(
-                'Category: ${product.category}',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          // Action Buttons
-          Row(
-            children: [
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => controller.loadForEdit(product),
-                  icon: Icon(Icons.edit, color: Colors.blue, size: 16),
-                  label: Text('Edit', style: TextStyle(color: Colors.blue, fontSize: 12)),
-                ),
-              ),
-              Expanded(
-                child: TextButton.icon(
-                  onPressed: () => controller.deleteProductService(product.id),
-                  icon: Icon(Icons.delete, color: Colors.red, size: 16),
-                  label: Text('Remove', style: TextStyle(color: Colors.red, fontSize: 12)),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  
 
   void _showImageUploadOptions(BuildContext context) {
     showModalBottomSheet(
@@ -402,7 +310,8 @@ class ProductsServicesScreen extends StatelessWidget {
         'Image captured successfully!',
         backgroundColor: Colors.green,
         colorText: Colors.white,
-      );
-    }
-  }
-}
+             );
+     }
+   }
+
+ }

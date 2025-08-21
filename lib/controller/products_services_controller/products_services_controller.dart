@@ -16,20 +16,16 @@ class ProductsServicesController extends GetxController {
   final nameCtrl = TextEditingController();
   final descriptionCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
-  final categoryCtrl = TextEditingController();
-  final featuresCtrl = TextEditingController();
 
   // Error Messages
   var nameError = ''.obs;
   var descriptionError = ''.obs;
   var priceError = ''.obs;
-  var categoryError = ''.obs;
-  var featuresError = ''.obs;
 
   // Products List
   var productsServices = <ProductServiceModel>[].obs;
-  
-  // Selected Image for upload
+
+  // Selected Image for upload (reactive in controller, plain string in model)
   var selectedImage = ''.obs;
 
   // Editing state
@@ -39,6 +35,8 @@ class ProductsServicesController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    print('🔍 ProductsServicesController initialized');
+    print('🔍 Firestore instance: $_firestore');
     loadProductsServices();
   }
 
@@ -47,8 +45,6 @@ class ProductsServicesController extends GetxController {
     nameCtrl.dispose();
     descriptionCtrl.dispose();
     priceCtrl.dispose();
-    categoryCtrl.dispose();
-    featuresCtrl.dispose();
     super.onClose();
   }
 
@@ -65,12 +61,14 @@ class ProductsServicesController extends GetxController {
 
       productsServices.value = snapshot.docs
           .map((doc) => ProductServiceModel.fromMap({
-                'id': doc.id,
-                ...doc.data(),
-              }))
+        'id': doc.id,
+        ...doc.data(),
+      }))
           .toList();
+
+      print("✅ Loaded ${productsServices.length} products for user: ${user.uid}");
     } catch (e) {
-      print('Error loading products: $e');
+      print('❌ Error loading products: $e');
       Get.snackbar('Error', 'Failed to load products');
     } finally {
       isLoading.value = false;
@@ -88,36 +86,97 @@ class ProductsServicesController extends GetxController {
         return;
       }
 
+      print('🔍 Starting product save process...');
+      print('🔍 User authenticated: ${user.uid}');
+      print('🔍 User email: ${user.email}');
+
       final product = ProductServiceModel(
         id: '', // Will be set by Firestore
         name: nameCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         price: priceCtrl.text.trim(),
-        category: categoryCtrl.text.trim(),
-        features: featuresCtrl.text.trim(),
+        category: '',
+        features: '',
         userId: user.uid,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        selectedImage: selectedImage,
+        selectedImage: selectedImage.value.isNotEmpty ? selectedImage.value : null,
       );
 
-      final docRef = await _firestore.collection('products_services').add(product.toMap());
-      
+      print("📤 Adding product to Firestore: ${product.toMap()}");
+      print("🔍 User ID: ${user.uid}");
+      print("🔍 Collection: products_services");
+
+      // Add timeout and retry logic
+      DocumentReference? docRef;
+      int retryCount = 0;
+      const maxRetries = 3;
+
+      while (retryCount < maxRetries) {
+        try {
+          print("🔄 Attempt ${retryCount + 1} of $maxRetries");
+          docRef = await _firestore
+              .collection('products_services')
+              .add(product.toMap())
+              .timeout(const Duration(seconds: 30));
+          print("✅ Product saved successfully on attempt ${retryCount + 1}");
+          break;
+        } catch (e) {
+          retryCount++;
+          print("❌ Attempt $retryCount failed: $e");
+          if (retryCount >= maxRetries) {
+            throw e;
+          }
+          // Wait before retrying
+          await Future.delayed(Duration(seconds: retryCount * 2));
+        }
+      }
+
       // Add the new product to the list with the correct ID
-      final newProduct = product.copyWith(id: docRef.id);
-      productsServices.add(newProduct);
+      if (docRef != null) {
+        final newProduct = product.copyWith(id: docRef.id);
+        productsServices.add(newProduct);
+        print("✅ Product added to local list with ID: ${docRef.id}");
+        
+        // Verify the document was actually saved
+        try {
+          final savedDoc = await docRef.get();
+          if (savedDoc.exists) {
+            print("✅ Document verified in Firestore");
+            print("📄 Document data: ${savedDoc.data()}");
+            print("🔍 Document path: ${savedDoc.reference.path}");
+          } else {
+            print("❌ Document not found in Firestore");
+          }
+        } catch (e) {
+          print("❌ Error verifying document: $e");
+        }
+      } else {
+        throw Exception("Failed to get document reference");
+      }
 
       _clearForm();
       Get.snackbar('Success', 'Product added successfully!');
+      print("✅ Product added with ID: ${docRef.id}");
+
       // Refresh AI Assistant's knowledge data
       try {
         Get.find<AIAssistantController>().refreshKnowledgeData();
       } catch (e) {
-        print('Error refreshing AI knowledge: $e');
+        print('⚠️ Error refreshing AI knowledge: $e');
       }
     } catch (e) {
-      print('Error adding product: $e');
-      Get.snackbar('Error', 'Failed to add product');
+      print('❌ Error adding product: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      print('❌ Error details: ${e.toString()}');
+      
+      if (e.toString().contains('permission')) {
+        Get.snackbar('Permission Error', 'You don\'t have permission to save products. Please check your Firebase rules.');
+      } else if (e.toString().contains('network')) {
+        Get.snackbar('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Get.snackbar('Error', 'Failed to add product: $e');
+      }
     } finally {
       isSaving.value = false;
     }
@@ -138,13 +197,19 @@ class ProductsServicesController extends GetxController {
         'name': nameCtrl.text.trim(),
         'description': descriptionCtrl.text.trim(),
         'price': priceCtrl.text.trim(),
-        'category': categoryCtrl.text.trim(),
-        'features': featuresCtrl.text.trim(),
-        'updatedAt': DateTime.now().toIso8601String(),
+        'category': '',
+        'features': '',
+        'updatedAt': FieldValue.serverTimestamp(),
+        'selectedImage': selectedImage.value.isNotEmpty ? selectedImage.value : null,
       };
 
-      await _firestore.collection('products_services').doc(productId).update(updatedData);
-      
+      print("📤 Updating product $productId with data: $updatedData");
+
+      await _firestore
+          .collection('products_services')
+          .doc(productId)
+          .update(updatedData);
+
       // Update the product in the list
       final index = productsServices.indexWhere((p) => p.id == productId);
       if (index != -1) {
@@ -152,9 +217,10 @@ class ProductsServicesController extends GetxController {
           name: nameCtrl.text.trim(),
           description: descriptionCtrl.text.trim(),
           price: priceCtrl.text.trim(),
-          category: categoryCtrl.text.trim(),
-          features: featuresCtrl.text.trim(),
+          category: '',
+          features: '',
           updatedAt: DateTime.now(),
+          selectedImage: selectedImage.value,
         );
         productsServices[index] = updatedProduct;
       }
@@ -163,14 +229,16 @@ class ProductsServicesController extends GetxController {
       isEditing.value = false;
       editingProductId.value = '';
       Get.snackbar('Success', 'Product updated successfully!');
+      print("✅ Product updated: $productId");
+
       // Refresh AI Assistant's knowledge data
       try {
         Get.find<AIAssistantController>().refreshKnowledgeData();
       } catch (e) {
-        print('Error refreshing AI knowledge: $e');
+        print('⚠️ Error refreshing AI knowledge: $e');
       }
     } catch (e) {
-      print('Error updating product: $e');
+      print('❌ Error updating product: $e');
       Get.snackbar('Error', 'Failed to update product');
     } finally {
       isSaving.value = false;
@@ -179,17 +247,20 @@ class ProductsServicesController extends GetxController {
 
   Future<void> deleteProductService(String productId) async {
     try {
+      print("🗑 Deleting product: $productId");
       await _firestore.collection('products_services').doc(productId).delete();
       productsServices.removeWhere((p) => p.id == productId);
       Get.snackbar('Success', 'Product deleted successfully!');
+      print("✅ Product deleted: $productId");
+
       // Refresh AI Assistant's knowledge data
       try {
         Get.find<AIAssistantController>().refreshKnowledgeData();
       } catch (e) {
-        print('Error refreshing AI knowledge: $e');
+        print('⚠️ Error refreshing AI knowledge: $e');
       }
     } catch (e) {
-      print('Error deleting product: $e');
+      print('❌ Error deleting product: $e');
       Get.snackbar('Error', 'Failed to delete product');
     }
   }
@@ -198,37 +269,112 @@ class ProductsServicesController extends GetxController {
     nameCtrl.text = product.name;
     descriptionCtrl.text = product.description;
     priceCtrl.text = product.price;
-    categoryCtrl.text = product.category;
-    featuresCtrl.text = product.features;
-    selectedImage.value = product.selectedImage?.value ?? '';
-    
+    selectedImage.value = product.selectedImage ?? ''; // ✅ fixed (no .value)
+
     isEditing.value = true;
     editingProductId.value = product.id;
+    print("✏️ Loaded product for edit: ${product.toMap()}");
   }
 
   void _clearForm() {
     nameCtrl.clear();
     descriptionCtrl.clear();
     priceCtrl.clear();
-    categoryCtrl.clear();
-    featuresCtrl.clear();
     selectedImage.value = '';
-    
+
     // Clear errors
     nameError.value = '';
     descriptionError.value = '';
     priceError.value = '';
-    categoryError.value = '';
-    featuresError.value = '';
+
+    print("🧹 Form cleared");
   }
 
   Future<void> saveAllProducts() async {
+    if (!_validateForm()) {
+      print("❌ Form validation failed - cannot save");
+      Get.snackbar('Error', 'Please fill all required fields');
+      return;
+    }
+
     try {
       isSaving.value = true;
-      Get.snackbar('Success', 'All products saved successfully!');
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        Get.snackbar('Error', 'User not authenticated');
+        return;
+      }
+
+      print('🔍 Starting direct save process...');
+      print('🔍 Form data validation: ${_validateForm()}');
+
+      // Create product from current form data
+      final product = ProductServiceModel(
+        id: '', // Will be set by Firestore
+        name: nameCtrl.text.trim(),
+        description: descriptionCtrl.text.trim(),
+        price: priceCtrl.text.trim(),
+        category: '',
+        features: '',
+        userId: user.uid,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        selectedImage: selectedImage.value.isNotEmpty ? selectedImage.value : null,
+      );
+
+      print("📤 Saving product to Firestore: ${product.toMap()}");
+      print("🔍 User ID: ${user.uid}");
+      print("🔍 Collection: products_services");
+
+      // Save directly to Firestore
+      final docRef = await _firestore
+          .collection('products_services')
+          .add(product.toMap())
+          .timeout(const Duration(seconds: 30));
+
+      print("✅ Product saved successfully with ID: ${docRef.id}");
+
+      // Verify the document was actually saved
+      try {
+        final savedDoc = await docRef.get();
+        if (savedDoc.exists) {
+          print("✅ Document verified in Firestore");
+          print("📄 Document data: ${savedDoc.data()}");
+          print("🔍 Document path: ${savedDoc.reference.path}");
+        } else {
+          print("❌ Document not found in Firestore");
+        }
+      } catch (e) {
+        print("❌ Error verifying document: $e");
+      }
+
+      // Clear the form after successful save
+      _clearForm();
+      
+      // Refresh the products list from Firestore
+      await loadProductsServices();
+      
+      Get.snackbar('Success', 'Product saved successfully!');
+      print("✅ Product saved to Firestore with ID: ${docRef.id}");
+
+      // Refresh AI Assistant's knowledge data
+      try {
+        Get.find<AIAssistantController>().refreshKnowledgeData();
+      } catch (e) {
+        print('⚠️ Error refreshing AI knowledge: $e');
+      }
     } catch (e) {
-      print('Error saving products: $e');
-      Get.snackbar('Error', 'Failed to save products');
+      print('❌ Error saving product: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      print('❌ Error details: ${e.toString()}');
+      
+      if (e.toString().contains('permission')) {
+        Get.snackbar('Permission Error', 'You don\'t have permission to save products. Please check your Firebase rules.');
+      } else if (e.toString().contains('network')) {
+        Get.snackbar('Network Error', 'Please check your internet connection and try again.');
+      } else {
+        Get.snackbar('Error', 'Failed to save product: $e');
+      }
     } finally {
       isSaving.value = false;
     }
@@ -238,6 +384,7 @@ class ProductsServicesController extends GetxController {
   bool _validateForm() {
     bool isValid = true;
 
+    // Required fields
     if (nameCtrl.text.trim().isEmpty) {
       nameError.value = 'Name is required';
       isValid = false;
@@ -259,20 +406,7 @@ class ProductsServicesController extends GetxController {
       priceError.value = '';
     }
 
-    if (categoryCtrl.text.trim().isEmpty) {
-      categoryError.value = 'Category is required';
-      isValid = false;
-    } else {
-      categoryError.value = '';
-    }
-
-    if (featuresCtrl.text.trim().isEmpty) {
-      featuresError.value = 'Features are required';
-      isValid = false;
-    } else {
-      featuresError.value = '';
-    }
-
+    print("✅ Form validation result: $isValid");
     return isValid;
   }
 
@@ -300,19 +434,83 @@ class ProductsServicesController extends GetxController {
     }
   }
 
-  void validateCategory(String value) {
-    if (value.trim().isEmpty) {
-      categoryError.value = 'Category is required';
-    } else {
-      categoryError.value = '';
-    }
-  }
 
-  void validateFeatures(String value) {
-    if (value.trim().isEmpty) {
-      featuresError.value = 'Features are required';
-    } else {
-      featuresError.value = '';
+
+  Future<void> testFirestoreConnection() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        print('❌ No authenticated user found');
+        Get.snackbar('Error', 'No authenticated user found');
+        return;
+      }
+
+      print('🔍 Testing Firestore connection...');
+      print('🔍 User ID: ${user.uid}');
+
+      // Test 1: Simple document creation with timeout
+      final testData = {
+        'test': true,
+        'userId': user.uid,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      print('📝 Creating test document...');
+      final testDoc = await _firestore
+          .collection('test')
+          .add(testData)
+          .timeout(const Duration(seconds: 30));
+      print('✅ Test document created: ${testDoc.id}');
+
+      // Test 2: Try to create a product document
+      final testProduct = {
+        'name': 'Test Product',
+        'description': 'Test Description',
+        'price': '0.00',
+        'category': 'Test',
+        'features': 'Test Features',
+        'userId': user.uid,
+        'createdAt': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
+        'selectedImage': '',
+      };
+
+      print('📝 Creating test product...');
+      final productDoc = await _firestore
+          .collection('products_services')
+          .add(testProduct)
+          .timeout(const Duration(seconds: 30));
+      print('✅ Test product created: ${productDoc.id}');
+
+      // Test 3: Verify the document exists
+      final docSnapshot = await productDoc.get();
+      if (docSnapshot.exists) {
+        print('✅ Document verified in Firestore');
+        print('📄 Document data: ${docSnapshot.data()}');
+      } else {
+        print('❌ Document not found in Firestore');
+      }
+
+      // Clean up test data
+      await testDoc.delete();
+      await productDoc.delete();
+      print('🧹 Test data cleaned up');
+
+      print('🎉 All Firestore tests passed!');
+      Get.snackbar('Success', 'Firestore connection test passed!');
+
+    } catch (e) {
+      print('❌ Firestore test failed: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      print('❌ Error details: ${e.toString()}');
+      
+      if (e.toString().contains('timeout')) {
+        Get.snackbar('Error', 'Firestore connection timeout. Check your internet connection.');
+      } else if (e.toString().contains('permission')) {
+        Get.snackbar('Error', 'Permission denied. Check your Firestore rules.');
+      } else {
+        Get.snackbar('Error', 'Firestore test failed: $e');
+      }
     }
   }
 }

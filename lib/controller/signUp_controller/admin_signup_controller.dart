@@ -6,6 +6,7 @@ import 'package:minechat/core/services/firebase_auth_service.dart';
 import 'package:minechat/core/services/otp_service/otp_service.dart';
 import 'package:minechat/model/repositories/user_repository.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
+import 'package:minechat/controller/auth_controller/auth_controller.dart';
 
 class AdminSignupController extends GetxController {
   static AdminSignupController get to => Get.find();
@@ -270,12 +271,10 @@ class AdminSignupController extends GetxController {
         colorText: Colors.black,
       );
 
-      // Navigate to OTP screen; prevent OTP screen from re-sending immediately
-      Get.offAllNamed('/otp', arguments: {
-        'email': email,
-        'purpose': 'signup',
-        'skipInitialSend': true,
-      });
+      // Mark onboarding as completed and let AuthController handle navigation
+      final authController = Get.find<AuthController>();
+      authController.markOnboardingCompleted();
+      // AuthController will automatically navigate to the appropriate screen
     } catch (e) {
       _handleFirebaseErrors(e, 'Failed to create admin account');
     } finally {

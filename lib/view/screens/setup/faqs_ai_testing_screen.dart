@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
-import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
+import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
 import '../../../model/data/chat_mesage_model.dart';
 
-class ProductsServicesAITestingScreen extends StatefulWidget {
-  final ProductsServicesController productsController;
+class FAQsAITestingScreen extends StatefulWidget {
+  final FAQsController faqsController;
   
-  const ProductsServicesAITestingScreen({
-    super.key, 
-    required this.productsController,
-  });
+  const FAQsAITestingScreen({super.key, required this.faqsController});
 
   @override
-  State<ProductsServicesAITestingScreen> createState() => _ProductsServicesAITestingScreenState();
+  State<FAQsAITestingScreen> createState() => _FAQsAITestingScreenState();
 }
 
-class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITestingScreen> {
+class _FAQsAITestingScreenState extends State<FAQsAITestingScreen> {
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    // Refresh knowledge data when screen opens
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final aiController = Get.find<AIAssistantController>();
-      await aiController.refreshKnowledgeData();
+    // Refresh AI knowledge data when screen opens
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.find<AIAssistantController>().refreshKnowledgeData();
     });
   }
 
@@ -51,7 +47,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Testing - Products & Services'),
+        title: const Text('FAQ AI Testing'),
         backgroundColor: Colors.red,
         elevation: 0,
         leading: IconButton(
@@ -61,10 +57,10 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () async {
-              await controller.refreshKnowledgeData();
+            onPressed: () {
+              controller.refreshKnowledgeData();
             },
-            tooltip: 'Refresh Data',
+            tooltip: 'Refresh FAQ Data',
           ),
         ],
       ),
@@ -79,7 +75,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
               return _buildChatMessages(controller);
             }),
           ),
-
+          
           // Loading Indicator
           Obx(() {
             if (controller.isLoading.value) {
@@ -153,6 +149,14 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
                 ],
               ),
             ),
+          const SizedBox(height: 24),
+          Text(
+            'Ask me anything about your FAQs!',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: 16,
+            ),
+          ),
         ],
       ),
     );
@@ -177,7 +181,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
 
   Widget _buildMessageBubble(ChatMessageModel message, int index) {
     final isUser = message.type == MessageType.user;
-
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -247,7 +251,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
 
   Widget _buildMessageInput(AIAssistantController controller) {
     final textController = TextEditingController();
-
+    
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -273,7 +277,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
               child: TextField(
                 controller: textController,
                 decoration: const InputDecoration(
-                  hintText: 'Ask about products and services...',
+                  hintText: 'Ask about your FAQs...',
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
@@ -288,7 +292,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
               ),
             ),
           ),
-
+          
           // Send Button
           Obx(() => Container(
             decoration: BoxDecoration(
@@ -314,7 +318,7 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
-
+    
     if (difference.inMinutes < 1) {
       return 'Just now';
     } else if (difference.inMinutes < 60) {

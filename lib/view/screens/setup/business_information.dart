@@ -64,7 +64,7 @@ class BusinessInformation extends StatelessWidget {
         SignupTextField(
           labelText: 'Phone Number',
           hintText: 'Enter phone number',
-          prefixIcon: 'assets/icons/phone.png',
+                        prefixIcon: 'assets/images/icons/icon_phone.svg',
           // optional
           controller: controller.phoneCtrl,
           errorText: controller.phoneError,
