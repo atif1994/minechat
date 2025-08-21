@@ -36,7 +36,7 @@ class AppTheme {
 
   static final lightTheme = ThemeData(
     brightness: Brightness.light,
-    scaffoldBackgroundColor: AppColors.backgroundLight,
+    scaffoldBackgroundColor: const Color(0xFFF4F6FC),
     primaryColor: AppColors.primary,
     hintColor: AppColors.grey,
     textTheme: _baseTextTheme(AppColors.black),
@@ -64,7 +64,7 @@ class AppTheme {
 
   static final darkTheme = ThemeData(
     brightness: Brightness.dark,
-    scaffoldBackgroundColor: AppColors.backgroundDark,
+    scaffoldBackgroundColor: const Color(0xFF0A0A0A),
     primaryColor: AppColors.primaryDark,
     hintColor: AppColors.grey,
     textTheme: _baseTextTheme(AppColors.white),
