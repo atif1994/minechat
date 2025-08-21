@@ -125,7 +125,7 @@ class ProductsServicesController extends GetxController {
           retryCount++;
           print("❌ Attempt $retryCount failed: $e");
           if (retryCount >= maxRetries) {
-            throw e;
+            rethrow;
           }
           // Wait before retrying
           await Future.delayed(Duration(seconds: retryCount * 2));

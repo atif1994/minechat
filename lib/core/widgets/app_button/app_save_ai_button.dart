@@ -12,13 +12,13 @@ class TwoButtonsRow extends StatelessWidget {
   final VoidCallback onSecondTap;
 
   const TwoButtonsRow({
-    Key? key,
+    super.key,
     required this.isSaving,
     required this.onSave,
     required this.secondLabel,
     required this.secondIcon,
     required this.onSecondTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

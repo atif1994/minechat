@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
-import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
@@ -73,7 +72,9 @@ class AdminEditProfileController extends GetxController {
     if (_uid.isEmpty) return;
     if ((name == null || name.trim().isEmpty) &&
         (position == null || position.trim().isEmpty) &&
-        photoFile == null) return;
+        photoFile == null) {
+      return;
+    }
 
     if (name != null && !_validateName(name)) return;
     if (position != null && !_validatePosition(position)) return;
@@ -97,8 +98,9 @@ class AdminEditProfileController extends GetxController {
       if (name != null) userUpdate['name'] = name.trim();
       if (position != null) userUpdate['position'] = position.trim();
       if (newPhotoUrl != null) userUpdate['photoURL'] = newPhotoUrl;
-      if (userUpdate.isNotEmpty)
+      if (userUpdate.isNotEmpty) {
         await _repo.updateUserProfile(_uid, userUpdate);
+      }
 
       final adminUser = _repo.createAdminUser(
         uid: _uid,
