@@ -10,7 +10,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Initialize auth controller
-    final authController = Get.put(AuthController());
+    final authController = Get.find<AuthController>();
 
     return Scaffold(
       body: AppBackground(
