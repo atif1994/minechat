@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -10,25 +9,12 @@ import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/controller/auth_controller/auth_controller.dart';
 import 'package:minechat/core/services/otp_service/firestore_init.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
-import 'package:minechat/view/screens/account/account_screen.dart';
-import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
-import 'package:minechat/view/screens/edit_profile/admin_edit_profile_screen.dart';
-import 'package:minechat/view/screens/edit_profile/business_edit_profile_screen.dart';
-import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
-import 'package:minechat/view/screens/forgot_password/new_password_screen.dart';
-import 'package:minechat/view/screens/login/login_screen.dart';
-import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
-import 'package:minechat/view/screens/otp/otp_screen.dart';
-import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scree.dart';
-import 'package:minechat/view/screens/splash/splash_screen.dart';
-import 'package:minechat/view/screens/signUp/business_account_form.dart';
-import 'package:minechat/view/screens/signUp/admin_user_form.dart';
+import 'package:minechat/core/router/app_pages.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // Initialize collections in background without waiting
   unawaited(FirestoreInitializer.initializeCollections().catchError(
       (e) => print('Background Firebase Collection Initialization Error: $e')));
 
@@ -56,39 +42,8 @@ class MineChatApp extends StatelessWidget {
           darkTheme: AppTheme.darkTheme,
           themeMode:
               themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          initialRoute: '/',
-          getPages: [
-            GetPage(name: '/', page: () => SplashScreen()),
-            GetPage(name: '/onboarding', page: () => const OnboardingScreen()),
-            GetPage(name: '/login', page: () => const LoginScreen()),
-            GetPage(
-                name: '/business-signup',
-                page: () => const SignupBusinessAccount(email: '')),
-            GetPage(
-                name: '/admin-signup', page: () => const SignupAdminAccount()),
-            GetPage(name: '/otp', page: () => const OtpScreen()),
-            GetPage(
-                name: '/root-bottom-nav-bar',
-                page: () => RootBottomNavScreen()),
-            GetPage(name: '/dashboard', page: () => const DashboardScreen()),
-            GetPage(
-                name: '/forgot-password',
-                page: () => const ForgotPasswordScreen()),
-            GetPage(
-                name: '/new-password', page: () => const NewPasswordScreen()),
-            GetPage(name: '/account', page: () => const AccountScreen()),
-            GetPage(
-              name: '/admin-edit-profile',
-              page: () => AdminEditProfileScreen(),
-            ),
-            GetPage(
-              name: '/business-edit-profile',
-              page: () => BusinessEditProfileScreen(),
-            ),
-            // GetPage(
-            //     name: '/products-services',
-          ],
-          home: const SplashScreen(),
+          initialRoute: AppPages.initial,
+          getPages: AppPages.routes,
         ));
   }
 }

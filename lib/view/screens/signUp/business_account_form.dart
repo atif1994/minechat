@@ -59,6 +59,7 @@ class SignupBusinessAccount extends StatelessWidget {
             SignupTextField(
               label: AppTexts.signupBusinessPhoneNumberLabel,
               hintText: AppTexts.signupBusinessPhoneNumberHintText,
+              keyboardType: TextInputType.number,
               prefixIcon: AppAssets.signupIconPhone,
               controller: controller.phoneCtrl,
               errorText: controller.phoneError,
