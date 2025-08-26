@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
+import '../../../core/constants/app_colors/app_colors.dart';
+import '../../../core/widgets/appbar/appbar.dart';
 import '../../../model/data/chat_mesage_model.dart';
 
 class ProductsServicesAITestingScreen extends StatefulWidget {
@@ -50,24 +52,8 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
     final controller = Get.find<AIAssistantController>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Testing - Products & Services'),
-        backgroundColor: Colors.red,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Get.back(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () async {
-              await controller.refreshKnowledgeData();
-            },
-            tooltip: 'Refresh Data',
-          ),
-        ],
-      ),
+      backgroundColor: AppColors.g3,
+      appBar:  CustomAppBar(title: "AI Testing"),
       body: Column(
         children: [
           // Chat Messages Area
@@ -251,15 +237,15 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, -1),
-          ),
-        ],
+        color: AppColors.g3,
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.grey.withOpacity(0.1),
+        //     spreadRadius: 1,
+        //     blurRadius: 3,
+        //     offset: const Offset(0, -1),
+        //   ),
+        // ],
       ),
       child: Row(
         children: [
@@ -273,9 +259,10 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
               child: TextField(
                 controller: textController,
                 decoration: const InputDecoration(
-                  hintText: 'Ask about products and services...',
+                  hintText: 'Send a message',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                  EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 maxLines: null,
                 textInputAction: TextInputAction.send,
@@ -288,24 +275,31 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
               ),
             ),
           ),
-
-          // Send Button
+          SizedBox(width: 10,),
           Obx(() => Container(
             decoration: BoxDecoration(
-              color: controller.isLoading.value ? Colors.grey : Colors.blue,
+              color: controller.isLoading.value ? Colors.grey : AppColors.primary,
               shape: BoxShape.circle,
             ),
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: controller.isLoading.value ? null : () {
-                final message = textController.text.trim();
-                if (message.isNotEmpty) {
-                  controller.sendMessage(message);
-                  textController.clear();
-                }
-              },
+            child: SizedBox(
+              width: 36, // button width
+              height: 36, // button height
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 18), // smaller icon
+                padding: EdgeInsets.zero, // remove extra padding
+                onPressed: controller.isLoading.value
+                    ? null
+                    : () {
+                  final message = textController.text.trim();
+                  if (message.isNotEmpty) {
+                    controller.sendMessage(message);
+                    textController.clear();
+                  }
+                },
+              ),
             ),
           )),
+
         ],
       ),
     );

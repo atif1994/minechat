@@ -29,32 +29,41 @@ class AIKnowledgeScreen extends StatelessWidget {
     final faqsController = Get.put(FAQsController());
     final knowledgeController = Get.put(AIKnowledgeController());
 
+    // Create a specific ScrollController for the horizontal tabs
+    final ScrollController tabScrollController = ScrollController();
+
     return Scaffold(
+      backgroundColor:AppColors.g1 ,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppSpacing.vertical(context, 0.02),
 
           // Top Tabs
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Container(
-height: AppResponsive.screenHeight(context) * 0.04,
-              width: AppResponsive.screenWidth(context),
-              decoration: BoxDecoration(
-                color: AppColors.g2
-
-              ),
-              child: Padding(
-                padding: const EdgeInsets.only(left: 16),
-                child: Row(
-                  children: [
-                    _buildTab('Business Information', 0, knowledgeController,context),
-                    const SizedBox(width: 20),
-                    _buildTab('Products & Services', 1, knowledgeController,context),
-                    const SizedBox(width: 20),
-                    _buildTab('FAQs', 2, knowledgeController,context),
-                  ],
+          Scrollbar(
+            controller: tabScrollController, // Use specific controller
+            thumbVisibility: true,
+            trackVisibility: true,
+            child: SingleChildScrollView(
+              controller: tabScrollController, // Use specific controller
+              scrollDirection: Axis.horizontal,
+              child: Container(
+                height: AppResponsive.screenHeight(context) * 0.04,
+                width: AppResponsive.screenWidth(context),
+                decoration: BoxDecoration(
+                  color: AppColors.g2,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Row(
+                    children: [
+                      _buildTab('Business Information', 0, knowledgeController, context),
+                      const SizedBox(width: 20),
+                      _buildTab('Products & Services', 1, knowledgeController, context),
+                      const SizedBox(width: 20),
+                      _buildTab('FAQs', 2, knowledgeController, context),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -67,11 +76,11 @@ height: AppResponsive.screenHeight(context) * 0.04,
             child: Obx(() {
               return IndexedStack(
                 index: knowledgeController.selectedTabIndex.value,
-                              children: [
-                BusinessInformation(controller: businessInfoController),
-                ProductsServicesScreen(controller: productsServicesController),
-                FAQsScreen(controller: faqsController),
-              ],
+                children: [
+                  BusinessInformation(controller: businessInfoController),
+                  ProductsServicesScreen(controller: productsServicesController),
+                  FAQsScreen(controller: faqsController),
+                ],
               );
             }),
           ),

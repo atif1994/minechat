@@ -33,6 +33,8 @@ class FAQsController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    print('🔍 FAQsController initialized');
+    print('🔍 Current user ID: ${getCurrentUserId()}');
     loadFAQs();
   }
 

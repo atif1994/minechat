@@ -1,7 +1,10 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/view/screens/setup/products_services_ai_testing_screen.dart';
@@ -17,12 +20,12 @@ class ProductsServicesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.g1,
       body: SingleChildScrollView(
         padding: AppSpacing.all(context, factor: 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 40),
 
             // Header
             Text(
@@ -33,8 +36,8 @@ class ProductsServicesScreen extends StatelessWidget {
                 color: Colors.grey[800],
               ),
             ),
-            AppSpacing.vertical(context, 0.02),
 
+            AppSpacing.vertical(context, 0.02),
             // Name Field
             SignupTextField(
               label: 'Name',
@@ -44,7 +47,7 @@ class ProductsServicesScreen extends StatelessWidget {
               errorText: controller.nameError,
               onChanged: (val) => controller.validateName(val),
             ),
-            AppSpacing.vertical(context, 0.01),
+            AppSpacing.vertical(context, 0.02),
             
             // Description Field
             SignupTextField(
@@ -55,7 +58,7 @@ class ProductsServicesScreen extends StatelessWidget {
               errorText: controller.descriptionError,
               onChanged: (val) => controller.validateDescription(val),
             ),
-            AppSpacing.vertical(context, 0.01),
+            AppSpacing.vertical(context, 0.02),
             
             // Price Field
             SignupTextField(
@@ -135,6 +138,7 @@ class ProductsServicesScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Title + Clear button
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -146,101 +150,88 @@ class ProductsServicesScreen extends StatelessWidget {
                 color: Colors.grey[800],
               ),
             ),
-            // Clear button (X icon)
+            // Clear button (only show when image is selected)
             Obx(() => controller.selectedImage.value.isNotEmpty
-              ? GestureDetector(
-                  onTap: () => controller.selectedImage.value = '',
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.blue[300]!, style: BorderStyle.solid),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.close,
-                      color: Colors.blue[600],
-                      size: 16,
-                    ),
+                ? GestureDetector(
+              onTap: () => controller.selectedImage.value = '',
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: Colors.blue[300]!,
+                    style: BorderStyle.solid,
                   ),
-                )
-              : const SizedBox.shrink()
-            ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.close,
+                  color: Colors.blue[600],
+                  size: 16,
+                ),
+              ),
+            )
+                : const SizedBox.shrink()),
           ],
         ),
+
         const SizedBox(height: 8),
-        
-        // Image Upload Area
+
+        // Upload area with dashed border
         GestureDetector(
-          onTap: () => _showImageUploadOptions(context),
-          child: Obx(() => Container(
-            width: double.infinity,
-            height: 120,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.red[300]!,
-                style: BorderStyle.solid,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.pink[50],
-            ),
-            child: controller.selectedImage.value.isNotEmpty
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
+          onTap: () {
+            if (controller.selectedImage.value.isEmpty) {
+              _showImageUploadOptions(context);
+            }
+          },
+          child: Obx(
+                () => DottedBorder(
+              color: AppColors.primary,
+              strokeWidth: 2,
+              dashPattern: const [6, 3],
+              borderType: BorderType.RRect,
+              radius: const Radius.circular(12),
+              child: Container(
+                width: double.infinity,
+                height: 160, // unified height for upload box
+                child: controller.selectedImage.value.isNotEmpty
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
                   child: Image.file(
                     File(controller.selectedImage.value),
                     width: double.infinity,
-                    height: 120,
-                    fit: BoxFit.cover,
+                    height: double.infinity,
+                    fit: BoxFit.cover, // ensures full fill
                   ),
                 )
-              : Stack(
+                    : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Background image icon
-                    Center(
-                      child: Icon(
-                        Icons.landscape,
-                        color: Colors.grey[400],
-                        size: 60,
-                      ),
+                    SvgPicture.asset(
+                      AppAssets.uploadFileProduct,
+                      height: 80,
+                      width: 80,
                     ),
-                    // Upload arrow icon
-                    Positioned(
-                      bottom: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.red[400],
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.keyboard_arrow_up,
-                          color: Colors.white,
-                          size: 16,
+                    const SizedBox(height: 12),
+                    // Only show choose button when no image
+                    Container(
+                      width: 180,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: TextButton(
+                        onPressed: () => _showImageUploadOptions(context),
+                        child: const Text(
+                          'Choose photo',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),
                   ],
                 ),
-          )),
-        ),
-        const SizedBox(height: 8),
-        
-        // Choose photo button
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.purple[600],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: TextButton(
-            onPressed: () => _showImageUploadOptions(context),
-            child: Text(
-              'Choose photo',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ),

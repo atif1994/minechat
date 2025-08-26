@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
+import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
@@ -18,6 +19,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(AIAssistantController());
+    final channelController = Get.put(ChannelController());
 
     final indexMap = {
       "AI Assistant": 0,
@@ -26,6 +28,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
     };
 
     return Scaffold(
+      backgroundColor:AppColors.g1 ,
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -43,7 +46,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
               children: [
                 _buildAIAssistantForm(controller, context),
                 AIKnowledgeScreen(controller: controller),
-                ChannelsScreen(controller: controller),
+                ChannelsScreen(),
               ],
             )),
           ),

@@ -1,29 +1,32 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
+import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 import 'package:minechat/view/screens/setup/faqs_ai_testing_screen.dart';
 
 import '../../../core/constants/app_assets/app_assets.dart';
+import '../../../core/constants/app_colors/app_colors.dart';
 import '../../../model/data/faq_model.dart';
 
 class FAQsScreen extends StatelessWidget {
   final FAQsController controller;
-  
+
   const FAQsScreen({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.g1,
       body: SingleChildScrollView(
         padding: AppSpacing.all(context, factor: 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
-
             // File Upload Section
             _buildFileUploadSection(context),
             AppSpacing.vertical(context, 0.04),
@@ -55,7 +58,7 @@ class FAQsScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                
+
                 // Test AI Button
                 Expanded(
                   child: Container(
@@ -68,8 +71,10 @@ class FAQsScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextButton.icon(
-                      onPressed: () => Get.to(() => FAQsAITestingScreen(faqsController: controller)),
-                      icon: Icon(Icons.smart_toy, color: Colors.white, size: 20),
+                      onPressed: () => Get.to(() =>
+                          FAQsAITestingScreen(faqsController: controller)),
+                      icon:
+                          Icon(Icons.smart_toy, color: Colors.white, size: 20),
                       label: Text(
                         'Test AI',
                         style: TextStyle(
@@ -95,132 +100,131 @@ class FAQsScreen extends StatelessWidget {
         // Header
         Text(
           'Frequently Asked Questions',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
+          style: AppTextStyles.heading(context),
         ),
         AppSpacing.vertical(context, 0.01),
-        
-        // Instruction text
-        RichText(
-          text: TextSpan(
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-            children: [
-              TextSpan(text: 'Upload any file to save in Firebase. '),
-              TextSpan(
-                text: 'Text files (.txt, .csv) will be processed for FAQs.',
-                style: TextStyle(
-                  color: Colors.blue[600],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+
+        // Instruction
+        Text(
+          "Upload any file to save in Firebase.",
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
           ),
         ),
+
         AppSpacing.vertical(context, 0.02),
 
         // File Upload Area
         GestureDetector(
           onTap: () => _pickFile(context),
-          child: Container(
-            width: double.infinity,
-            height: 120,
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: Colors.grey[400]!,
-                style: BorderStyle.solid,
-                width: 2,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              color: Colors.grey[50],
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.upload_file,
-                  color: Colors.grey[400],
-                  size: 40,
+          child: DottedBorder(
+            color: Colors.grey[400]!,
+            strokeWidth: 2,
+            dashPattern: const [6, 3],
+            borderType: BorderType.RRect,
+            radius: const Radius.circular(12),
+            child: Obx(() {
+              final name = controller.lastPickedFileName.value;
+
+              return Container(
+                width: double.infinity,
+                height: 140,
+                decoration: BoxDecoration(
+                  color: AppColors.g1,
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Drag and drop any file here or click to browse',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                child: name.isEmpty
+                    ? Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.asset(
+                      AppAssets.uploadFile,
+                      height: 50,
+                      width: 50,
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: 180,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: TextButton(
+                        onPressed: controller.isUploading.value
+                            ? null
+                            : () => _pickFile(context),
+                        child: Text(
+                          controller.isUploading.value
+                              ? 'Uploading...'
+                              : 'Upload file',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+                    : Stack(
+                  children: [
+                    // File name centered
+                    Center(
+                      child: Text(
+                        name,
+                        style: TextStyle(
+                          color: Colors.green[800],
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                    // Close button at top-right
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: GestureDetector(
+                        onTap: () => controller.clearFileSelection(),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.primary,
+                            border: Border.all(
+                              color: Colors.red[300]!,
+                              width: 1.2,
+                            ),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 3,
+                                offset: Offset(1, 1),
+                              )
+                            ],
+                          ),
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            }),
           ),
         ),
-        AppSpacing.vertical(context, 0.02),
-
-        // Upload File Button
-        Obx(() => Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.pink[400]!, Colors.red[400]!],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: TextButton(
-            onPressed: controller.isUploading.value ? null : () => _pickFile(context),
-            child: Text(
-              controller.isUploading.value ? 'Uploading...' : 'Upload file',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        )),
-
-        // Last picked file name
-        Obx(() {
-          final name = controller.lastPickedFileName.value;
-          if (name.isEmpty) return const SizedBox.shrink();
-          return Container(
-            margin: const EdgeInsets.only(top: 8.0),
-            padding: const EdgeInsets.all(8.0),
-            decoration: BoxDecoration(
-              color: Colors.green[50],
-              border: Border.all(color: Colors.green[200]!),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.green, size: 16),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Selected: $name',
-                    style: TextStyle(
-                      color: Colors.green[700], 
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () => controller.clearFileSelection(),
-                  child: Icon(Icons.close, color: Colors.green[600], size: 16),
-                ),
-              ],
-            ),
-          );
-        }),
       ],
     );
   }
+
+
 
   Widget _buildIndividualFAQSection(BuildContext context) {
     return Column(
@@ -239,7 +243,9 @@ class FAQsScreen extends StatelessWidget {
 
         // Existing FAQs List
         Obx(() => Column(
-          children: controller.faqs.map((faq) => _buildFAQCard(faq, context)).toList(),
+          children: controller.faqs
+              .map((faq) => _buildFAQCard(faq, context))
+              .toList(),
         )),
 
         // Individual FAQ Form
@@ -253,7 +259,7 @@ class FAQsScreen extends StatelessWidget {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: AppColors.g1,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
       ),
@@ -270,7 +276,7 @@ class FAQsScreen extends StatelessWidget {
             onChanged: (val) => controller.validateQuestion(val),
           ),
           AppSpacing.vertical(context, 0.01),
-          
+
           // Answer Field
           SignupTextField(
             label: 'Answer',
@@ -311,7 +317,7 @@ class FAQsScreen extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: AppColors.g1,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
       ),
@@ -335,7 +341,7 @@ class FAQsScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Action Buttons
           Row(
             children: [
@@ -343,14 +349,16 @@ class FAQsScreen extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: () => _showEditFAQDialog(context, faq),
                   icon: Icon(Icons.edit, color: Colors.blue, size: 16),
-                  label: Text('Edit', style: TextStyle(color: Colors.blue, fontSize: 12)),
+                  label: Text('Edit',
+                      style: TextStyle(color: Colors.blue, fontSize: 12)),
                 ),
               ),
               Expanded(
                 child: TextButton.icon(
                   onPressed: () => controller.deleteFAQ(faq.id),
                   icon: Icon(Icons.delete, color: Colors.red, size: 16),
-                  label: Text('Remove', style: TextStyle(color: Colors.red, fontSize: 12)),
+                  label: Text('Remove',
+                      style: TextStyle(color: Colors.red, fontSize: 12)),
                 ),
               ),
             ],
@@ -363,7 +371,7 @@ class FAQsScreen extends StatelessWidget {
   void _pickFile(BuildContext context) async {
     try {
       print('🔍 Starting file picker...');
-      
+
       // Try with any file type first to see if file picker works at all
       FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.any,
@@ -371,21 +379,24 @@ class FAQsScreen extends StatelessWidget {
       );
 
       print('🔍 File picker completed');
-      print('🔍 Result: ${result != null ? 'File selected' : 'No file selected'}');
-      
+      print(
+          '🔍 Result: ${result != null ? 'File selected' : 'No file selected'}');
+
       if (result != null && result.files.isNotEmpty) {
         PlatformFile file = result.files.first;
         print('🔍 Selected file: ${file.name}');
         print('🔍 File path: ${file.path}');
         print('🔍 File size: ${file.size}');
         print('🔍 File extension: ${file.extension}');
-        
+
         if (file.path != null && file.path!.isNotEmpty) {
           controller.selectedFile.value = file.path!;
           controller.lastPickedFileName.value = file.name;
-          print('🔍 File path set to controller: ${controller.selectedFile.value}');
-          print('🔍 File name set to controller: ${controller.lastPickedFileName.value}');
-          
+          print(
+              '🔍 File path set to controller: ${controller.selectedFile.value}');
+          print(
+              '🔍 File name set to controller: ${controller.lastPickedFileName.value}');
+
           print('🔍 Calling uploadFAQFile...');
           await controller.uploadFAQFile();
         } else {
@@ -409,7 +420,7 @@ class FAQsScreen extends StatelessWidget {
     } catch (e) {
       print('❌ File picker error: $e');
       print('❌ Error type: ${e.runtimeType}');
-      
+
       Get.snackbar(
         'Error',
         'Failed to pick file: $e',
@@ -447,7 +458,7 @@ class FAQsScreen extends StatelessWidget {
                 onChanged: (val) => controller.validateQuestion(val),
               ),
               AppSpacing.vertical(context, 0.01),
-              
+
               // Answer Field
               SignupTextField(
                 label: 'Answer',
