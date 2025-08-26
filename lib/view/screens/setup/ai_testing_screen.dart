@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 import '../../../model/data/chat_mesage_model.dart';
-
 
 class AITestingScreen extends StatefulWidget {
   const AITestingScreen({super.key});
@@ -36,32 +37,22 @@ class _AITestingScreenState extends State<AITestingScreen> {
     final controller = Get.find<AIAssistantController>();
 
     return Scaffold(
+      backgroundColor: AppColors.g3,
       appBar: AppBar(
-        title: const Text('AI Testing'),
-        backgroundColor: Colors.red,
+        title: Text(
+          'AI Testing',
+          style:
+              AppTextStyles.heading(context).copyWith(color: AppColors.black),
+        ),
+        backgroundColor: AppColors.g1,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: Icon(
+            Icons.arrow_back,
+            color: AppColors.black,
+          ),
           onPressed: () => Get.back(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              // Test OpenAI connection
-              controller.sendMessage("Hello, can you introduce yourself?");
-            },
-            tooltip: 'Test AI Connection',
-          ),
-          IconButton(
-            icon: const Icon(Icons.lightbulb_outline),
-            onPressed: () {
-              // Test knowledge integration
-              controller.sendMessage("Tell me about your business information and products");
-            },
-            tooltip: 'Test Knowledge Integration',
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -105,7 +96,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
             }
             return const SizedBox.shrink();
           }),
-          
+
           // Message Input Area
           _buildMessageInput(controller),
         ],
@@ -118,7 +109,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-
           if (controller.currentAIAssistant.value != null)
             Container(
               padding: const EdgeInsets.all(16),
@@ -177,7 +167,8 @@ class _AITestingScreenState extends State<AITestingScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!isUser) ...[
@@ -198,8 +189,12 @@ class _AITestingScreenState extends State<AITestingScreen> {
               decoration: BoxDecoration(
                 color: isUser ? Colors.blue[600] : Colors.grey[100],
                 borderRadius: BorderRadius.circular(18).copyWith(
-                  bottomLeft: isUser ? const Radius.circular(18) : const Radius.circular(4),
-                  bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(18),
+                  bottomLeft: isUser
+                      ? const Radius.circular(18)
+                      : const Radius.circular(4),
+                  bottomRight: isUser
+                      ? const Radius.circular(4)
+                      : const Radius.circular(18),
                 ),
               ),
               child: Column(
@@ -247,27 +242,18 @@ class _AITestingScreenState extends State<AITestingScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, -1),
-          ),
-        ],
+        color: AppColors.g3,
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Colors.grey.withOpacity(0.1),
+        //     spreadRadius: 1,
+        //     blurRadius: 3,
+        //     offset: const Offset(0, -1),
+        //   ),
+        // ],
       ),
       child: Row(
         children: [
-          // Emoji Button
-          // IconButton(
-          //   icon: const Icon(Icons.emoji_emotions_outlined),
-          //   onPressed: () {
-          //     // TODO: Implement emoji picker
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-
           // Message Input Field
           Expanded(
             child: Container(
@@ -280,7 +266,8 @@ class _AITestingScreenState extends State<AITestingScreen> {
                 decoration: const InputDecoration(
                   hintText: 'Send a message',
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
                 maxLines: null,
                 textInputAction: TextInputAction.send,
@@ -293,53 +280,31 @@ class _AITestingScreenState extends State<AITestingScreen> {
               ),
             ),
           ),
-
-          // const SizedBox(width: 8),
-          //
-          // // Attachment Button
-          // IconButton(
-          //   icon: const Icon(Icons.attach_file),
-          //   onPressed: () {
-          //     // TODO: Implement file attachment
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-          //
-          // // Image Button
-          // IconButton(
-          //   icon: const Icon(Icons.image),
-          //   onPressed: () {
-          //     // TODO: Implement image picker
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-          //
-          // // Voice Button
-          // IconButton(
-          //   icon: const Icon(Icons.mic),
-          //   onPressed: () {
-          //     // TODO: Implement voice recording
-          //   },
-          //   color: Colors.grey[600],
-          // ),
-
-          // Send Button
+SizedBox(width: 10,),
           Obx(() => Container(
             decoration: BoxDecoration(
-              color: controller.isLoading.value ? Colors.grey : Colors.blue,
+              color: controller.isLoading.value ? Colors.grey : AppColors.primary,
               shape: BoxShape.circle,
             ),
-            child: IconButton(
-              icon: const Icon(Icons.send, color: Colors.white),
-              onPressed: controller.isLoading.value ? null : () {
-                final message = textController.text.trim();
-                if (message.isNotEmpty) {
-                  controller.sendMessage(message);
-                  textController.clear();
-                }
-              },
+            child: SizedBox(
+              width: 36, // button width
+              height: 36, // button height
+              child: IconButton(
+                icon: const Icon(Icons.send, color: Colors.white, size: 18), // smaller icon
+                padding: EdgeInsets.zero, // remove extra padding
+                onPressed: controller.isLoading.value
+                    ? null
+                    : () {
+                  final message = textController.text.trim();
+                  if (message.isNotEmpty) {
+                    controller.sendMessage(message);
+                    textController.clear();
+                  }
+                },
+              ),
             ),
           )),
+
         ],
       ),
     );

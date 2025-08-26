@@ -42,59 +42,60 @@ class SignupTextField extends StatelessWidget {
     final isDark = themeController.isDarkMode;
     final displayLabel = label ?? labelText ?? '';
     
-    return Obx(() => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (displayLabel.isNotEmpty)
-              Text(displayLabel,
-                  style: AppTextStyles.bodyText(context).copyWith(
-                      fontSize: AppResponsive.scaleSize(context, 14),
-                      fontWeight: FontWeight.w500)),
-            if (displayLabel.isNotEmpty)
-              AppSpacing.vertical(context, 0.005),
-            TextField(
-              controller: controller,
-              onChanged: onChanged,
-              obscureText: obscureText,
-              keyboardType: keyboardType,
-              decoration: InputDecoration(
-                hintText: hintText,
-                hintStyle: AppTextStyles.hintText(context),
-                prefixIcon: prefixIcon != null ? Padding(
-                  padding: EdgeInsets.all(AppResponsive.scaleSize(context, 10)),
-                  child: SvgPicture.asset(
-                    prefixIcon!,
-                    width: AppResponsive.iconSize(context),
-                    height: AppResponsive.iconSize(context),
-                    color: isDark ? Colors.white : Colors.black,
-                  ),
-                ) : null,
-                suffixIcon: suffixIcon != null
-                    ? GestureDetector(
-                        onTap: onSuffixTap,
-                        child: suffixIcon,
-                      )
-                    : null,
-                filled: true,
-                fillColor:isDark? AppColors.black:Color(0xfffafbfd),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppResponsive.radius(context)),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(AppResponsive.radius(context)),
-                  borderSide:
-                      const BorderSide(color: AppColors.primary, width: 2),
-                ),
-              ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (displayLabel.isNotEmpty)
+          Text(displayLabel,
               style: AppTextStyles.bodyText(context).copyWith(
                   fontSize: AppResponsive.scaleSize(context, 14),
-                  fontWeight: FontWeight.w500),
+                  fontWeight: FontWeight.w500)),
+        if (displayLabel.isNotEmpty)
+          AppSpacing.vertical(context, 0.005),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          obscureText: obscureText,
+          keyboardType: keyboardType,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: AppTextStyles.hintText(context),
+            prefixIcon: prefixIcon != null ? Padding(
+              padding: EdgeInsets.all(AppResponsive.scaleSize(context, 10)),
+              child: SvgPicture.asset(
+                prefixIcon!,
+                width: AppResponsive.iconSize(context),
+                height: AppResponsive.iconSize(context),
+                color: isDark ? Colors.white : Colors.black,
+              ),
+            ) : null,
+            suffixIcon: suffixIcon != null
+                ? GestureDetector(
+                    onTap: onSuffixTap,
+                    child: suffixIcon,
+                  )
+                : null,
+            filled: true,
+            fillColor:isDark? AppColors.black:Color(0xfffafbfd),
+            enabledBorder: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(AppResponsive.radius(context)),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
-            if (errorText != null && errorText!.value.isNotEmpty)
-              Padding(
+            focusedBorder: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(AppResponsive.radius(context)),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 2),
+            ),
+          ),
+          style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: AppResponsive.scaleSize(context, 14),
+              fontWeight: FontWeight.w500),
+        ),
+        if (errorText != null)
+          Obx(() => errorText!.value.isNotEmpty
+            ? Padding(
                 padding: AppSpacing.symmetric(context, h: 0, v: 0.005),
                 child: Text(
                   errorText!.value,
@@ -102,8 +103,9 @@ class SignupTextField extends StatelessWidget {
                       fontSize: AppResponsive.scaleSize(context, 12),
                       color: AppColors.error),
                 ),
-              ),
-          ],
-        ));
+              )
+            : const SizedBox.shrink()),
+      ],
+    );
   }
 }
