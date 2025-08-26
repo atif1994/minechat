@@ -17,7 +17,7 @@ class SplashScreen extends StatelessWidget {
         child: AppAnimatedLogo(
           onAnimationEnd: () {
             // Check authentication state and navigate accordingly
-            authController.checkAuthState();
+            authController.resolveStartupRoute();
           },
         ),
       ),

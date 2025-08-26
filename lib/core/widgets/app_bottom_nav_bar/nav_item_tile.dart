@@ -24,7 +24,9 @@ class NavItemTile extends StatelessWidget {
     required this.inactiveColor,
   });
 
-  bool get _isSvg => item.iconPath.toLowerCase().endsWith('.svg');
+  bool get _hasBuilder => item.iconBuilder != null;
+
+  bool get _isSvg => (item.iconPath ?? '').toLowerCase().endsWith('.svg');
 
   @override
   Widget build(BuildContext context) {
@@ -59,11 +61,14 @@ class NavItemTile extends StatelessWidget {
   }
 
   Widget _buildIcon() {
-    if (_isSvg) {
-      final path = active && item.activeIconPath != null
-          ? item.activeIconPath!
-          : item.iconPath;
+    if (_hasBuilder) {
+      return item.iconBuilder!(active); // ← dynamic icon
+    }
+    final path = active && item.activeIconPath != null
+        ? item.activeIconPath!
+        : (item.iconPath ?? '');
 
+    if (_isSvg) {
       final tint = (active && item.activeIconPath == null)
           ? const ColorFilter.mode(Color(0xFFB01D47), BlendMode.srcIn)
           : (active
@@ -77,15 +82,10 @@ class NavItemTile extends StatelessWidget {
         colorFilter: tint,
       );
     } else {
-      final path = active && item.activeIconPath != null
-          ? item.activeIconPath!
-          : item.iconPath;
-
       return Image.asset(
         path,
         width: iconSize,
         height: iconSize,
-        // Note: applying color to PNG works best for monochrome assets.
         color: (active && item.activeIconPath == null)
             ? const Color(0xFFB01D47)
             : (active ? null : const Color(0xFFB9C0CC)),

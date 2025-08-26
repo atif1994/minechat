@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/auth_controller/auth_controller.dart';
+import 'package:minechat/core/router/app_routes.dart';
 import 'package:minechat/core/services/otp_service/otp_service.dart';
 
 class OtpController extends GetxController {
@@ -120,7 +122,8 @@ class OtpController extends GetxController {
         });
       } else {
         // Signup flow: continue to your home/root
-        Get.offAllNamed('/root-bottom-nav-bar');
+        AuthController.suppressGlobalRouting.value = false;
+        Get.offAllNamed(AppRoutes.rootBottomNav);
       }
     } catch (e) {
       Get.snackbar('Verification Failed', e.toString(),

@@ -113,6 +113,7 @@ class DashboardAppBar extends StatelessWidget implements PreferredSizeWidget {
                       onTap: onTapAvatar,
                       child: CircleAvatar(
                         radius: avatar / 2,
+                        backgroundColor: Colors.transparent,
                         backgroundImage: avatarImage,
                       ),
                     ),

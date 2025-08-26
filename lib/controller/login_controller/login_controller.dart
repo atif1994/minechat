@@ -110,10 +110,25 @@ class LoginController extends GetxController {
   // Computed: can submit?
   bool get canSubmit =>
       emailError.value.isEmpty &&
-          passwordError.value.isEmpty &&
-          emailCtrl.text.trim().isNotEmpty &&
-          passwordCtrl.text.isNotEmpty &&
-          !isLoading.value;
+      passwordError.value.isEmpty &&
+      emailCtrl.text.trim().isNotEmpty &&
+      passwordCtrl.text.isNotEmpty &&
+      !isLoading.value;
+
+  Future<void> hydrateFromAuthIfNeeded() async {
+    if (currentUser.value != null) return; // already hydrated
+    final u = _authService.currentUser;
+    if (u == null) {
+      currentUser.value = null;
+      return;
+    }
+    try {
+      final data = await _userRepository.getUser(u.uid);
+      currentUser.value = data; // <- drives AccountProfileCard
+    } catch (_) {
+      // keep silent or show a snackbar if you prefer
+    }
+  }
 
   // ====== AUTH FLOWS (same as yours) ======
 
@@ -139,7 +154,7 @@ class LoginController extends GetxController {
 
       if (userCredential.user != null) {
         final userData =
-        await _userRepository.getUser(userCredential.user!.uid);
+            await _userRepository.getUser(userCredential.user!.uid);
 
         if (userData != null) {
           currentUser.value = userData;
@@ -230,7 +245,7 @@ class LoginController extends GetxController {
 
       if (e.toString().contains('ApiException: 10')) {
         errorMessage =
-        'Google Sign-In configuration error. Please check Firebase setup.';
+            'Google Sign-In configuration error. Please check Firebase setup.';
       } else if (e.toString().contains('network_error')) {
         errorMessage = 'Network error. Please check your internet connection.';
       } else if (e.toString().contains('sign_in_canceled')) {
