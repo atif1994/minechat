@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
+import 'package:minechat/controller/subscription_controller/subscription_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/controller/auth_controller/auth_controller.dart';
 import 'package:minechat/core/services/otp_service/firestore_init.dart';
@@ -24,6 +25,7 @@ void main() async {
   Get.put(LoginController());
   Get.put(DashboardController());
   Get.put(AuthController());
+  Get.put(SubscriptionController());
 
   runApp(const MineChatApp());
 }
