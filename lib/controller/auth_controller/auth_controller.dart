@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
 import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scree.dart';
@@ -8,87 +9,54 @@ import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scr
 class AuthController extends GetxController {
   final FirebaseAuthService _authService = FirebaseAuthService();
   final GetStorage _storage = GetStorage();
-  
+
   // Observable variables
   var isLoading = false.obs;
   var isAuthenticated = false.obs;
   var currentUser = Rx<User?>(null);
-  
+
   // Storage keys
   static const String _hasCompletedOnboardingKey = 'hasCompletedOnboarding';
   static const String _hasCompletedSetupKey = 'hasCompletedSetup';
 
+  static final RxBool suppressGlobalRouting = false.obs;
+
   @override
   void onInit() {
     super.onInit();
-    _initializeAuth();
-  }
-
-  /// Initialize authentication state
-  void _initializeAuth() {
-    // Listen to authentication state changes
+    // Only keep auth state in sync; do NOT navigate here
     _authService.authStateChanges.listen((User? user) {
       currentUser.value = user;
       isAuthenticated.value = user != null;
-      
+
+      // ❌ DO NOT navigate here if we are in a special flow (e.g., OTP)
+      if (suppressGlobalRouting.value) return;
+
+      // hydrate LoginController's currentUser whenever auth changes
+      final login = Get.find<LoginController>();
       if (user != null) {
-        _handleAuthenticatedUser();
+        login.hydrateFromAuthIfNeeded();
       } else {
-        _handleUnauthenticatedUser();
+        login.currentUser.value = null;
       }
     });
   }
 
-  /// Handle authenticated user flow
-  void _handleAuthenticatedUser() {
-    final hasCompletedOnboarding = _storage.read(_hasCompletedOnboardingKey) ?? false;
-    final hasCompletedSetup = _storage.read(_hasCompletedSetupKey) ?? false;
-    
-    // Use Future.delayed to ensure GetMaterialApp is ready
-    Future.delayed(const Duration(milliseconds: 100), () {
-      if (hasCompletedOnboarding && hasCompletedSetup) {
-        // User has completed onboarding and setup - go to main app
-        Get.offAll(() => RootBottomNavScreen());
-      } else if (hasCompletedOnboarding) {
-        // User has completed onboarding but not setup - go to setup flow
-        // You can navigate to your setup screen here
-        Get.offAll(() => RootBottomNavScreen()); // For now, go to main app
-      } else {
-        // User is authenticated but hasn't completed onboarding - go to onboarding
-        Get.offAll(() => OnboardingScreen());
-      }
-    });
-  }
-
-  /// Handle unauthenticated user flow
-  void _handleUnauthenticatedUser() {
-    // User is not authenticated - go to onboarding
-    Future.delayed(const Duration(milliseconds: 100), () {
-      Get.offAll(() => OnboardingScreen());
-    });
-  }
-
-  /// Check if user is already signed up and authenticated
-  Future<void> checkAuthState() async {
-    isLoading.value = true;
-    
+  /// Called by SplashScreen when the animation ends
+  Future<void> resolveStartupRoute() async {
     try {
+      isLoading.value = true;
       final user = _authService.currentUser;
-      
       if (user != null) {
-        // User is already authenticated
-        currentUser.value = user;
-        isAuthenticated.value = true;
-        _handleAuthenticatedUser();
+        // Logged in → straight to app
+        Get.offAll(() => RootBottomNavScreen());
       } else {
-        // User is not authenticated
-        isAuthenticated.value = false;
-        _handleUnauthenticatedUser();
+        // Not logged in → onboarding
+        Get.offAll(() => const OnboardingScreen());
       }
     } catch (e) {
-      print('Error checking auth state: $e');
-      // On error, go to onboarding
-      Get.offAll(() => OnboardingScreen());
+      // On error, be safe and go to onboarding
+      Get.offAll(() => const OnboardingScreen());
     } finally {
       isLoading.value = false;
     }
@@ -105,7 +73,8 @@ class AuthController extends GetxController {
   }
 
   /// Check if user has completed onboarding
-  bool get hasCompletedOnboarding => _storage.read(_hasCompletedOnboardingKey) ?? false;
+  bool get hasCompletedOnboarding =>
+      _storage.read(_hasCompletedOnboardingKey) ?? false;
 
   /// Check if user has completed setup
   bool get hasCompletedSetup => _storage.read(_hasCompletedSetupKey) ?? false;
@@ -114,11 +83,9 @@ class AuthController extends GetxController {
   Future<void> signOut() async {
     try {
       await _authService.signOut();
-      // Clear stored data
       _storage.remove(_hasCompletedOnboardingKey);
       _storage.remove(_hasCompletedSetupKey);
-      // Navigate to onboarding
-      Get.offAll(() => OnboardingScreen());
+      Get.offAll(() => const OnboardingScreen());
     } catch (e) {
       print('Error signing out: $e');
     }

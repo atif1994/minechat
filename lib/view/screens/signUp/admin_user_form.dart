@@ -20,6 +20,7 @@ class SignupAdminAccount extends StatelessWidget {
     final controller = Get.put(AdminSignupController());
     final authService = FirebaseAuthService();
     final isUserAuthenticated = authService.currentUser != null;
+    final bool lockCreds = (Get.arguments?['lockCredentials'] ?? false) == true;
 
     return Scaffold(
       appBar: AppBar(
@@ -67,58 +68,67 @@ class SignupAdminAccount extends StatelessWidget {
               onChanged: (val) => controller.validatePosition(val),
             ),
             AppSpacing.vertical(context, 0.01),
-            SignupTextField(
-              label: AppTexts.signupEmailLabel,
-              hintText: AppTexts.dummyEmailText,
-              prefixIcon: AppAssets.signupIconEmail,
-              controller: controller.emailCtrl,
-              errorText: controller.emailError,
-              // <-- pass RxString here
-              onChanged: (val) => controller.validateEmail(val),
+            IgnorePointer(
+              ignoring: lockCreds,
+              child: SignupTextField(
+                label: AppTexts.signupEmailLabel,
+                hintText: AppTexts.dummyEmailText,
+                prefixIcon: AppAssets.signupIconEmail,
+                controller: controller.emailCtrl,
+                errorText: controller.emailError,
+                // <-- pass RxString here
+                onChanged: (val) => controller.validateEmail(val),
+              ),
             ),
             AppSpacing.vertical(context, 0.01),
-            Obx(
-              () => SignupTextField(
-                label: AppTexts.signupPasswordLabel,
-                hintText: AppTexts.signupPasswordHintText,
-                prefixIcon: AppAssets.signupIconPassword,
-                controller: controller.passwordCtrl,
-                errorText: controller.passwordError,
-                // <-- RxString
-                obscureText: !controller.isPasswordVisible.value,
-                onChanged: (val) => controller.validatePassword(val),
-                onSuffixTap: () => controller.togglePasswordVisibility(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    controller.isPasswordVisible.value
-                        ? Iconsax.eye_slash
-                        : Iconsax.eye,
-                    color: Colors.black,
+            IgnorePointer(
+              ignoring: lockCreds,
+              child: Obx(
+                () => SignupTextField(
+                  label: AppTexts.signupPasswordLabel,
+                  hintText: AppTexts.signupPasswordHintText,
+                  prefixIcon: AppAssets.signupIconPassword,
+                  controller: controller.passwordCtrl,
+                  errorText: controller.passwordError,
+                  // <-- RxString
+                  obscureText: !controller.isPasswordVisible.value,
+                  onChanged: (val) => controller.validatePassword(val),
+                  onSuffixTap: () => controller.togglePasswordVisibility(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      controller.isPasswordVisible.value
+                          ? Iconsax.eye_slash
+                          : Iconsax.eye,
+                      color: Colors.black,
+                    ),
+                    onPressed: controller.togglePasswordVisibility,
                   ),
-                  onPressed: controller.togglePasswordVisibility,
                 ),
               ),
             ),
             AppSpacing.vertical(context, 0.01),
-            Obx(
-              () => SignupTextField(
-                label: AppTexts.signupConfirmPasswordLabel,
-                hintText: AppTexts.signupConfirmPasswordHintText,
-                prefixIcon: AppAssets.signupIconPassword,
-                controller: controller.confirmPasswordCtrl,
-                errorText: controller.confirmPasswordError,
-                // <-- RxString
-                obscureText: !controller.isConfirmPasswordVisible.value,
-                onChanged: (val) => controller.validateConfirmPassword(val),
-                onSuffixTap: () => controller.toggleConfirmPasswordVisibility(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    controller.isConfirmPasswordVisible.value
-                        ? Iconsax.eye_slash
-                        : Iconsax.eye,
-                    color: Colors.black,
+            IgnorePointer(
+              ignoring: lockCreds,
+              child: Obx(
+                () => SignupTextField(
+                  label: AppTexts.signupConfirmPasswordLabel,
+                  hintText: AppTexts.signupConfirmPasswordHintText,
+                  prefixIcon: AppAssets.signupIconPassword,
+                  controller: controller.confirmPasswordCtrl,
+                  errorText: controller.confirmPasswordError,
+                  // <-- RxString
+                  obscureText: !controller.isConfirmPasswordVisible.value,
+                  onChanged: (val) => controller.validateConfirmPassword(val),
+                  onSuffixTap: () => controller.toggleConfirmPasswordVisibility(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      controller.isConfirmPasswordVisible.value
+                          ? Iconsax.eye_slash
+                          : Iconsax.eye,
+                      color: Colors.black,
+                    ),
+                    onPressed: controller.toggleConfirmPasswordVisibility,
                   ),
-                  onPressed: controller.toggleConfirmPasswordVisibility,
                 ),
               ),
             ),

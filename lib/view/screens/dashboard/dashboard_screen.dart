@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
+import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
@@ -26,25 +27,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!Get.isRegistered<DashboardController>()) {
       Get.put(DashboardController(), permanent: true);
     }
+
+    Get.find<LoginController>().hydrateFromAuthIfNeeded();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Color(0XFFf4f6fc),
-      appBar: DashboardAppBar(
-        brandMarkPng: AppAssets.minechatDashboard,
-        notificationIconSvg: AppAssets.dashboardNotification,
-        chatbotPng: AppAssets.minechatChatbot,
-        avatarImage: const AssetImage(AppAssets.minechatProfileAvatarLogoDummy),
-        hasUnreadNotifications: true,
-        onTapNotifications: () {},
-        onTapChatbot: () {},
-        onTapAvatar: () {},
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(kToolbarHeight),
+        child: Obx(
+          () {
+            final login = Get.find<LoginController>();
+            final url = login.currentUser.value?.photoURL ?? '';
+            final ImageProvider avatarProvider = url.isNotEmpty
+                ? NetworkImage(url)
+                : const AssetImage(AppAssets.minechatProfileAvatarLogoDummy);
+            return DashboardAppBar(
+              brandMarkPng: AppAssets.minechatDashboard,
+              notificationIconSvg: AppAssets.dashboardNotification,
+              chatbotPng: AppAssets.minechatChatbot,
+              avatarImage: avatarProvider,
+              hasUnreadNotifications: true,
+              onTapNotifications: () {},
+              onTapChatbot: () {},
+              onTapAvatar: () {},
+            );
+          },
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: AppSpacing.all(context, factor: 2).copyWith(top: AppResponsive.scaleSize(context, 8)),
+          padding: AppSpacing.all(context, factor: 2)
+              .copyWith(top: AppResponsive.scaleSize(context, 8)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
