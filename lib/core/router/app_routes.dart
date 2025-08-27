@@ -14,4 +14,6 @@ class AppRoutes {
   static const account               = '/account';
   static const adminEditProfile      = '/admin-edit-profile';
   static const businessEditProfile   = '/business-edit-profile';
+  static const chat                  = '/chat';
+  static const chatConversation      = '/chat-conversation';
 }
