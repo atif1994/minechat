@@ -13,6 +13,8 @@ import 'package:minechat/view/screens/forgot_password/new_password_screen.dart';
 import 'package:minechat/view/screens/account/account_screen.dart';
 import 'package:minechat/view/screens/edit_profile/admin_edit_profile_screen.dart';
 import 'package:minechat/view/screens/edit_profile/business_edit_profile_screen.dart';
+import 'package:minechat/view/screens/chat/chat_screen.dart';
+import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
 
 import 'app_routes.dart';
 
@@ -43,5 +45,9 @@ class AppPages {
     GetPage(
         name: AppRoutes.businessEditProfile,
         page: () => BusinessEditProfileScreen()),
+    GetPage(name: AppRoutes.chat, page: () => ChatScreen()),
+    GetPage(
+        name: AppRoutes.chatConversation,
+        page: () => ChatConversationScreen(chat: Get.arguments)),
   ];
 }

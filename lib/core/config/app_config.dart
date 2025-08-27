@@ -1,6 +1,6 @@
 class AppConfig {
   // OpenAI Configuration
-  static const String openaiApiKey = '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';
+  static const String openaiApiKey = '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';
   static const String openaiBaseUrl = 'https://api.openai.com/v1';
   
   // Database Configuration
