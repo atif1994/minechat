@@ -170,8 +170,14 @@ class AppAssets {
   static const String accountDeleteProfileDark =
       'assets/images/icons/icon_dark_delete_profile.svg';
 
+  //Icon -=> subscriptionFeatureTick
+  static const String subscriptionFeatureTick =
+      'assets/images/icons/icon_subscription_tick.svg';
+
   //Icon => SetUp
   static const String uploadFile = 'assets/images/setup/file_upload.svg';
+
   //=> product
-  static const String uploadFileProduct = 'assets/images/product/uploadImage.svg';
+  static const String uploadFileProduct =
+      'assets/images/product/uploadImage.svg';
 }

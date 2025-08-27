@@ -4,6 +4,7 @@ import 'package:minechat/controller/edit_profile_controller/admin_edit_profile_c
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/router/app_routes.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/account/account_app_bar.dart';
@@ -110,7 +111,9 @@ class AccountScreen extends StatelessWidget {
                             title: 'Upgrade Subscription',
                             leadingSvgPath: AppAssets.accountSubscription,
                             trailingSvgPath: AppAssets.accountArrowRight,
-                            onTap: () {},
+                            onTap: () {
+                              Get.toNamed(AppRoutes.subscription);
+                            },
                           ),
                           AccountOptionTile(
                             title: 'Logout',
