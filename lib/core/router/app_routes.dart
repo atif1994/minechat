@@ -1,6 +1,5 @@
 class AppRoutes {
   AppRoutes._(); // no instances
-
   static const splash = '/';
   static const onboarding = '/onboarding';
   static const login = '/login';
@@ -15,4 +14,6 @@ class AppRoutes {
   static const adminEditProfile = '/admin-edit-profile';
   static const businessEditProfile = '/business-edit-profile';
   static const subscription = '/subscription';
+  static const chat                  = '/chat';
+  static const chatConversation      = '/chat-conversation';
 }

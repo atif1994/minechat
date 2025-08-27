@@ -237,6 +237,18 @@ class ChannelsScreen extends StatelessWidget {
         return _buildWebsiteChannel(context);
       case 'Messenger':
         return _buildMessengerChannel(context);
+      case 'Instagram':
+        return _buildInstagramChannel(context);
+      case 'Telegram':
+        return _buildTelegramChannel(context);
+      case 'WhatsApp':
+        return _buildWhatsAppChannel(context);
+      case 'Slack':
+        return _buildSlackChannel(context);
+      case 'Viber':
+        return _buildViberChannel(context);
+      case 'Discord':
+        return _buildDiscordChannel(context);
       default:
         return _buildComingSoonChannel(context);
     }
@@ -433,6 +445,26 @@ class ChannelsScreen extends StatelessWidget {
         ),
         AppSpacing.vertical(context, 0.02),
 
+        // Facebook Access Token input (Optional)
+        SignupTextField(
+          label: 'Facebook Access Token (Optional)',
+          hintText: 'Enter your Facebook Access Token for advanced features',
+          prefixIcon: '🔑',
+          controller: channelController.facebookAccessTokenCtrl,
+          // isPassword: true,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 Access Token is optional for basic connection.\nFor advanced features (auto-replies, webhooks):\n1. Go to Facebook Developers\n2. Create/Select your app\n3. Go to Tools > Graph API Explorer\n4. Generate a Page Access Token',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
         // Connection status area
         Obx(() => Container(
           width: double.infinity,
@@ -536,6 +568,39 @@ class ChannelsScreen extends StatelessWidget {
             ),
           ],
         ),
+        AppSpacing.vertical(context, 0.01),
+        
+        // Quick connect without token - always show for now
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.blue[50],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue[200]!),
+          ),
+          child: Column(
+            children: [
+              Text(
+                'Quick Connect Available',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.blue[700],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'You can connect with just the Page ID for basic setup.\nAdd an access token later for advanced features.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue[600],
+                ),
+              ),
+            ],
+          ),
+        ),
         AppSpacing.vertical(context, 0.02),
 
         // AI control buttons
@@ -575,6 +640,1185 @@ class ChannelsScreen extends StatelessWidget {
                   channelController.isFacebookAIPaused.value
                       ? 'Resume Facebook AI'
                       : 'Pause Facebook AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInstagramChannel(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connect Your Instagram Business Account',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          'Connect your Instagram Business account to receive and respond to direct messages.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Instagram Business ID input
+        SignupTextField(
+          label: 'Instagram Business ID',
+          hintText: 'Enter your Instagram Business ID',
+          prefixIcon: '📷',
+          controller: channelController.instagramBusinessIdCtrl,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 Note: Instagram uses the same Facebook Access Token as Messenger',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Connection status area
+        Obx(() => Container(
+          width: double.infinity,
+          height: 120,
+          decoration: BoxDecoration(
+            color: channelController.isInstagramConnected.value
+                ? Colors.pink[50]
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: channelController.isInstagramConnected.value
+                  ? Colors.pink[300]!
+                  : Colors.grey[300]!,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  channelController.isInstagramConnected.value
+                      ? Icons.check_circle
+                      : Icons.camera_alt,
+                  color: channelController.isInstagramConnected.value
+                      ? Colors.pink
+                      : Colors.grey[600],
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  channelController.isInstagramConnected.value
+                      ? 'Instagram Connected'
+                      : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: channelController.isInstagramConnected.value
+                        ? Colors.pink[700]
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        AppSpacing.vertical(context, 0.02),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingInstagram.value
+                    ? null
+                    : () => channelController.disconnectInstagram(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingInstagram.value
+                    ? null
+                    : () => channelController.connectInstagram(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.pink,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isConnectingInstagram.value
+                      ? 'Connecting...'
+                      : 'Connect Instagram',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // AI control buttons
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => channelController.disconnectInstagram(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: () => channelController.toggleInstagramAI(),
+                style: TextButton.styleFrom(
+                  backgroundColor: channelController.isInstagramAIPaused.value
+                      ? Colors.orange
+                      : Colors.pink,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isInstagramAIPaused.value
+                      ? 'Resume Instagram AI'
+                      : 'Pause Instagram AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTelegramChannel(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connect Your Telegram Bot',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          'Create a Telegram bot with @BotFather and connect it here to receive messages.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Bot Token input
+        SignupTextField(
+          label: 'Bot Token',
+          hintText: 'Enter your Telegram bot token',
+          prefixIcon: '🔑',
+          controller: channelController.telegramBotTokenCtrl,
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Bot Username input
+        SignupTextField(
+          label: 'Bot Username',
+          hintText: '@your_bot_username',
+          prefixIcon: '👤',
+          controller: channelController.telegramBotUsernameCtrl,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 How to create a bot:\n1. Message @BotFather on Telegram\n2. Send /newbot command\n3. Follow the instructions\n4. Copy the bot token and username',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Connection status area
+        Obx(() => Container(
+          width: double.infinity,
+          height: 120,
+          decoration: BoxDecoration(
+            color: channelController.isTelegramConnected.value
+                ? Colors.blue[50]
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: channelController.isTelegramConnected.value
+                  ? Colors.blue[300]!
+                  : Colors.grey[300]!,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  channelController.isTelegramConnected.value
+                      ? Icons.check_circle
+                      : Icons.send,
+                  color: channelController.isTelegramConnected.value
+                      ? Colors.blue
+                      : Colors.grey[600],
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  channelController.isTelegramConnected.value
+                      ? 'Telegram Connected'
+                      : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: channelController.isTelegramConnected.value
+                        ? Colors.blue[700]
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        AppSpacing.vertical(context, 0.02),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingTelegram.value
+                    ? null
+                    : () => channelController.disconnectTelegram(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingTelegram.value
+                    ? null
+                    : () => channelController.connectTelegram(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isConnectingTelegram.value
+                      ? 'Connecting...'
+                      : 'Connect Telegram',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // AI control buttons
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => channelController.disconnectTelegram(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: () => channelController.toggleTelegramAI(),
+                style: TextButton.styleFrom(
+                  backgroundColor: channelController.isTelegramAIPaused.value
+                      ? Colors.orange
+                      : Colors.blue,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isTelegramAIPaused.value
+                      ? 'Resume Telegram AI'
+                      : 'Pause Telegram AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWhatsAppChannel(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connect Your WhatsApp Business',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          'Connect your WhatsApp Business account to receive and respond to messages.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Phone Number input
+        SignupTextField(
+          label: 'Phone Number',
+          hintText: '+1234567890',
+          prefixIcon: '📞',
+          controller: channelController.whatsAppPhoneNumberCtrl,
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Access Token input
+        SignupTextField(
+          label: 'Access Token',
+          hintText: 'Enter your WhatsApp Business API token',
+          prefixIcon: '🔑',
+          controller: channelController.whatsAppAccessTokenCtrl,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 You need a WhatsApp Business API account. Consider using Twilio or 360dialog for testing.',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Connection status area
+        Obx(() => Container(
+          width: double.infinity,
+          height: 120,
+          decoration: BoxDecoration(
+            color: channelController.isWhatsAppConnected.value
+                ? Colors.green[50]
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: channelController.isWhatsAppConnected.value
+                  ? Colors.green[300]!
+                  : Colors.grey[300]!,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  channelController.isWhatsAppConnected.value
+                      ? Icons.check_circle
+                      : Icons.phone,
+                  color: channelController.isWhatsAppConnected.value
+                      ? Colors.green
+                      : Colors.grey[600],
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  channelController.isWhatsAppConnected.value
+                      ? 'WhatsApp Connected'
+                      : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: channelController.isWhatsAppConnected.value
+                        ? Colors.green[700]
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        AppSpacing.vertical(context, 0.02),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingWhatsApp.value
+                    ? null
+                    : () => channelController.disconnectWhatsApp(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingWhatsApp.value
+                    ? null
+                    : () => channelController.connectWhatsApp(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isConnectingWhatsApp.value
+                      ? 'Connecting...'
+                      : 'Connect WhatsApp',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // AI control buttons
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => channelController.disconnectWhatsApp(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: () => channelController.toggleWhatsAppAI(),
+                style: TextButton.styleFrom(
+                  backgroundColor: channelController.isWhatsAppAIPaused.value
+                      ? Colors.orange
+                      : Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isWhatsAppAIPaused.value
+                      ? 'Resume WhatsApp AI'
+                      : 'Pause WhatsApp AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSlackChannel(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connect Your Slack Workspace',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          'Create a Slack app and connect it to your workspace to receive messages.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Bot Token input
+        SignupTextField(
+          label: 'Bot Token',
+          hintText: 'xoxb-your-bot-token',
+          prefixIcon: '🔑',
+          controller: channelController.slackBotTokenCtrl,
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // App Token input
+        SignupTextField(
+          label: 'App Token',
+          hintText: 'xapp-your-app-token',
+          prefixIcon: '🔧',
+          controller: channelController.slackAppTokenCtrl,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 How to create a Slack app:\n1. Go to api.slack.com/apps\n2. Click "Create New App"\n3. Add bot token and app token scopes\n4. Install app to workspace',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Connection status area
+        Obx(() => Container(
+          width: double.infinity,
+          height: 120,
+          decoration: BoxDecoration(
+            color: channelController.isSlackConnected.value
+                ? Colors.purple[50]
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: channelController.isSlackConnected.value
+                  ? Colors.purple[300]!
+                  : Colors.grey[300]!,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  channelController.isSlackConnected.value
+                      ? Icons.check_circle
+                      : Icons.work,
+                  color: channelController.isSlackConnected.value
+                      ? Colors.purple
+                      : Colors.grey[600],
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  channelController.isSlackConnected.value
+                      ? 'Slack Connected'
+                      : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: channelController.isSlackConnected.value
+                        ? Colors.purple[700]
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        AppSpacing.vertical(context, 0.02),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingSlack.value
+                    ? null
+                    : () => channelController.disconnectSlack(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingSlack.value
+                    ? null
+                    : () => channelController.connectSlack(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isConnectingSlack.value
+                      ? 'Connecting...'
+                      : 'Connect Slack',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // AI control buttons
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => channelController.disconnectSlack(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: () => channelController.toggleSlackAI(),
+                style: TextButton.styleFrom(
+                  backgroundColor: channelController.isSlackAIPaused.value
+                      ? Colors.orange
+                      : Colors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isSlackAIPaused.value
+                      ? 'Resume Slack AI'
+                      : 'Pause Slack AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildViberChannel(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connect Your Viber Bot',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          'Create a Viber bot and connect it here to receive messages.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Bot Token input
+        SignupTextField(
+          label: 'Bot Token',
+          hintText: 'Enter your Viber bot token',
+          prefixIcon: '🔑',
+          controller: channelController.viberBotTokenCtrl,
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Bot Name input
+        SignupTextField(
+          label: 'Bot Name',
+          hintText: 'Enter your Viber bot name',
+          prefixIcon: '👤',
+          controller: channelController.viberBotNameCtrl,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 How to create a Viber bot:\n1. Go to developers.viber.com\n2. Create a new bot\n3. Get the bot token and name\n4. Set up webhook URL',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Connection status area
+        Obx(() => Container(
+          width: double.infinity,
+          height: 120,
+          decoration: BoxDecoration(
+            color: channelController.isViberConnected.value
+                ? Colors.purple[50]
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: channelController.isViberConnected.value
+                  ? Colors.purple[300]!
+                  : Colors.grey[300]!,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  channelController.isViberConnected.value
+                      ? Icons.check_circle
+                      : Icons.chat_bubble,
+                  color: channelController.isViberConnected.value
+                      ? Colors.purple
+                      : Colors.grey[600],
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  channelController.isViberConnected.value
+                      ? 'Viber Connected'
+                      : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: channelController.isViberConnected.value
+                        ? Colors.purple[700]
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        AppSpacing.vertical(context, 0.02),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingViber.value
+                    ? null
+                    : () => channelController.disconnectViber(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingViber.value
+                    ? null
+                    : () => channelController.connectViber(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isConnectingViber.value
+                      ? 'Connecting...'
+                      : 'Connect Viber',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // AI control buttons
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => channelController.disconnectViber(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: () => channelController.toggleViberAI(),
+                style: TextButton.styleFrom(
+                  backgroundColor: channelController.isViberAIPaused.value
+                      ? Colors.orange
+                      : Colors.purple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isViberAIPaused.value
+                      ? 'Resume Viber AI'
+                      : 'Pause Viber AI',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDiscordChannel(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Connect Your Discord Bot',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          'Create a Discord bot and add it to your server to receive messages.',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey[600],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Bot Token input
+        SignupTextField(
+          label: 'Bot Token',
+          hintText: 'Enter your Discord bot token',
+          prefixIcon: '🔑',
+          controller: channelController.discordBotTokenCtrl,
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Client ID input
+        SignupTextField(
+          label: 'Client ID',
+          hintText: 'Enter your Discord client ID',
+          prefixIcon: '🆔',
+          controller: channelController.discordClientIdCtrl,
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
+        Text(
+          '💡 How to create a Discord bot:\n1. Go to discord.com/developers/applications\n2. Create a new application\n3. Add a bot to your application\n4. Copy the bot token and client ID',
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Connection status area
+        Obx(() => Container(
+          width: double.infinity,
+          height: 120,
+          decoration: BoxDecoration(
+            color: channelController.isDiscordConnected.value
+                ? Colors.indigo[50]
+                : Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: channelController.isDiscordConnected.value
+                  ? Colors.indigo[300]!
+                  : Colors.grey[300]!,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  channelController.isDiscordConnected.value
+                      ? Icons.check_circle
+                      : Icons.games,
+                  color: channelController.isDiscordConnected.value
+                      ? Colors.indigo
+                      : Colors.grey[600],
+                  size: 32,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  channelController.isDiscordConnected.value
+                      ? 'Discord Connected'
+                      : 'Not Connected',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: channelController.isDiscordConnected.value
+                        ? Colors.indigo[700]
+                        : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )),
+        AppSpacing.vertical(context, 0.02),
+
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingDiscord.value
+                    ? null
+                    : () => channelController.disconnectDiscord(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: channelController.isConnectingDiscord.value
+                    ? null
+                    : () => channelController.connectDiscord(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.indigo,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isConnectingDiscord.value
+                      ? 'Connecting...'
+                      : 'Connect Discord',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              )),
+            ),
+          ],
+        ),
+        AppSpacing.vertical(context, 0.02),
+
+        // AI control buttons
+        Row(
+          children: [
+            Expanded(
+              child: TextButton(
+                onPressed: () => channelController.disconnectDiscord(),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.grey[300],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  'Disconnect',
+                  style: TextStyle(
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => TextButton(
+                onPressed: () => channelController.toggleDiscordAI(),
+                style: TextButton.styleFrom(
+                  backgroundColor: channelController.isDiscordAIPaused.value
+                      ? Colors.orange
+                      : Colors.indigo,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  channelController.isDiscordAIPaused.value
+                      ? 'Resume Discord AI'
+                      : 'Pause Discord AI',
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
