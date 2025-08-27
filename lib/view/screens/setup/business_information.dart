@@ -1,8 +1,12 @@
+import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
+import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 import '../../../controller/business_info_controller/business_info_controller.dart';
 import '../../../core/utils/helpers/app_spacing/app_spacing.dart';
@@ -12,39 +16,55 @@ import 'ai_business_information.dart';
 
 class BusinessInformation extends StatelessWidget {
   final BusinessInfoController controller;
-  
+
   const BusinessInformation({super.key, required this.controller});
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Scaffold(
-      backgroundColor:AppColors.g1 ,
+      backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.only(left: 16,right: 16),
+          padding: AppSpacing.all(context, factor: 2),
           child: Column(
-            children: [
-              _buildBusinessInformationTab(controller, context)
-            ],
+            children: [_buildBusinessInformationTab(controller, context)],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildBusinessInformationTab(BusinessInfoController controller,
-      BuildContext context) {
+  Widget _buildBusinessInformationTab(
+      BusinessInfoController controller, BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Business Information',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Business Information',
+                style: AppTextStyles.bodyText(context).copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextSpan(
+                text: '(watch tutorial video)',
+                style: AppTextStyles.bodyText(context).copyWith(
+                  fontSize: 10,
+                  color: Color(0xFF1677FF),
+                  decoration: TextDecoration.underline,
+                  decorationColor: Color(0xFF1677FF),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         ),
+
         AppSpacing.vertical(context, 0.02),
 
         // File Upload Section
@@ -64,7 +84,7 @@ class BusinessInformation extends StatelessWidget {
         SignupTextField(
           labelText: 'Phone Number',
           hintText: 'Enter phone number',
-                        prefixIcon: 'assets/images/icons/icon_phone.svg',
+          prefixIcon: 'assets/images/icons/icon_phone.svg',
           // optional
           controller: controller.phoneCtrl,
           errorText: controller.phoneError,
@@ -147,10 +167,14 @@ class BusinessInformation extends StatelessWidget {
 
         // Action Buttons
         TwoButtonsRow(
-          isSaving: controller.isSaving,          // your RxBool
-          onSave: controller.saveBusinessInfo,     // your save function
-          secondLabel: "Test AI",                 // text for second button
-          secondIcon: Icons.smart_toy,            // icon for second button
+          isSaving: controller.isSaving,
+          // your RxBool
+          onSave: controller.saveBusinessInfo,
+          // your save function
+          secondLabel: "Test AI",
+          // text for second button
+          secondIcon: "assets/images/icons/icon_setup_test_ai_button.svg",
+          // icon for second button
           onSecondTap: () {
             Navigator.push(
               context,
@@ -160,105 +184,149 @@ class BusinessInformation extends StatelessWidget {
             );
           },
         ),
-        
+
         // Temporary Test Button
         AppSpacing.vertical(context, 0.02),
-
       ],
     );
   }
 
   Widget _buildFileUploadSection(
-      BusinessInfoController controller, BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Upload file you want to import (see sample document)',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey[700],
-            ),
-          ),
-          const SizedBox(height: 12),
+    BusinessInfoController controller,
+    BuildContext context,
+  ) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+    final linkStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 10,
+      color: Color(0xFF1677FF),
+      decoration: TextDecoration.underline,
+      decorationColor: Color(0xFF1677FF),
+      fontWeight: FontWeight.w500,
+    );
 
-          GestureDetector(
-            onTap: () => controller.pickFile(),
+    final subStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 10,
+      fontWeight: FontWeight.w400,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Upload file you want to import ',
+                style: subStyle,
+              ),
+              TextSpan(
+                text: '(see sample document)',
+                style: linkStyle,
+              ),
+            ],
+          ),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        GestureDetector(
+          onTap: () => controller.pickFile(),
+          child: DottedBorder(
+            color: isDark
+                ? Color(0XFFFFFFFF).withValues(alpha: .12)
+                : Color(0XFFEBEDF0),
+            strokeWidth: 1.6,
+            dashPattern: const [6, 6],
+            borderType: BorderType.RRect,
+            radius: const Radius.circular(12),
             child: Container(
               width: double.infinity,
-              height: 120,
+              height: 150,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Obx(() {
+                // If a file is already selected, show its name (keep original behavior)
                 if (controller.selectedFileName.value.isNotEmpty) {
-                  // Show uploaded file name
                   return Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.insert_drive_file,
-                          size: 40, color: Colors.blueGrey),
-                      const SizedBox(height: 8),
-                      Text(
-                        controller.selectedFileName.value,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                    ],
-                  );
-                } else {
-                  // Default design (no file picked yet)
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SvgPicture.asset(
-                        AppAssets.uploadFile,
-                        height: 40,
-                        width: 40,
+                      const Icon(
+                        Icons.insert_drive_file,
+                        size: 40,
+                        color: Colors.blueGrey,
                       ),
                       const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 40, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppColors.secondary,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Text(
-                          'Upload file',
-                          style: TextStyle(
-                            color: AppColors.g3,
-                            fontWeight: FontWeight.w600,
+                          controller.selectedFileName.value,
+                          style: const TextStyle(
                             fontSize: 14,
+                            fontWeight: FontWeight.w600,
                           ),
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                     ],
                   );
                 }
+
+                // Default “no file picked” design
+                return Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Upload icon in a light circle
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: isDark
+                                  ? Color(0XFFF0F1F5).withValues(alpha: .12)
+                                  : Color(0XFFF0F1F5)),
+                          child: Center(
+                            child: SvgPicture.asset(
+                              "assets/images/icons/icon_setup_file_upload.svg",
+                              color: isDark
+                                  ? Color(0XFFFFFFFF)
+                                  : Color(0XFF15181F),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Gradient pill "Upload file" button (visual only; whole box is tappable)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                          ).withAppGradient,
+                          child: const Text(
+                            'Upload file',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                );
               }),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
-
-
-
-
 }

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
-import '../../../core/constants/app_assets/app_assets.dart';
 import '../../../core/utils/helpers/app_responsive/app_responsive.dart';
 import '../../../core/widgets/app_button/app_save_ai_button.dart';
 import 'ai_testing_screen.dart';
@@ -18,6 +18,8 @@ class AIAssistantSetupScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     final controller = Get.put(AIAssistantController());
     final channelController = Get.put(ChannelController());
 
@@ -28,29 +30,30 @@ class AIAssistantSetupScreen extends StatelessWidget {
     };
 
     return Scaffold(
-      backgroundColor:AppColors.g1 ,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 40,),
-          // Breadcrumb Navigation
-          Padding(
-            padding: const EdgeInsets.only(left: 16,right: 16,top: 16),
-            child: _buildBreadcrumbs(context, controller),
-          ),
+      backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
+      body: SafeArea(
+        child: Padding(
+          padding: AppSpacing.all(context, factor: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Breadcrumb Navigation
+              _buildBreadcrumbs(context, controller),
 
-          // Main content - keeps all pages alive
-          Expanded(
-            child: Obx(() => IndexedStack(
-              index: indexMap[controller.currentStep.value] ?? 0,
-              children: [
-                _buildAIAssistantForm(controller, context),
-                AIKnowledgeScreen(controller: controller),
-                ChannelsScreen(),
-              ],
-            )),
+              // Main content - keeps all pages alive
+              Expanded(
+                child: Obx(() => IndexedStack(
+                      index: indexMap[controller.currentStep.value] ?? 0,
+                      children: [
+                        _buildAIAssistantForm(controller, context),
+                        AIKnowledgeScreen(controller: controller),
+                        ChannelsScreen(),
+                      ],
+                    )),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -63,14 +66,16 @@ class AIAssistantSetupScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("Ai Assistant",style: AppTextStyles.bodyText(context).copyWith(
-              fontSize: AppResponsive.scaleSize(context, 14),
-              fontWeight: FontWeight.w500),),
+          Text(
+            "Ai Persona",
+            style: AppTextStyles.bodyText(context).copyWith(
+                fontSize: AppResponsive.scaleSize(context, 16),
+                fontWeight: FontWeight.w600),
+          ),
           AppSpacing.vertical(context, 0.01),
           SignupTextField(
             label: 'Name',
             hintText: 'Enter AI assistant name',
-            prefixIcon: AppAssets.signupIconEmail,
             controller: controller.nameCtrl,
             errorText: controller.nameError,
             onChanged: controller.validateName,
@@ -79,7 +84,6 @@ class AIAssistantSetupScreen extends StatelessWidget {
           SignupTextField(
             label: 'Intro Message',
             hintText: 'Enter Intro Message',
-            prefixIcon: AppAssets.signupIconEmail,
             controller: controller.introMessageCtrl,
             errorText: controller.introMessageError,
             onChanged: controller.validateIntroMessage,
@@ -88,22 +92,25 @@ class AIAssistantSetupScreen extends StatelessWidget {
           SignupTextField(
             label: 'Short Description',
             hintText: 'Enter Description',
-            prefixIcon: AppAssets.signupIconEmail,
             controller: controller.shortDescriptionCtrl,
             errorText: controller.shortDescriptionError,
             onChanged: controller.validateShortDescription,
           ),
           AppSpacing.vertical(context, 0.01),
-          _buildAIGuidelinesField(controller),
+          _buildAIGuidelinesField(context, controller),
           AppSpacing.vertical(context, 0.01),
-          _buildResponseLengthSelector(controller),
+          _buildResponseLengthSelector(context, controller),
           AppSpacing.vertical(context, 0.02),
           // Example usage inside your widget
           TwoButtonsRow(
-            isSaving: controller.isSaving,          // your RxBool
-            onSave: controller.saveAIAssistant,     // your save function
-            secondLabel: "Test AI",                 // text for second button
-            secondIcon: Icons.smart_toy,            // icon for second button
+            isSaving: controller.isSaving,
+            // your RxBool
+            onSave: controller.saveAIAssistant,
+            // your save function
+            secondLabel: "Test AI",
+            // text for second button
+            secondIcon: "assets/images/icons/icon_setup_test_ai_button.svg",
+            // icon for second button
             onSecondTap: () {
               Navigator.push(
                 context,
@@ -113,7 +120,6 @@ class AIAssistantSetupScreen extends StatelessWidget {
               );
             },
           )
-
         ],
       ),
     );
@@ -122,37 +128,39 @@ class AIAssistantSetupScreen extends StatelessWidget {
   // ---------------------- Breadcrumbs ----------------------
   Widget _buildBreadcrumbs(
       BuildContext context, AIAssistantController controller) {
-    TextStyle activeStyle = TextStyle(
-      fontSize: 14,
+    TextStyle activeStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 13,
       fontWeight: FontWeight.w600,
       color: AppColors.secondary,
     );
-    TextStyle linkStyle = TextStyle(
-      fontSize: 14,
-      fontWeight: FontWeight.w500,
-      color: Colors.grey[800],
+    TextStyle linkStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 13,
+      fontWeight: FontWeight.w400,
+      color: Color(0XFF767C8C),
     );
-    TextStyle inactiveStyle = TextStyle(
-      fontSize: 12,
-      fontWeight: FontWeight.normal,
-      color: Colors.grey[500],
+    TextStyle inactiveStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 13,
+      fontWeight: FontWeight.w400,
+      color: Color(0XFF767C8C),
     );
-    TextStyle separatorStyle = TextStyle(
-      fontSize: 12,
-      color: Colors.grey[400],
+    TextStyle separatorStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 13,
+      color: Color(0XFFA8AEBF),
     );
 
     return Obx(() {
+      final themeController = Get.find<ThemeController>();
+      final isDark = themeController.isDarkMode;
       return Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(
-            'Setup',
-            style:TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.black,
-            )  // Always active style since it's the main title
-          ),
+          Text('Setup',
+              style: AppTextStyles.bodyText(context).copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Color(0XFFFFFFFF) : Color(0XFF222222),
+              ) // Always active style since it's the main title
+              ),
           Text(' > ', style: separatorStyle),
           GestureDetector(
             onTap: () => controller.currentStep.value = "AI Assistant",
@@ -189,21 +197,23 @@ class AIAssistantSetupScreen extends StatelessWidget {
   }
 
   // ---------------------- AI Guidelines ----------------------
-  Widget _buildAIGuidelinesField(AIAssistantController controller) {
+  Widget _buildAIGuidelinesField(
+      BuildContext context, AIAssistantController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'AI Guidelines',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: AppTextStyles.bodyText(context)
+              .copyWith(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
             border: Border.all(
               color: controller.aiGuidelinesError.value.isNotEmpty
-                  ? Colors.red
-                  : Colors.grey[300]!,
+                  ? AppColors.error
+                  : Color(0XFFEBEDF0),
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -211,8 +221,9 @@ class AIAssistantSetupScreen extends StatelessWidget {
             controller: controller.aiGuidelinesCtrl,
             onChanged: controller.validateAIGuidelines,
             maxLines: 4,
-            decoration: const InputDecoration(
-              hintText: 'Enter AI guidelines...',
+            decoration: InputDecoration(
+              hintText: 'Enter Guidelines',
+              hintStyle: AppTextStyles.hintText(context),
               border: InputBorder.none,
               contentPadding: EdgeInsets.all(16),
             ),
@@ -231,46 +242,59 @@ class AIAssistantSetupScreen extends StatelessWidget {
   }
 
   // ---------------------- Response Length ----------------------
-  Widget _buildResponseLengthSelector(AIAssistantController controller) {
+  Widget _buildResponseLengthSelector(
+      BuildContext context, AIAssistantController controller) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Response Length',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+          style: AppTextStyles.bodyText(context)
+              .copyWith(fontSize: 15, fontWeight: FontWeight.w500),
         ),
-        const SizedBox(height: 8),
+        AppSpacing.vertical(context, 0.01),
         Container(
+          height: AppResponsive.screenHeight(context) * 0.065,
+          width: AppResponsive.screenWidth(context) * 0.75,
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: controller.responseLengthOptions.map((option) {
               final isSelected =
                   controller.selectedResponseLength.value == option;
               return Expanded(
                 child: GestureDetector(
-                  onTap: () =>
-                  controller.selectedResponseLength.value = option,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppColors.primary
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      option,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : Colors.grey[700],
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+                  onTap: () => controller.selectedResponseLength.value = option,
+                  child: Padding(
+                    padding: AppSpacing.symmetric(context, h: 0.02, v: 0)
+                        .copyWith(left: 0),
+                    child: Container(
+                      padding: AppSpacing.all(context, factor: 1.8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: isSelected
+                                ? AppColors.primary
+                                : isDark
+                                    ? Color(0XFFFFFFFF).withValues(alpha: .12)
+                                    : Color(0XFFEBEDF0),
+                            width: 2),
+                      ),
+                      child: Text(
+                        option,
+                        textAlign: TextAlign.center,
+                        style: AppTextStyles.bodyText(context).copyWith(
+                            color: isSelected
+                                ? AppColors.primary
+                                : isDark
+                                    ? Color(0XFFFFFFFF)
+                                    : Color(0XFF222222),
+                            fontWeight: FontWeight.w500,
+                            fontSize: AppResponsive.scaleSize(context, 14)),
                       ),
                     ),
                   ),
@@ -282,6 +306,4 @@ class AIAssistantSetupScreen extends StatelessWidget {
       ],
     );
   }
-
-
 }
