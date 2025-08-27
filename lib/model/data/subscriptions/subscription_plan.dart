@@ -1,9 +1,13 @@
+import 'dart:ui';
+
+import 'package:minechat/model/data/subscriptions/plan_label_link.dart';
 import 'plan_feature.dart';
 import 'billing_cycle.dart';
 
 class PlanPrice {
-  final String monthly; // display-ready, e.g., "$99"
-  final String yearly; // display-ready, e.g., "$990"
+  final String monthly;
+  final String yearly;
+
   const PlanPrice({required this.monthly, required this.yearly});
 
   String text(BillingCycle cycle) =>
@@ -13,21 +17,23 @@ class PlanPrice {
 enum PlanButtonStyle { gradient, black, disabled }
 
 class SubscriptionPlan {
-  final String id; // local id (also map to Stripe price later)
-  final String title; // "Free" | "Plus" | "Pro"
-  final String subtitle; // short blurb under price
+  final String id;
+  final String title;
+  final String subtitle;
   final PlanPrice price;
-  final String per; // "/month" or "/year"
+  final String per;
   final List<PlanFeature> features;
 
-  final String ctaText; // "Get Free" | "Get Plus" | "Get Pro"
-  final PlanButtonStyle ctaStyle;
-  final bool highlighted; // red border for Plus "Popular"
-  final String? badge; // "Popular"
+  final List<PlanLabelLink> labelLinks;
+  final Color? linkTextColor;
 
-  // Backend placeholders (to be filled when wiring Firebase/Stripe)
-  final String? monthlyPriceId; // Stripe price id for monthly
-  final String? yearlyPriceId; // Stripe price id for yearly
+  final String ctaText;
+  final PlanButtonStyle ctaStyle;
+  final bool highlighted;
+  final String? badge;
+
+  final String? monthlyPriceId;
+  final String? yearlyPriceId;
 
   const SubscriptionPlan({
     required this.id,
@@ -42,5 +48,7 @@ class SubscriptionPlan {
     this.badge,
     this.monthlyPriceId,
     this.yearlyPriceId,
-  });
+    List<PlanLabelLink>? labelLinks,
+    this.linkTextColor,
+  }) : labelLinks = labelLinks ?? const [];
 }

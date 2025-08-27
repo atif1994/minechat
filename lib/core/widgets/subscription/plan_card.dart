@@ -5,6 +5,7 @@ import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
+import 'package:minechat/core/widgets/subscription/label_link_row.dart';
 import 'package:minechat/model/data/subscriptions/billing_cycle.dart';
 import 'package:minechat/model/data/subscriptions/subscription_plan.dart';
 import 'feature_row.dart';
@@ -36,7 +37,7 @@ class PlanCard extends StatelessWidget {
 
     return Container(
       width: width,
-      padding: AppSpacing.all(context, factor: .8),
+      padding: AppSpacing.all(context, factor: 2),
       decoration: BoxDecoration(
         color: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
         borderRadius:
@@ -64,19 +65,20 @@ class PlanCard extends StatelessWidget {
               AppSpacing.horizontal(context, 0.02),
               if (plan.badge != null)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: AppSpacing.symmetric(context, h: 0.02, v: 0),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFFEDF1),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFFFF507D)),
+                    color: const Color(0xFFFFFFFF),
+                    borderRadius: BorderRadius.circular(
+                        AppResponsive.radius(context, factor: 2)),
+                    border: Border.all(color: AppColors.primary),
                   ),
                   child: Text(
                     plan.badge!,
-                    style: Theme.of(context).textTheme.labelMedium!.copyWith(
-                          color: const Color(0xFFB4234D),
-                          fontWeight: FontWeight.w600,
-                        ),
+                    style: AppTextStyles.bodyText(context).copyWith(
+                      color: const Color(0xFFB4234D),
+                      fontSize: AppResponsive.scaleSize(context, 16),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
             ],
@@ -121,16 +123,24 @@ class PlanCard extends StatelessWidget {
           AppSpacing.vertical(context, 0.012),
 
           // Features
-          ...plan.features
-              .map((f) => FeatureRow(
-                    feature: f,
-                    featureIconColor: plan.highlighted
-                        ? AppColors.primary
-                        : isDark
-                            ? Color(0XFFFFFFFF)
-                            : Color(0XFF0A0A0A),
-                  ))
-              .toList(),
+          ...plan.features.map((f) => FeatureRow(
+                feature: f,
+                featureIconColor: plan.highlighted
+                    ? AppColors.primary
+                    : isDark
+                        ? const Color(0XFFFFFFFF)
+                        : const Color(0XFF0A0A0A),
+              )),
+
+          // Label + link rows (no icon)
+          ...plan.labelLinks.map(
+            (l) => LabelLinkRow(
+              label: l.label,
+              linkText: l.linkText,
+              linkColor: plan.linkTextColor,
+              onTap: l.onTap,
+            ),
+          ),
         ],
       ),
     );

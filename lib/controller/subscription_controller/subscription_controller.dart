@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/services/subscription_service/suscription_service.dart';
 import 'package:minechat/model/data/subscriptions/billing_cycle.dart';
 import 'package:minechat/model/data/subscriptions/plan_feature.dart';
+import 'package:minechat/model/data/subscriptions/plan_label_link.dart';
 import 'package:minechat/model/data/subscriptions/subscription_plan.dart';
 
 class SubscriptionController extends GetxController {
@@ -57,14 +59,15 @@ class SubscriptionController extends GetxController {
             "Get the best of Minechat.ai with the highest level of access",
         price: const PlanPrice(monthly: "\$0", yearly: "\$0"),
         per: "USD/month",
-        features: [
-          ...baseFeatures(),
-          PlanFeature(
+        features: baseFeatures(),
+        labelLinks: [
+          PlanLabelLink(
             label: "Have an existing plan? See",
             linkText: "billing help",
-            onTap: onHelpTap,
+            onTap: () {},
           ),
         ],
+
         ctaText: "Get Free",
         ctaStyle: PlanButtonStyle.disabled,
       ),
@@ -73,16 +76,16 @@ class SubscriptionController extends GetxController {
         title: "Plus",
         subtitle:
             "Just getting started? Our launch kit includes everything you need –",
-        price: const PlanPrice(monthly: "\$99", yearly: "\$990"),
+        price: const PlanPrice(monthly: "\$9", yearly: "\$99"),
         per: "USD/month",
-        features: [
-          ...baseFeatures(),
-          PlanFeature(
-            label: "",
+        features: baseFeatures(),
+        labelLinks: [
+          PlanLabelLink(
             linkText: "Limits apply",
             onTap: () {},
           ),
         ],
+        linkTextColor: AppColors.primary,
         ctaText: "Get Plus",
         ctaStyle: PlanButtonStyle.gradient,
         highlighted: true,
@@ -96,14 +99,14 @@ class SubscriptionController extends GetxController {
         title: "Pro",
         subtitle:
             "Get the best of Minechat.ai with the highest level of access",
-        price: const PlanPrice(monthly: "\$200", yearly: "\$2000"),
+        price: const PlanPrice(monthly: "\$20", yearly: "\$200"),
         per: "USD/month",
-        features: [
-          ...baseFeatures(),
-          PlanFeature(
+        features: baseFeatures(),
+        labelLinks: [
+          PlanLabelLink(
             label: "Have an existing plan? See",
             linkText: "billing help",
-            onTap: onHelpTap,
+            onTap: () {},
           ),
         ],
         ctaText: "Get Pro",

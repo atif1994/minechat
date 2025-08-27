@@ -41,8 +41,7 @@ class AppTheme {
     hintColor: AppColors.grey,
     textTheme: _baseTextTheme(AppColors.black),
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.primary,
-      foregroundColor: AppColors.white,
+      backgroundColor: Color(0xFFFFFFFF),
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -69,8 +68,7 @@ class AppTheme {
     hintColor: AppColors.grey,
     textTheme: _baseTextTheme(AppColors.white),
     appBarTheme: const AppBarTheme(
-      backgroundColor: AppColors.primaryDark,
-      foregroundColor: AppColors.white,
+      backgroundColor: Color(0xFF1D1D1D),
       elevation: 0,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,

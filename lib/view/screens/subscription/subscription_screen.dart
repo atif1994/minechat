@@ -24,7 +24,7 @@ class SubscriptionScreen extends StatelessWidget {
       ),
       body: Obx(
         () => SingleChildScrollView(
-          padding: AppSpacing.symmetric(context, h: 0.04, v: 0.02),
+          padding: AppSpacing.all(context, factor: 2),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
