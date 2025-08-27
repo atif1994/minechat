@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 import '../../constants/app_colors/app_colors.dart';
 
 
@@ -8,7 +10,7 @@ class TwoButtonsRow extends StatelessWidget {
   final VoidCallback onSave;
 
   final String secondLabel;
-  final IconData secondIcon;
+  final String secondIcon;
   final VoidCallback onSecondTap;
 
   const TwoButtonsRow({
@@ -56,12 +58,16 @@ class TwoButtonsRow extends StatelessWidget {
           child: Container(
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
-            ),
+            ).withAppGradient,
             child: TextButton.icon(
               onPressed: onSecondTap,
-              icon: Icon(secondIcon, color: Colors.white, size: 20),
+              icon: SvgPicture.asset(
+                secondIcon,
+                width: 20,
+                height: 20,
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              ),
               label: Text(
                 secondLabel,
                 style: const TextStyle(

@@ -4,6 +4,7 @@ import 'package:minechat/controller/ai_knowledge_controller/ai_knowledge_control
 import 'package:minechat/controller/business_info_controller/business_info_controller.dart';
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
 import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
@@ -23,6 +24,8 @@ class AIKnowledgeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     // Init controllers
     final businessInfoController = Get.put(BusinessInfoController());
     final productsServicesController = Get.put(ProductsServicesController());
@@ -33,40 +36,23 @@ class AIKnowledgeScreen extends StatelessWidget {
     final ScrollController tabScrollController = ScrollController();
 
     return Scaffold(
-      backgroundColor:AppColors.g1 ,
+      backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           AppSpacing.vertical(context, 0.02),
 
           // Top Tabs
-          Scrollbar(
-            controller: tabScrollController, // Use specific controller
-            thumbVisibility: true,
-            trackVisibility: true,
-            child: SingleChildScrollView(
-              controller: tabScrollController, // Use specific controller
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                height: AppResponsive.screenHeight(context) * 0.04,
-                width: AppResponsive.screenWidth(context),
-                decoration: BoxDecoration(
-                  color: AppColors.g2,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: Row(
-                    children: [
-                      _buildTab('Business Information', 0, knowledgeController, context),
-                      const SizedBox(width: 20),
-                      _buildTab('Products & Services', 1, knowledgeController, context),
-                      const SizedBox(width: 20),
-                      _buildTab('FAQs', 2, knowledgeController, context),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          Row(
+            children: [
+              _buildTab(
+                  'Business Information', 0, knowledgeController, context),
+              AppSpacing.horizontal(context, 0.03),
+              _buildTab(
+                  'Products & Services', 1, knowledgeController, context),
+              AppSpacing.horizontal(context, 0.03),
+              _buildTab('FAQs', 2, knowledgeController, context),
+            ],
           ),
 
           AppSpacing.vertical(context, 0.015),
@@ -78,7 +64,8 @@ class AIKnowledgeScreen extends StatelessWidget {
                 index: knowledgeController.selectedTabIndex.value,
                 children: [
                   BusinessInformation(controller: businessInfoController),
-                  ProductsServicesScreen(controller: productsServicesController),
+                  ProductsServicesScreen(
+                      controller: productsServicesController),
                   FAQsScreen(controller: faqsController),
                 ],
               );
@@ -90,27 +77,27 @@ class AIKnowledgeScreen extends StatelessWidget {
   }
 
   Widget _buildTab(
-      String title,
-      int index,
-      AIKnowledgeController controller,
-      context,
-      ) {
+    String title,
+    int index,
+    AIKnowledgeController controller,
+    context,
+  ) {
     return GestureDetector(
       onTap: () => controller.selectedTabIndex.value = index,
       child: Obx(() {
         final isSelected = controller.selectedTabIndex.value == index;
         return Text(
           title,
-          style: AppTextStyles.poppinsRegular(context).copyWith(
-            color: isSelected ? AppColors.secondary : Colors.grey[600],
-            decoration: isSelected ? TextDecoration.underline:TextDecoration.none,
-            decorationColor: isSelected ? AppColors.secondary:Colors.transparent,   // underline color
-            decorationThickness: 2,
-
-          ),
+          style: AppTextStyles.bodyText(context).copyWith(
+              color: isSelected ? AppColors.secondary : Colors.grey[600],
+              decoration:
+                  isSelected ? TextDecoration.underline : TextDecoration.none,
+              decorationColor:
+                  isSelected ? AppColors.secondary : Colors.transparent,
+              fontSize: AppResponsive.scaleSize(context, 13),
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
         );
       }),
     );
   }
-
 }
