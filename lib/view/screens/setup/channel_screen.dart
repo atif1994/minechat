@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
@@ -18,27 +20,34 @@ class ChannelsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          AppSpacing.vertical(context, 0.01),
           // Header
-          Text(
-            'Channels',
-            style: AppTextStyles.heading(context),
-          ),
-          const SizedBox(height: 4),
-          GestureDetector(
-            onTap: () {
-              // TODO: Open tutorial video
-              Get.snackbar('Info', 'Tutorial video will open here');
-            },
-            child: Text(
-              '(watch tutorial video)',
-              style: TextStyle(
-                color: Colors.blue[600],
-                fontSize: 14,
-                decoration: TextDecoration.underline,
+          Row(
+            children: [
+              Text(
+                'Channels',
+                style: AppTextStyles.bodyText(context).copyWith(
+                    fontSize: AppResponsive.scaleSize(context, 16),
+                    fontWeight: FontWeight.w600),
               ),
-            ),
+              AppSpacing.horizontal(context, 0.01),
+              GestureDetector(
+                onTap: () {
+                  // TODO: Open tutorial video
+                  Get.snackbar('Info', 'Tutorial video will open here');
+                },
+                child: Text(
+                  '(watch tutorial video)',
+                  style: TextStyle(
+                      color: Color(0XFF1677FF),
+                      fontSize: 14,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Color(0XFF1677FF)),
+                ),
+              ),
+            ],
           ),
-          AppSpacing.vertical(context, 0.03),
+          AppSpacing.vertical(context, 0.01),
 
           // Channel Selector
           _buildChannelSelector(context),
@@ -53,28 +62,37 @@ class ChannelsScreen extends StatelessWidget {
             children: [
               // Cancel Button
               Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    // Reset to original settings
-                    channelController.loadChannelSettings();
-                    Get.snackbar(
-                      'Cancelled',
-                      'Changes have been cancelled',
-                      backgroundColor: Colors.orange,
-                      colorText: Colors.white,
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.grey[300],
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                        color: isDark
+                            ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                            : Color(0XFFEBEDF0)),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
-                    'Cancel',
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                      fontWeight: FontWeight.w600,
+                  child: TextButton(
+                    onPressed: () {
+                      // Reset to original settings
+                      channelController.loadChannelSettings();
+                      Get.snackbar(
+                        'Cancelled',
+                        'Changes have been cancelled',
+                        backgroundColor: Colors.orange,
+                        colorText: Colors.white,
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: isDark ? AppColors.white : AppColors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ),
@@ -83,26 +101,31 @@ class ChannelsScreen extends StatelessWidget {
 
               // Save Changes Button
               Expanded(
-                child: Obx(() => TextButton(
-                      onPressed: channelController.isLoading.value
-                          ? null
-                          : () => channelController.saveChannelSettings(),
-                      style: TextButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                  ).withAppGradient,
+                  child: Obx(() => TextButton(
+                        onPressed: channelController.isLoading.value
+                            ? null
+                            : () => channelController.saveChannelSettings(),
+                        style: TextButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        channelController.isLoading.value
-                            ? 'Saving...'
-                            : 'Save Changes',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
+                        child: Text(
+                          channelController.isLoading.value
+                              ? 'Saving...'
+                              : 'Save Changes',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
-                    )),
+                      )),
+                ),
               ),
             ],
           ),
@@ -115,16 +138,6 @@ class ChannelsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Select Channel',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
-        ),
-        AppSpacing.vertical(context, 0.01),
-
         // Channel dropdown
         GestureDetector(
           onTap: () => channelController.toggleChannelDropdown(),
@@ -148,10 +161,9 @@ class ChannelsScreen extends StatelessWidget {
                 Expanded(
                   child: Obx(() => Text(
                         channelController.selectedChannel.value,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        style: AppTextStyles.bodyText(context).copyWith(
+                            fontSize: AppResponsive.scaleSize(context, 16),
+                            fontWeight: FontWeight.w600),
                       )),
                 ),
 
@@ -262,6 +274,8 @@ class ChannelsScreen extends StatelessWidget {
   }
 
   Widget _buildWebsiteChannel(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -269,7 +283,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Website',
           hintText: 'https://www.yourwebsite.com',
-          prefixIcon: '🌐',
           controller: channelController.websiteUrlCtrl,
         ),
         AppSpacing.vertical(context, 0.02),
@@ -277,11 +290,9 @@ class ChannelsScreen extends StatelessWidget {
         // Widget color selection
         Text(
           'AI Chat Widget Color',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
+          style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: AppResponsive.scaleSize(context, 16),
+              fontWeight: FontWeight.w400),
         ),
         AppSpacing.vertical(context, 0.01),
 
@@ -320,19 +331,18 @@ class ChannelsScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: Color(0XFFFFFFFF).withOpacity(0.12)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Get your website AI chat assistant widget. Tap Generate, copy the code, and send to your web master or developer.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[700],
-                ),
+                style: AppTextStyles.bodyText(context).copyWith(
+                    fontSize: AppResponsive.scaleSize(context, 14),
+                    fontWeight: FontWeight.w600,
+                    color: Color(0XFFA8AEBF)),
               ),
               AppSpacing.vertical(context, 0.02),
 
@@ -355,75 +365,89 @@ class ChannelsScreen extends StatelessWidget {
                       ),
                     )
                   : const SizedBox.shrink()),
-              AppSpacing.vertical(context, 0.02),
-
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: Obx(() => TextButton(
-                          onPressed:
-                              channelController.generatedCode.value.isNotEmpty
-                                  ? () => channelController.copyGeneratedCode()
-                                  : null,
-                          style: TextButton.styleFrom(
-                            backgroundColor: Colors.grey[300],
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            'Copy',
-                            style: TextStyle(
-                              color: Colors.grey[700],
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Obx(() => TextButton(
-                          onPressed: channelController.isGeneratingCode.value
-                              ? null
-                              : () => channelController.generateWebsiteCode(),
-                          style: TextButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          child: Text(
-                            channelController.isGeneratingCode.value
-                                ? 'Generating...'
-                                : 'Generate',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        )),
-                  ),
-                ],
-              ),
             ],
           ),
+        ),
+
+        AppSpacing.vertical(context, 0.01),
+        // Action buttons
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: isDark
+                          ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                          : Color(0XFFEBEDF0)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Obx(() => TextButton(
+                      onPressed:
+                          channelController.generatedCode.value.isNotEmpty
+                              ? () => channelController.copyGeneratedCode()
+                              : null,
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        'Copy',
+                        style: TextStyle(
+                          color: isDark ? AppColors.white : AppColors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ).withAppGradient,
+                child: Obx(() => TextButton(
+                      onPressed: channelController.isGeneratingCode.value
+                          ? null
+                          : () => channelController.generateWebsiteCode(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        channelController.isGeneratingCode.value
+                            ? 'Generating...'
+                            : 'Generate',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )),
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
 
   Widget _buildMessengerChannel(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Connect Your Facebook Business Chat',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
+          style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: AppResponsive.scaleSize(context, 16),
+              fontWeight: FontWeight.w400),
         ),
         AppSpacing.vertical(context, 0.01),
 
@@ -440,7 +464,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Facebook Page ID',
           hintText: 'Enter your Facebook Page ID (e.g., 123456789)',
-          prefixIcon: '📄',
           controller: channelController.facebookPageIdCtrl,
         ),
         AppSpacing.vertical(context, 0.01),
@@ -459,7 +482,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Facebook Access Token (Optional)',
           hintText: 'Enter your Facebook Access Token for advanced features',
-          prefixIcon: '🔑',
           controller: channelController.facebookAccessTokenCtrl,
           // isPassword: true,
         ),
@@ -534,47 +556,61 @@ class ChannelsScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Obx(() => TextButton(
-                    onPressed: channelController.isConnectingFacebook.value
-                        ? null
-                        : () => channelController.disconnectFacebook(),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: isDark
+                          ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                          : Color(0XFFEBEDF0)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Obx(() => TextButton(
+                      onPressed: channelController.isConnectingFacebook.value
+                          ? null
+                          : () => channelController.disconnectFacebook(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      'Disconnect',
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        'Disconnect',
+                        style: TextStyle(
+                          color: isDark ? AppColors.white : AppColors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )),
+                    )),
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 6),
             Expanded(
-              child: Obx(() => TextButton(
-                    onPressed: channelController.isConnectingFacebook.value
-                        ? null
-                        : () => channelController.connectFacebook(),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ).withAppGradient,
+                child: Obx(() => TextButton(
+                      onPressed: channelController.isConnectingFacebook.value
+                          ? null
+                          : () => channelController.connectFacebook(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      channelController.isConnectingFacebook.value
-                          ? 'Connecting...'
-                          : 'Connect Facebook',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        channelController.isConnectingFacebook.value
+                            ? 'Connecting...'
+                            : 'Connect Facebook',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )),
+                    )),
+              ),
             ),
           ],
         ),
@@ -617,46 +653,61 @@ class ChannelsScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: TextButton(
-                onPressed: () => channelController.disconnectFacebook(),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: isDark
+                          ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                          : Color(0XFFEBEDF0)),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  'Disconnect',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w600,
+                child: TextButton(
+                  onPressed: () => channelController.disconnectFacebook(),
+                  style: TextButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Disconnect',
+                    style: TextStyle(
+                      color: isDark ? AppColors.white : AppColors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 6),
             Expanded(
-              child: Obx(() => TextButton(
-                    onPressed: () => channelController.toggleFacebookAI(),
-                    style: TextButton.styleFrom(
-                      backgroundColor:
-                          channelController.isFacebookAIPaused.value
-                              ? Colors.orange
-                              : AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 48,
+                decoration: channelController.isFacebookAIPaused.value
+                    ? BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.orange)
+                    : BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                      ).withAppGradient,
+                child: Obx(() => TextButton(
+                      onPressed: () => channelController.toggleFacebookAI(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      channelController.isFacebookAIPaused.value
-                          ? 'Resume Facebook AI'
-                          : 'Pause Facebook AI',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        channelController.isFacebookAIPaused.value
+                            ? 'Resume Facebook AI'
+                            : 'Pause Facebook AI',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )),
+                    )),
+              ),
             ),
           ],
         ),
@@ -665,6 +716,8 @@ class ChannelsScreen extends StatelessWidget {
   }
 
   Widget _buildInstagramChannel(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -691,7 +744,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Instagram Business ID',
           hintText: 'Enter your Instagram Business ID',
-          prefixIcon: '📷',
           controller: channelController.instagramBusinessIdCtrl,
         ),
         AppSpacing.vertical(context, 0.01),
@@ -757,47 +809,61 @@ class ChannelsScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: Obx(() => TextButton(
-                    onPressed: channelController.isConnectingInstagram.value
-                        ? null
-                        : () => channelController.disconnectInstagram(),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: isDark
+                          ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                          : Color(0XFFEBEDF0)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Obx(() => TextButton(
+                      onPressed: channelController.isConnectingInstagram.value
+                          ? null
+                          : () => channelController.disconnectInstagram(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      'Disconnect',
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        'Disconnect',
+                        style: TextStyle(
+                          color: isDark ? AppColors.white : AppColors.black,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )),
+                    )),
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 2),
             Expanded(
-              child: Obx(() => TextButton(
-                    onPressed: channelController.isConnectingInstagram.value
-                        ? null
-                        : () => channelController.connectInstagram(),
-                    style: TextButton.styleFrom(
-                      backgroundColor: Colors.pink,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                ).withAppGradient,
+                child: Obx(() => TextButton(
+                      onPressed: channelController.isConnectingInstagram.value
+                          ? null
+                          : () => channelController.connectInstagram(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      channelController.isConnectingInstagram.value
-                          ? 'Connecting...'
-                          : 'Connect Instagram',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        channelController.isConnectingInstagram.value
+                            ? 'Connecting...'
+                            : 'Connect Instagram',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )),
+                    )),
+              ),
             ),
           ],
         ),
@@ -807,46 +873,60 @@ class ChannelsScreen extends StatelessWidget {
         Row(
           children: [
             Expanded(
-              child: TextButton(
-                onPressed: () => channelController.disconnectInstagram(),
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                      color: isDark
+                          ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                          : Color(0XFFEBEDF0)),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(
-                  'Disconnect',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w600,
+                child: TextButton(
+                  onPressed: () => channelController.disconnectInstagram(),
+                  style: TextButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: Text(
+                    'Disconnect',
+                    style: TextStyle(
+                      color: isDark ? AppColors.white : AppColors.black,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
             Expanded(
-              child: Obx(() => TextButton(
-                    onPressed: () => channelController.toggleInstagramAI(),
-                    style: TextButton.styleFrom(
-                      backgroundColor:
-                          channelController.isInstagramAIPaused.value
-                              ? Colors.orange
-                              : Colors.pink,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+              child: Container(
+                height: 48,
+                decoration: channelController.isInstagramAIPaused.value
+                    ? BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: Colors.orange)
+                    : BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                      ).withAppGradient,
+                child: Obx(() => TextButton(
+                      onPressed: () => channelController.toggleInstagramAI(),
+                      style: TextButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
-                    ),
-                    child: Text(
-                      channelController.isInstagramAIPaused.value
-                          ? 'Resume Instagram AI'
-                          : 'Pause Instagram AI',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                      child: Text(
+                        channelController.isInstagramAIPaused.value
+                            ? 'Resume Instagram AI'
+                            : 'Pause Instagram AI',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )),
+                    )),
+              ),
             ),
           ],
         ),
@@ -881,7 +961,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Bot Token',
           hintText: 'Enter your Telegram bot token',
-          prefixIcon: '🔑',
           controller: channelController.telegramBotTokenCtrl,
         ),
         AppSpacing.vertical(context, 0.02),
@@ -890,7 +969,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Bot Username',
           hintText: '@your_bot_username',
-          prefixIcon: '👤',
           controller: channelController.telegramBotUsernameCtrl,
         ),
         AppSpacing.vertical(context, 0.01),
@@ -1080,7 +1158,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Phone Number',
           hintText: '+1234567890',
-          prefixIcon: '📞',
           controller: channelController.whatsAppPhoneNumberCtrl,
         ),
         AppSpacing.vertical(context, 0.02),
@@ -1089,7 +1166,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Access Token',
           hintText: 'Enter your WhatsApp Business API token',
-          prefixIcon: '🔑',
           controller: channelController.whatsAppAccessTokenCtrl,
         ),
         AppSpacing.vertical(context, 0.01),
@@ -1279,7 +1355,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Bot Token',
           hintText: 'xoxb-your-bot-token',
-          prefixIcon: '🔑',
           controller: channelController.slackBotTokenCtrl,
         ),
         AppSpacing.vertical(context, 0.02),
@@ -1288,7 +1363,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'App Token',
           hintText: 'xapp-your-app-token',
-          prefixIcon: '🔧',
           controller: channelController.slackAppTokenCtrl,
         ),
         AppSpacing.vertical(context, 0.01),
@@ -1477,7 +1551,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Bot Token',
           hintText: 'Enter your Viber bot token',
-          prefixIcon: '🔑',
           controller: channelController.viberBotTokenCtrl,
         ),
         AppSpacing.vertical(context, 0.02),
@@ -1486,7 +1559,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Bot Name',
           hintText: 'Enter your Viber bot name',
-          prefixIcon: '👤',
           controller: channelController.viberBotNameCtrl,
         ),
         AppSpacing.vertical(context, 0.01),
@@ -1675,7 +1747,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Bot Token',
           hintText: 'Enter your Discord bot token',
-          prefixIcon: '🔑',
           controller: channelController.discordBotTokenCtrl,
         ),
         AppSpacing.vertical(context, 0.02),
@@ -1684,7 +1755,6 @@ class ChannelsScreen extends StatelessWidget {
         SignupTextField(
           label: 'Client ID',
           hintText: 'Enter your Discord client ID',
-          prefixIcon: '🆔',
           controller: channelController.discordClientIdCtrl,
         ),
         AppSpacing.vertical(context, 0.01),

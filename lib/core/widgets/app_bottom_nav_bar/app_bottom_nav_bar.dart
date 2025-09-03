@@ -36,9 +36,6 @@ class AppBottomNavBar extends StatelessWidget {
       height: barHeight,
       decoration: BoxDecoration(
         color: backgroundColor,
-        border: const Border(
-          top: BorderSide(color: Color(0xFFE8ECF3), width: 1),
-        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
