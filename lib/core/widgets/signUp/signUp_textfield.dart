@@ -63,12 +63,7 @@ class SignupTextField extends StatelessWidget {
                 ? Padding(
                     padding:
                         EdgeInsets.all(AppResponsive.scaleSize(context, 10)),
-                    child: SvgPicture.asset(
-                      prefixIcon!,
-                      width: AppResponsive.iconSize(context),
-                      height: AppResponsive.iconSize(context),
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
+                    child: _buildPrefixIcon(prefixIcon!, context, isDark),
                   )
                 : null,
             suffixIcon: suffixIcon != null
@@ -112,5 +107,41 @@ class SignupTextField extends StatelessWidget {
               : const SizedBox.shrink()),
       ],
     );
+  }
+
+  Widget _buildPrefixIcon(String iconPath, BuildContext context, bool isDark) {
+    // Check if it's an emoji or text (not a file path)
+    if (iconPath.length == 1 || iconPath.startsWith('🌐') || iconPath.startsWith('📄') || iconPath.startsWith('🔑')) {
+      // Handle emoji or text icons
+      return Text(
+        iconPath,
+        style: TextStyle(
+          fontSize: AppResponsive.iconSize(context),
+          color: isDark ? Colors.white : Colors.black,
+        ),
+      );
+    } else {
+      // Handle SVG assets
+      try {
+        return SvgPicture.asset(
+          iconPath,
+          width: AppResponsive.iconSize(context),
+          height: AppResponsive.iconSize(context),
+          colorFilter: ColorFilter.mode(
+            isDark ? Colors.white : Colors.black,
+            BlendMode.srcIn,
+          ),
+        );
+      } catch (e) {
+        // Fallback to text if SVG fails to load
+        return Text(
+          iconPath,
+          style: TextStyle(
+            fontSize: AppResponsive.iconSize(context),
+            color: isDark ? Colors.white : Colors.black,
+          ),
+        );
+      }
+    }
   }
 }

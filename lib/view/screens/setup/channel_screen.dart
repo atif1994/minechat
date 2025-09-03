@@ -10,12 +10,9 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
 
 class ChannelsScreen extends StatelessWidget {
-  final channelController = Get.put(ChannelController());
-
   @override
   Widget build(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    final isDark = themeController.isDarkMode;
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,11 +47,11 @@ class ChannelsScreen extends StatelessWidget {
           AppSpacing.vertical(context, 0.01),
 
           // Channel Selector
-          _buildChannelSelector(context),
+          _buildChannelSelector(context, channelController),
           AppSpacing.vertical(context, 0.03),
 
           // Channel-specific content
-          Obx(() => _buildChannelContent(context)),
+          Obx(() => _buildChannelContent(context, channelController)),
           AppSpacing.vertical(context, 0.04),
 
           // Action Buttons
@@ -134,7 +131,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChannelSelector(BuildContext context) {
+  Widget _buildChannelSelector(BuildContext context, ChannelController channelController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -150,11 +147,7 @@ class ChannelsScreen extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Channel icon
-                Obx(() => Text(
-                      _getChannelIcon(channelController.selectedChannel.value),
-                      style: TextStyle(fontSize: 20),
-                    )),
+
                 const SizedBox(width: 12),
 
                 // Channel name
@@ -242,7 +235,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  String _getChannelIcon(String channelName) {
+  String _getChannelIcon(String channelName, ChannelController channelController) {
     final channel = channelController.availableChannels.firstWhere(
       (c) => c['name'] == channelName,
       orElse: () => channelController.availableChannels.first,
@@ -250,32 +243,30 @@ class ChannelsScreen extends StatelessWidget {
     return channel['icon'];
   }
 
-  Widget _buildChannelContent(BuildContext context) {
+  Widget _buildChannelContent(BuildContext context, ChannelController channelController) {
     switch (channelController.selectedChannel.value) {
       case 'Website':
-        return _buildWebsiteChannel(context);
+        return _buildWebsiteChannel(context, channelController);
       case 'Messenger':
-        return _buildMessengerChannel(context);
+        return _buildMessengerChannel(context, channelController);
       case 'Instagram':
-        return _buildInstagramChannel(context);
+        return _buildInstagramChannel(context, channelController);
       case 'Telegram':
-        return _buildTelegramChannel(context);
+        return _buildTelegramChannel(context, channelController);
       case 'WhatsApp':
-        return _buildWhatsAppChannel(context);
+        return _buildWhatsAppChannel(context, channelController);
       case 'Slack':
-        return _buildSlackChannel(context);
+        return _buildSlackChannel(context, channelController);
       case 'Viber':
-        return _buildViberChannel(context);
+        return _buildViberChannel(context, channelController);
       case 'Discord':
-        return _buildDiscordChannel(context);
+        return _buildDiscordChannel(context, channelController);
       default:
-        return _buildComingSoonChannel(context);
+        return _buildComingSoonChannel(context, channelController);
     }
   }
 
-  Widget _buildWebsiteChannel(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    final isDark = themeController.isDarkMode;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -437,9 +428,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMessengerChannel(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    final isDark = themeController.isDarkMode;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,7 +441,7 @@ class ChannelsScreen extends StatelessWidget {
         AppSpacing.vertical(context, 0.01),
 
         Text(
-          'Please make sure you are logged in on the Facebook page you wish to connect with.',
+          'Choose your preferred connection method below. We recommend using the Quick Connect option for the fastest setup.',
           style: TextStyle(
             fontSize: 14,
             color: Colors.grey[600],
@@ -460,41 +449,141 @@ class ChannelsScreen extends StatelessWidget {
         ),
         AppSpacing.vertical(context, 0.02),
 
-        // Facebook Page ID input
-        SignupTextField(
-          label: 'Facebook Page ID',
-          hintText: 'Enter your Facebook Page ID (e.g., 123456789)',
-          controller: channelController.facebookPageIdCtrl,
-        ),
-        AppSpacing.vertical(context, 0.01),
 
-        Text(
-          '💡 How to find your Page ID:\n1. Go to your Facebook Page\n2. Click "About" in the left sidebar\n3. Scroll down to find "Page ID"',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-            fontStyle: FontStyle.italic,
           ),
         ),
         AppSpacing.vertical(context, 0.02),
 
-        // Facebook Access Token input (Optional)
-        SignupTextField(
-          label: 'Facebook Access Token (Optional)',
-          hintText: 'Enter your Facebook Access Token for advanced features',
-          controller: channelController.facebookAccessTokenCtrl,
-          // isPassword: true,
-        ),
-        AppSpacing.vertical(context, 0.01),
-
-        Text(
-          '💡 Access Token is optional for basic connection.\nFor advanced features (auto-replies, webhooks):\n1. Go to Facebook Developers\n2. Create/Select your app\n3. Go to Tools > Graph API Explorer\n4. Generate a Page Access Token',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-            fontStyle: FontStyle.italic,
           ),
         ),
+        AppSpacing.vertical(context, 0.02),
+
+        // Page Selector (shown after OAuth)
+        Obx(() => channelController.showPageSelector.value
+          ? Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.blue[50],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blue[200]!),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select Your Facebook Page',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Available pages list
+                  ...channelController.availablePages.map((page) {
+                    final isSelected = channelController.selectedPageId.value == page['id'];
+                    return GestureDetector(
+                      onTap: () => channelController.selectedPageId.value = page['id'],
+                      child: Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.blue[100] : Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: isSelected ? Colors.blue[300]! : Colors.grey[300]!,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            // Page picture
+                            Container(
+                              width: 40,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: page['picture']?['data']?['url'] != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Image.network(
+                                      page['picture']['data']['url'],
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Icon(Icons.facebook, color: Colors.grey[600]);
+                                      },
+                                    ),
+                                  )
+                                : Icon(Icons.facebook, color: Colors.grey[600]),
+                            ),
+                            const SizedBox(width: 12),
+                            
+                            // Page info
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    page['name'] ?? 'Unknown Page',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[800],
+                                    ),
+                                  ),
+                                  Text(
+                                    'Page ID: ${page['id']}',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            
+                            // Selection indicator
+                            if (isSelected)
+                              Icon(Icons.check_circle, color: Colors.blue[600], size: 20),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  
+                  const SizedBox(height: 12),
+                  
+                  // Connect button
+                  SizedBox(
+                    width: double.infinity,
+                    child: Obx(() => TextButton(
+                      onPressed: channelController.selectedPageId.value.isNotEmpty
+                          ? () => channelController.connectSelectedPage()
+                          : null,
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.blue[600],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Text(
+                        channelController.isConnectingFacebook.value
+                            ? 'Connecting...'
+                            : 'Connect Selected Page',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )),
+                  ),
+                ],
+              ),
+            )
+          : const SizedBox.shrink()),
         AppSpacing.vertical(context, 0.02),
 
         // Connection status area
@@ -586,138 +675,19 @@ class ChannelsScreen extends StatelessWidget {
             ),
             const SizedBox(width: 6),
             Expanded(
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                ).withAppGradient,
-                child: Obx(() => TextButton(
-                      onPressed: channelController.isConnectingFacebook.value
-                          ? null
-                          : () => channelController.connectFacebook(),
-                      style: TextButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        channelController.isConnectingFacebook.value
-                            ? 'Connecting...'
-                            : 'Connect Facebook',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )),
-              ),
+
             ),
           ],
         ),
         AppSpacing.vertical(context, 0.01),
 
-        // Quick connect without token - always show for now
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.blue[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.blue[200]!),
-          ),
-          child: Column(
-            children: [
-              Text(
-                'Quick Connect Available',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.blue[700],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'You can connect with just the Page ID for basic setup.\nAdd an access token later for advanced features.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue[600],
-                ),
-              ),
-            ],
-          ),
-        ),
-        AppSpacing.vertical(context, 0.02),
-
-        // AI control buttons
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  border: Border.all(
-                      color: isDark
-                          ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
-                          : Color(0XFFEBEDF0)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextButton(
-                  onPressed: () => channelController.disconnectFacebook(),
-                  style: TextButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: Text(
-                    'Disconnect',
-                    style: TextStyle(
-                      color: isDark ? AppColors.white : AppColors.black,
-                      fontWeight: FontWeight.w600,
-                    ),
                   ),
                 ),
               ),
             ),
             const SizedBox(width: 6),
             Expanded(
-              child: Container(
-                height: 48,
-                decoration: channelController.isFacebookAIPaused.value
-                    ? BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        color: Colors.orange)
-                    : BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                      ).withAppGradient,
-                child: Obx(() => TextButton(
-                      onPressed: () => channelController.toggleFacebookAI(),
-                      style: TextButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: Text(
-                        channelController.isFacebookAIPaused.value
-                            ? 'Resume Facebook AI'
-                            : 'Pause Facebook AI',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
-  Widget _buildInstagramChannel(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    final isDark = themeController.isDarkMode;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -934,7 +904,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTelegramChannel(BuildContext context) {
+  Widget _buildTelegramChannel(BuildContext context, ChannelController channelController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1131,7 +1101,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWhatsAppChannel(BuildContext context) {
+  Widget _buildWhatsAppChannel(BuildContext context, ChannelController channelController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1328,7 +1298,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSlackChannel(BuildContext context) {
+  Widget _buildSlackChannel(BuildContext context, ChannelController channelController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1524,7 +1494,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildViberChannel(BuildContext context) {
+  Widget _buildViberChannel(BuildContext context, ChannelController channelController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1720,7 +1690,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDiscordChannel(BuildContext context) {
+  Widget _buildDiscordChannel(BuildContext context, ChannelController channelController) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1916,7 +1886,7 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildComingSoonChannel(BuildContext context) {
+  Widget _buildComingSoonChannel(BuildContext context, ChannelController channelController) {
     return Container(
       width: double.infinity,
       height: 200,

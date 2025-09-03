@@ -1,0 +1,66 @@
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:minechat/controller/crm_controller/crm_controller.dart';
+import 'package:minechat/model/data/crm/lead_model.dart';
+
+class AddLeadController extends GetxController {
+  final CrmController crmController = Get.find<CrmController>();
+  
+  // Form key
+  final formKey = GlobalKey<FormState>();
+  
+  // Text controllers
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  final descriptionController = TextEditingController();
+  
+  // Observable variables
+  final selectedStatus = LeadStatus.hot.obs;
+  final selectedSource = LeadSource.website.obs;
+  final isLoading = false.obs;
+
+  @override
+  void onClose() {
+    // Dispose text controllers
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    descriptionController.dispose();
+    super.onClose();
+  }
+
+  // Save lead method
+  Future<void> saveLead(LeadModel lead) async {
+    try {
+      isLoading.value = true;
+      await crmController.addLead(lead);
+      Get.back(); // Navigate back after successful save
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to save lead: $e',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  // Reset form
+  void resetForm() {
+    nameController.clear();
+    emailController.clear();
+    phoneController.clear();
+    descriptionController.clear();
+    selectedStatus.value = LeadStatus.hot;
+    selectedSource.value = LeadSource.website;
+  }
+
+  // Validate form
+  bool validateForm() {
+    return formKey.currentState?.validate() ?? false;
+  }
+}
