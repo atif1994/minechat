@@ -32,9 +32,6 @@ class AIKnowledgeScreen extends StatelessWidget {
     final faqsController = Get.put(FAQsController());
     final knowledgeController = Get.put(AIKnowledgeController());
 
-    // Create a specific ScrollController for the horizontal tabs
-    final ScrollController tabScrollController = ScrollController();
-
     return Scaffold(
       backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
       body: Column(
@@ -48,8 +45,7 @@ class AIKnowledgeScreen extends StatelessWidget {
               _buildTab(
                   'Business Information', 0, knowledgeController, context),
               AppSpacing.horizontal(context, 0.03),
-              _buildTab(
-                  'Products & Services', 1, knowledgeController, context),
+              _buildTab('Products & Services', 1, knowledgeController, context),
               AppSpacing.horizontal(context, 0.03),
               _buildTab('FAQs', 2, knowledgeController, context),
             ],
@@ -82,6 +78,8 @@ class AIKnowledgeScreen extends StatelessWidget {
     AIKnowledgeController controller,
     context,
   ) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return GestureDetector(
       onTap: () => controller.selectedTabIndex.value = index,
       child: Obx(() {
@@ -89,11 +87,18 @@ class AIKnowledgeScreen extends StatelessWidget {
         return Text(
           title,
           style: AppTextStyles.bodyText(context).copyWith(
-              color: isSelected ? AppColors.secondary : Colors.grey[600],
+              color: isSelected
+                  ? isDark
+                      ? AppColors.white
+                      : AppColors.secondary
+                  : Colors.grey[600],
               decoration:
                   isSelected ? TextDecoration.underline : TextDecoration.none,
-              decorationColor:
-                  isSelected ? AppColors.secondary : Colors.transparent,
+              decorationColor: isSelected
+                  ? isDark
+                      ? AppColors.white
+                      : AppColors.secondary
+                  : Colors.transparent,
               fontSize: AppResponsive.scaleSize(context, 13),
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
         );

@@ -32,6 +32,8 @@ class ProductsServicesController extends GetxController {
   var isEditing = false.obs;
   var editingProductId = ''.obs;
 
+  final images = <String>[].obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -61,12 +63,13 @@ class ProductsServicesController extends GetxController {
 
       productsServices.value = snapshot.docs
           .map((doc) => ProductServiceModel.fromMap({
-        'id': doc.id,
-        ...doc.data(),
-      }))
+                'id': doc.id,
+                ...doc.data(),
+              }))
           .toList();
 
-      print("✅ Loaded ${productsServices.length} products for user: ${user.uid}");
+      print(
+          "✅ Loaded ${productsServices.length} products for user: ${user.uid}");
     } catch (e) {
       print('❌ Error loading products: $e');
       Get.snackbar('Error', 'Failed to load products');
@@ -91,7 +94,8 @@ class ProductsServicesController extends GetxController {
       print('🔍 User email: ${user.email}');
 
       final product = ProductServiceModel(
-        id: '', // Will be set by Firestore
+        id: '',
+        // Will be set by Firestore
         name: nameCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         price: priceCtrl.text.trim(),
@@ -100,7 +104,8 @@ class ProductsServicesController extends GetxController {
         userId: user.uid,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        selectedImage: selectedImage.value.isNotEmpty ? selectedImage.value : null,
+        selectedImage:
+            selectedImage.value.isNotEmpty ? selectedImage.value : null,
       );
 
       print("📤 Adding product to Firestore: ${product.toMap()}");
@@ -112,12 +117,20 @@ class ProductsServicesController extends GetxController {
       int retryCount = 0;
       const maxRetries = 3;
 
+      // Build payload with backward compatibility
+      final payload = product.toMap()
+        ..['images'] = images.toList()
+        ..['selectedImage'] = (images.isNotEmpty)
+            ? images.first
+            : (selectedImage.value.isNotEmpty ? selectedImage.value : null);
+
+      // Add with retries (unchanged outer logic)
       while (retryCount < maxRetries) {
         try {
           print("🔄 Attempt ${retryCount + 1} of $maxRetries");
           docRef = await _firestore
               .collection('products_services')
-              .add(product.toMap())
+              .add(payload)
               .timeout(const Duration(seconds: 30));
           print("✅ Product saved successfully on attempt ${retryCount + 1}");
           break;
@@ -137,7 +150,7 @@ class ProductsServicesController extends GetxController {
         final newProduct = product.copyWith(id: docRef.id);
         productsServices.add(newProduct);
         print("✅ Product added to local list with ID: ${docRef.id}");
-        
+
         // Verify the document was actually saved
         try {
           final savedDoc = await docRef.get();
@@ -169,11 +182,13 @@ class ProductsServicesController extends GetxController {
       print('❌ Error adding product: $e');
       print('❌ Error type: ${e.runtimeType}');
       print('❌ Error details: ${e.toString()}');
-      
+
       if (e.toString().contains('permission')) {
-        Get.snackbar('Permission Error', 'You don\'t have permission to save products. Please check your Firebase rules.');
+        Get.snackbar('Permission Error',
+            'You don\'t have permission to save products. Please check your Firebase rules.');
       } else if (e.toString().contains('network')) {
-        Get.snackbar('Network Error', 'Please check your internet connection and try again.');
+        Get.snackbar('Network Error',
+            'Please check your internet connection and try again.');
       } else {
         Get.snackbar('Error', 'Failed to add product: $e');
       }
@@ -200,7 +215,10 @@ class ProductsServicesController extends GetxController {
         'category': '',
         'features': '',
         'updatedAt': FieldValue.serverTimestamp(),
-        'selectedImage': selectedImage.value.isNotEmpty ? selectedImage.value : null,
+        'images': images.toList(),
+        'selectedImage': images.isNotEmpty
+            ? images.first
+            : (selectedImage.value.isNotEmpty ? selectedImage.value : null),
       };
 
       print("📤 Updating product $productId with data: $updatedData");
@@ -265,15 +283,41 @@ class ProductsServicesController extends GetxController {
     }
   }
 
-  void loadForEdit(ProductServiceModel product) {
+  void loadForEdit(ProductServiceModel product) async {
     nameCtrl.text = product.name;
     descriptionCtrl.text = product.description;
     priceCtrl.text = product.price;
-    selectedImage.value = product.selectedImage ?? ''; // ✅ fixed (no .value)
+
+    selectedImage.value = product.selectedImage ?? '';
+    images.clear();
+
+    // Try to load images array from Firestore (safe even if not present)
+    try {
+      if (product.id.isNotEmpty) {
+        final snap = await _firestore
+            .collection('products_services')
+            .doc(product.id)
+            .get();
+        final data = snap.data();
+        if (data != null && data['images'] is List) {
+          images.assignAll((data['images'] as List).whereType<String>());
+        } else if (product.selectedImage != null &&
+            product.selectedImage!.isNotEmpty) {
+          // fallback: seed list with legacy single image
+          images.assignAll([product.selectedImage!]);
+        }
+      }
+    } catch (e) {
+      // fallback, no crash
+      if (product.selectedImage != null && product.selectedImage!.isNotEmpty) {
+        images.assignAll([product.selectedImage!]);
+      }
+    }
 
     isEditing.value = true;
     editingProductId.value = product.id;
-    print("✏️ Loaded product for edit: ${product.toMap()}");
+    print(
+        "✏️ Loaded product for edit: ${product.toMap()} | images: ${images.length}");
   }
 
   void _clearForm() {
@@ -281,6 +325,7 @@ class ProductsServicesController extends GetxController {
     descriptionCtrl.clear();
     priceCtrl.clear();
     selectedImage.value = '';
+    images.clear();
 
     // Clear errors
     nameError.value = '';
@@ -310,7 +355,8 @@ class ProductsServicesController extends GetxController {
 
       // Create product from current form data
       final product = ProductServiceModel(
-        id: '', // Will be set by Firestore
+        id: '',
+        // Will be set by Firestore
         name: nameCtrl.text.trim(),
         description: descriptionCtrl.text.trim(),
         price: priceCtrl.text.trim(),
@@ -319,7 +365,8 @@ class ProductsServicesController extends GetxController {
         userId: user.uid,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        selectedImage: selectedImage.value.isNotEmpty ? selectedImage.value : null,
+        selectedImage:
+            selectedImage.value.isNotEmpty ? selectedImage.value : null,
       );
 
       print("📤 Saving product to Firestore: ${product.toMap()}");
@@ -327,9 +374,15 @@ class ProductsServicesController extends GetxController {
       print("🔍 Collection: products_services");
 
       // Save directly to Firestore
+      final payload = product.toMap()
+        ..['images'] = images.toList()
+        ..['selectedImage'] = (images.isNotEmpty)
+            ? images.first
+            : (selectedImage.value.isNotEmpty ? selectedImage.value : null);
+
       final docRef = await _firestore
           .collection('products_services')
-          .add(product.toMap())
+          .add(payload)
           .timeout(const Duration(seconds: 30));
 
       print("✅ Product saved successfully with ID: ${docRef.id}");
@@ -350,10 +403,10 @@ class ProductsServicesController extends GetxController {
 
       // Clear the form after successful save
       _clearForm();
-      
+
       // Refresh the products list from Firestore
       await loadProductsServices();
-      
+
       Get.snackbar('Success', 'Product saved successfully!');
       print("✅ Product saved to Firestore with ID: ${docRef.id}");
 
@@ -367,11 +420,13 @@ class ProductsServicesController extends GetxController {
       print('❌ Error saving product: $e');
       print('❌ Error type: ${e.runtimeType}');
       print('❌ Error details: ${e.toString()}');
-      
+
       if (e.toString().contains('permission')) {
-        Get.snackbar('Permission Error', 'You don\'t have permission to save products. Please check your Firebase rules.');
+        Get.snackbar('Permission Error',
+            'You don\'t have permission to save products. Please check your Firebase rules.');
       } else if (e.toString().contains('network')) {
-        Get.snackbar('Network Error', 'Please check your internet connection and try again.');
+        Get.snackbar('Network Error',
+            'Please check your internet connection and try again.');
       } else {
         Get.snackbar('Error', 'Failed to save product: $e');
       }
@@ -434,7 +489,15 @@ class ProductsServicesController extends GetxController {
     }
   }
 
+  void addImagePath(String path) {
+    if (path.isNotEmpty) images.add(path);
+  }
 
+  void removeImageAt(int index) {
+    if (index >= 0 && index < images.length) images.removeAt(index);
+  }
+
+  void clearImages() => images.clear();
 
   Future<void> testFirestoreConnection() async {
     try {
@@ -498,14 +561,14 @@ class ProductsServicesController extends GetxController {
 
       print('🎉 All Firestore tests passed!');
       Get.snackbar('Success', 'Firestore connection test passed!');
-
     } catch (e) {
       print('❌ Firestore test failed: $e');
       print('❌ Error type: ${e.runtimeType}');
       print('❌ Error details: ${e.toString()}');
-      
+
       if (e.toString().contains('timeout')) {
-        Get.snackbar('Error', 'Firestore connection timeout. Check your internet connection.');
+        Get.snackbar('Error',
+            'Firestore connection timeout. Check your internet connection.');
       } else if (e.toString().contains('permission')) {
         Get.snackbar('Error', 'Permission denied. Check your Firestore rules.');
       } else {

@@ -1,11 +1,13 @@
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
-import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 import '../../../controller/business_info_controller/business_info_controller.dart';
@@ -23,14 +25,13 @@ class BusinessInformation extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
+    final radius = AppResponsive.radius(context);
+
     return Scaffold(
       backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
       body: SingleChildScrollView(
-        child: Padding(
-          padding: AppSpacing.all(context, factor: 2),
-          child: Column(
-            children: [_buildBusinessInformationTab(controller, context)],
-          ),
+        child: Column(
+          children: [_buildBusinessInformationTab(controller, context)],
         ),
       ),
     );
@@ -38,6 +39,9 @@ class BusinessInformation extends StatelessWidget {
 
   Widget _buildBusinessInformationTab(
       BusinessInfoController controller, BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+    final radius = AppResponsive.radius(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -73,22 +77,84 @@ class BusinessInformation extends StatelessWidget {
 
         // Business Name
         SignupTextField(
-          labelText: 'Company Name',
-          hintText: 'Enter Company Name',
+          labelText: 'Business Name',
+          hintText: 'Enter Business Name',
           controller: controller.businessNameCtrl,
           errorText: controller.businessNameError,
         ),
         AppSpacing.vertical(context, 0.015),
 
         // Phone Number
-        SignupTextField(
-          labelText: 'Phone Number',
-          hintText: 'Enter phone number',
-          prefixIcon: 'assets/images/icons/icon_phone.svg',
-          // optional
-          controller: controller.phoneCtrl,
-          errorText: controller.phoneError,
-          keyboardType: TextInputType.phone,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Phone Number',
+              style: AppTextStyles.bodyText(context).copyWith(
+                fontSize: AppResponsive.scaleSize(context, 14),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            AppSpacing.vertical(context, 0.005),
+
+            IntlPhoneField(
+              controller: controller.phoneCtrl,
+              // keeps local part in the field
+              initialCountryCode: 'PK',
+              // default Pakistan
+              disableLengthCheck: true,
+              // show validation by length
+              dropdownIconPosition: IconPosition.trailing,
+              flagsButtonPadding: const EdgeInsets.only(left: 12),
+              showDropdownIcon: false,
+
+              // style to match your inputs
+              decoration: InputDecoration(
+                hintText: '0000000000',
+                hintStyle: AppTextStyles.hintText(context),
+                filled: true,
+                fillColor:
+                    isDark ? const Color(0xFF0A0A0A) : const Color(0xFFFAFBFD),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(radius),
+                  borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(radius),
+                  borderSide:
+                      const BorderSide(color: AppColors.primary, width: 2),
+                ),
+              ),
+
+              // keep your controller in sync
+              onChanged: (phone) {
+                // local part already goes into controller.phoneCtrl.text
+                controller.fullPhone.value =
+                    phone.completeNumber; // +92xxxxxxxxxx
+                controller.dialCode.value = phone.countryCode; // +92
+                controller.isoCode.value = phone.countryISOCode; // PK
+              },
+
+              // you can also listen when country changes
+              onCountryChanged: (country) {
+                controller.dialCode.value = '+${country.dialCode}';
+                controller.isoCode.value = country.code;
+              },
+            ),
+
+            // your reactive error text (kept as-is)
+            Obx(() => controller.phoneError.value.isNotEmpty
+                ? Text(
+                    controller.phoneError.value,
+                    style: AppTextStyles.bodyText(context).copyWith(
+                      fontSize: AppResponsive.scaleSize(context, 12),
+                      color: AppColors.error,
+                    ),
+                  )
+                : const SizedBox.shrink()),
+          ],
         ),
         AppSpacing.vertical(context, 0.015),
 
@@ -113,8 +179,8 @@ class BusinessInformation extends StatelessWidget {
 
         // Company Story
         SignupTextField(
-          labelText: 'Company Story or Other information',
-          hintText: 'Enter Company Story or Other information',
+          labelText: 'Company Story',
+          hintText: 'Enter Company Story',
           controller: controller.companyStoryCtrl,
           errorText: controller.companyStoryError,
         ),
@@ -132,7 +198,7 @@ class BusinessInformation extends StatelessWidget {
         // Discounts
         SignupTextField(
           labelText: 'Discounts',
-          hintText: 'Enter Discounts',
+          hintText: 'Enter FAQs',
           controller: controller.discountsCtrl,
           errorText: controller.discountsError,
         ),
