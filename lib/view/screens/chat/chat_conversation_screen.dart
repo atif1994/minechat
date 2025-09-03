@@ -42,13 +42,15 @@ class ChatConversationScreen extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 16,
-            backgroundImage: NetworkImage(chat['contactImage']),
+            backgroundImage: chat['profileImageUrl']?.isNotEmpty == true
+                ? NetworkImage(chat['profileImageUrl'])
+                : null,
             onBackgroundImageError: (exception, stackTrace) {
               // Handle image error
             },
-            child: chat['contactImage'].contains('placeholder')
+            child: chat['profileImageUrl']?.isEmpty != false
                 ? Text(
-                    chat['contactName'][0].toUpperCase(),
+                    (chat['contactName']?[0] ?? '?').toUpperCase(),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -267,13 +269,15 @@ class ChatConversationScreen extends StatelessWidget {
             const SizedBox(width: 8),
             CircleAvatar(
               radius: 16,
-              backgroundImage: NetworkImage(chat['contactImage']),
+              backgroundImage: chat['profileImageUrl']?.isNotEmpty == true
+                  ? NetworkImage(chat['profileImageUrl'])
+                  : null,
               onBackgroundImageError: (exception, stackTrace) {
                 // Handle image error
               },
-              child: chat['contactImage'].contains('placeholder')
+              child: chat['profileImageUrl']?.isEmpty != false
                   ? Text(
-                      chat['contactName'][0].toUpperCase(),
+                      (chat['contactName']?[0] ?? '?').toUpperCase(),
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

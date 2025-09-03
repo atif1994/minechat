@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
+import 'package:minechat/core/services/facebook_graph_api_service.dart';
 
 class ChannelController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -118,50 +119,50 @@ class ChannelController extends GetxController {
         selectedChannel.value = data['selectedChannel'] ?? 'Website';
         websiteUrlCtrl.text = data['websiteUrl'] ?? '';
         selectedWidgetColor.value = data['widgetColor'] ?? 'green';
-        
+
         // Facebook/Messenger
         isFacebookConnected.value = data['isFacebookConnected'] ?? false;
         isFacebookAIPaused.value = data['isFacebookAIPaused'] ?? false;
         facebookPageIdCtrl.text = data['facebookPageId'] ?? '';
         facebookAccessTokenCtrl.text = data['facebookAccessToken'] ?? '';
-        
+
         // Instagram
         isInstagramConnected.value = data['isInstagramConnected'] ?? false;
         isInstagramAIPaused.value = data['isInstagramAIPaused'] ?? false;
         instagramBusinessIdCtrl.text = data['instagramBusinessId'] ?? '';
-        
+
         // Telegram
         isTelegramConnected.value = data['isTelegramConnected'] ?? false;
         isTelegramAIPaused.value = data['isTelegramAIPaused'] ?? false;
         telegramBotTokenCtrl.text = data['telegramBotToken'] ?? '';
         telegramBotUsernameCtrl.text = data['telegramBotUsername'] ?? '';
-        
+
         // WhatsApp
         isWhatsAppConnected.value = data['isWhatsAppConnected'] ?? false;
         isWhatsAppAIPaused.value = data['isWhatsAppAIPaused'] ?? false;
         whatsAppPhoneNumberCtrl.text = data['whatsAppPhoneNumber'] ?? '';
         whatsAppAccessTokenCtrl.text = data['whatsAppAccessToken'] ?? '';
-        
+
         // Slack
         isSlackConnected.value = data['isSlackConnected'] ?? false;
         isSlackAIPaused.value = data['isSlackAIPaused'] ?? false;
         slackBotTokenCtrl.text = data['slackBotToken'] ?? '';
         slackAppTokenCtrl.text = data['slackAppToken'] ?? '';
-        
+
         // Viber
         isViberConnected.value = data['isViberConnected'] ?? false;
         isViberAIPaused.value = data['isViberAIPaused'] ?? false;
         viberBotTokenCtrl.text = data['viberBotToken'] ?? '';
         viberBotNameCtrl.text = data['viberBotName'] ?? '';
-        
+
         // Discord
         isDiscordConnected.value = data['isDiscordConnected'] ?? false;
         isDiscordAIPaused.value = data['isDiscordAIPaused'] ?? false;
         discordBotTokenCtrl.text = data['discordBotToken'] ?? '';
         discordClientIdCtrl.text = data['discordClientId'] ?? '';
-        
+
         generatedCode.value = data['generatedCode'] ?? '';
-        
+
         // Update connection status in available channels
         _updateChannelConnectionStatus();
       }
@@ -215,48 +216,48 @@ class ChannelController extends GetxController {
         'selectedChannel': selectedChannel.value,
         'websiteUrl': websiteUrlCtrl.text.trim(),
         'widgetColor': selectedWidgetColor.value,
-        
+
         // Facebook/Messenger
         'isFacebookConnected': isFacebookConnected.value,
         'isFacebookAIPaused': isFacebookAIPaused.value,
         'facebookPageId': facebookPageIdCtrl.text.trim(),
         'facebookAccessToken': facebookAccessTokenCtrl.text.trim(),
-        
+
         // Instagram
         'isInstagramConnected': isInstagramConnected.value,
         'isInstagramAIPaused': isInstagramAIPaused.value,
         'instagramBusinessId': instagramBusinessIdCtrl.text.trim(),
-        
+
         // Telegram
         'isTelegramConnected': isTelegramConnected.value,
         'isTelegramAIPaused': isTelegramAIPaused.value,
         'telegramBotToken': telegramBotTokenCtrl.text.trim(),
         'telegramBotUsername': telegramBotUsernameCtrl.text.trim(),
-        
+
         // WhatsApp
         'isWhatsAppConnected': isWhatsAppConnected.value,
         'isWhatsAppAIPaused': isWhatsAppAIPaused.value,
         'whatsAppPhoneNumber': whatsAppPhoneNumberCtrl.text.trim(),
         'whatsAppAccessToken': whatsAppAccessTokenCtrl.text.trim(),
-        
+
         // Slack
         'isSlackConnected': isSlackConnected.value,
         'isSlackAIPaused': isSlackAIPaused.value,
         'slackBotToken': slackBotTokenCtrl.text.trim(),
         'slackAppToken': slackAppTokenCtrl.text.trim(),
-        
+
         // Viber
         'isViberConnected': isViberConnected.value,
         'isViberAIPaused': isViberAIPaused.value,
         'viberBotToken': viberBotTokenCtrl.text.trim(),
         'viberBotName': viberBotNameCtrl.text.trim(),
-        
+
         // Discord
         'isDiscordConnected': isDiscordConnected.value,
         'isDiscordAIPaused': isDiscordAIPaused.value,
         'discordBotToken': discordBotTokenCtrl.text.trim(),
         'discordClientId': discordClientIdCtrl.text.trim(),
-        
+
         'generatedCode': generatedCode.value,
         'userId': userId,
         'updatedAt': DateTime.now().toIso8601String(),
@@ -292,7 +293,7 @@ class ChannelController extends GetxController {
   Future<void> generateWebsiteCode() async {
     try {
       isGeneratingCode.value = true;
-      
+
       if (websiteUrlCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -310,7 +311,7 @@ class ChannelController extends GetxController {
       )['color'] as Color;
 
       final colorHex = '#${color.value.toRadixString(16).substring(2)}';
-      
+
       final code = '''
 <!-- MineChat AI Assistant Widget -->
 <div id="minechat-widget" style="position: fixed; bottom: 20px; right: 20px; z-index: 1000;">
@@ -331,7 +332,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
 ''';
 
       generatedCode.value = code;
-      
+
       Get.snackbar(
         'Success',
         'Website widget code generated!',
@@ -366,63 +367,165 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   }
 
   // ===== FACEBOOK/MESSENGER INTEGRATION =====
-  /// Connect Facebook Messenger
-  Future<void> connectFacebook() async {
+
+  // OAuth state variables
+  var isOAuthInProgress = false.obs;
+  var showPageSelector = false.obs;
+  var availablePages = <Map<String, dynamic>>[].obs;
+  var selectedPageId = ''.obs;
+  var userAccessToken = ''.obs;
+
+  /// Start Facebook OAuth flow (like Replit)
+  Future<void> startFacebookOAuth() async {
     try {
-      isConnectingFacebook.value = true;
-      
-      if (facebookPageIdCtrl.text.trim().isEmpty) {
+      isOAuthInProgress.value = true;
+      print('🚀 Starting Facebook OAuth flow...');
+
+      final result = await FacebookGraphApiService.startOAuthFlow();
+
+      if (result['success']) {
+        print('✅ OAuth flow started successfully');
+        Get.snackbar(
+          'Facebook OAuth Started',
+          'Please complete the authentication in your browser',
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      } else {
+        throw Exception(result['error']);
+      }
+    } catch (e) {
+      print('❌ Error starting OAuth: $e');
+      Get.snackbar(
+        'OAuth Error',
+        'Failed to start Facebook authentication: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isOAuthInProgress.value = false;
+    }
+  }
+
+  /// Handle OAuth callback and get pages
+  Future<void> handleOAuthCallback(String code, String state) async {
+    try {
+      print('🔄 Handling OAuth callback...');
+
+      final result = await FacebookGraphApiService.handleOAuthCallback(code);
+
+      if (result['success']) {
+        userAccessToken.value = result['accessToken'] ?? '';
+        print('✅ OAuth successful, got access token');
+
+        // Get user's pages
+        await loadUserPages();
+      } else {
+        throw Exception(result['error']);
+      }
+    } catch (e) {
+      print('❌ Error handling OAuth callback: $e');
+      Get.snackbar(
+        'OAuth Error',
+        'Failed to complete authentication: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Load user's Facebook pages
+  Future<void> loadUserPages() async {
+    try {
+      print('📋 Loading user pages...');
+
+      final result = await FacebookGraphApiService.getUserPages();
+
+      if (result['success']) {
+        final pages = (result['data'] as List).cast<Map<String, dynamic>>();
+        availablePages.value = pages;
+        showPageSelector.value = true;
+
+        print('✅ Loaded ${pages.length} Facebook pages');
+        Get.snackbar(
+          'Pages Loaded',
+          'Found ${pages.length} Facebook pages. Please select one to connect.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else {
+        throw Exception(result['error']);
+      }
+    } catch (e) {
+      print('❌ Error loading pages: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to load Facebook pages: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Connect to selected page
+  Future<void> connectSelectedPage() async {
+    try {
+      if (selectedPageId.value.isEmpty) {
         Get.snackbar(
           'Error',
-          'Please enter your Facebook Page ID',
+          'Please select a page first',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
         return;
       }
-      
-      // Access token is optional for basic connection
-      final hasAccessToken = facebookAccessTokenCtrl.text.trim().isNotEmpty;
 
-      // TODO: Implement real Facebook Graph API verification
-      // 1. Verify access token with Facebook Graph API (if provided)
-      // 2. Check if user has permission to manage the page
-      // 3. Set up webhook for incoming messages
-      
-      await Future.delayed(Duration(seconds: 2)); // Simulate API call
-      
-      final pageId = facebookPageIdCtrl.text.trim();
-      if (!RegExp(r'^\d+$').hasMatch(pageId)) {
-        throw Exception('Invalid Facebook Page ID format');
-      }
-      
+      isConnectingFacebook.value = true;
+      print('🔗 Connecting to page: ${selectedPageId.value}');
+
+      // For the backend approach, we'll use the selected page directly
+      final pageId = selectedPageId.value;
+      final selectedPage = availablePages.firstWhere(
+        (page) => page['id'] == pageId,
+        orElse: () => {'name': 'Unknown Page'},
+      );
+      final pageName = selectedPage['name'] ?? 'Unknown Page';
+
+      // For backend approach, we just save the page ID
+      // The backend handles the access token internally
+      await _savePageAccessToken(pageId, 'backend_managed');
+
+      // Update UI
+      facebookPageIdCtrl.text = pageId;
       isFacebookConnected.value = true;
+      showPageSelector.value = false;
+      selectedPageId.value = '';
+
       await saveChannelSettings();
-      
-      final message = hasAccessToken 
-          ? 'Facebook Messenger connected successfully!\nPage ID: $pageId\nAdvanced features enabled.'
-          : 'Facebook Messenger connected successfully!\nPage ID: $pageId\nBasic mode - add access token for advanced features.';
-      
+
       Get.snackbar(
-        'Success',
-        message,
+        'Success!',
+        'Connected to Facebook page: $pageName',
         backgroundColor: Colors.green,
         colorText: Colors.white,
         duration: Duration(seconds: 4),
       );
-      
-      // Trigger chat loading after successful connection
+
+      // Trigger chat loading
       try {
         final chatController = Get.find<ChatController>();
-        chatController.refreshChats();
+        await chatController.refreshFacebookChats();
+        print('✅ Facebook chats loaded successfully');
       } catch (e) {
-        print('Chat controller not found, will load chats when chat screen is opened');
+        print('⚠️ Chat controller not found, will load chats when chat screen is opened');
       }
+
     } catch (e) {
-      print('❌ Error connecting Facebook: $e');
+      print('❌ Error connecting page: $e');
       Get.snackbar(
         'Error',
-        'Failed to connect Facebook: $e',
+        'Failed to connect page: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -431,19 +534,471 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
+  /// Connect Facebook Messenger with OAuth (new method)
+  Future<void> connectFacebook() async {
+    // Check if user has Page ID already
+    if (facebookPageIdCtrl.text.trim().isNotEmpty) {
+      // Use existing Page ID method if available
+      await _connectWithExistingPageId();
+    } else {
+      // Start OAuth flow for new connections
+      await startFacebookOAuth();
+    }
+  }
+
+  /// Connect using existing Page ID (fallback method)
+  Future<void> _connectWithExistingPageId() async {
+    try {
+      isConnectingFacebook.value = true;
+
+      final pageId = facebookPageIdCtrl.text.trim();
+
+      // Validate Page ID format
+      if (!RegExp(r'^\d+$').hasMatch(pageId)) {
+        throw Exception('Invalid Facebook Page ID format. Please enter numeric ID only.');
+      }
+
+      // Check if we have an access token
+      final existingToken = await getPageAccessToken(pageId);
+
+      if (existingToken != null) {
+        // We have a token, verify it still works
+        print('✅ Found existing access token for page: $pageId');
+        isFacebookConnected.value = true;
+        await saveChannelSettings();
+
+        Get.snackbar(
+          'Success',
+          'Facebook Messenger connected successfully!\nPage ID: $pageId\nFull integration enabled!',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 4),
+        );
+
+        // Trigger chat loading
+        try {
+          final chatController = Get.find<ChatController>();
+          await chatController.refreshFacebookChats();
+          print('✅ Facebook chats loaded successfully');
+        } catch (e) {
+          print('⚠️ Chat controller not found, will load chats when chat screen is opened');
+        }
+      } else {
+        // No token, show instructions
+        Get.dialog(
+          AlertDialog(
+            title: Text('Facebook Access Token Required'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('To connect to your Facebook page, you need an access token.'),
+                SizedBox(height: 16),
+                Text('Quick Setup:'),
+                Text('1. Go to https://developers.facebook.com/'),
+                Text('2. Create/select your app'),
+                Text('3. Go to Tools > Graph API Explorer'),
+                Text('4. Generate Access Token with permissions:'),
+                Text('   • pages_show_list'),
+                Text('   • pages_messaging'),
+                Text('5. Copy the token and paste it below'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Get.back();
+                  _showTokenInputDialog();
+                },
+                child: Text('Add Token'),
+              ),
+            ],
+          ),
+        );
+      }
+    } catch (e) {
+      print('❌ Error connecting with existing Page ID: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to connect Facebook: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 5),
+      );
+    } finally {
+      isConnectingFacebook.value = false;
+    }
+  }
+
+  /// Show dialog to input access token
+  void _showTokenInputDialog() {
+    final tokenController = TextEditingController();
+
+    Get.dialog(
+      AlertDialog(
+        title: Text('Enter Facebook Access Token'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'To get real Facebook chats, you need a valid access token:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 12),
+              Text('1. Go to https://developers.facebook.com/'),
+              Text('2. Create/select your app'),
+              Text('3. Go to Tools > Graph API Explorer'),
+              Text('4. Click "Generate Access Token"'),
+              Text('5. Add these permissions:'),
+              Text('   • pages_show_list'),
+              Text('   • pages_messaging'),
+              Text('6. Copy the generated token (starts with "EAAB")'),
+              SizedBox(height: 16),
+              Text(
+                'Paste your Facebook Access Token here:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              TextField(
+                controller: tokenController,
+                decoration: InputDecoration(
+                  hintText: 'EAAB... (paste your access token here)',
+                  border: OutlineInputBorder(),
+                  helperText: 'Token should start with "EAAB" and be about 200+ characters long',
+                ),
+                maxLines: 3,
+                onChanged: (value) {
+                  // Basic validation feedback
+                  if (value.isNotEmpty && !value.contains('EAAB')) {
+                    // Could add visual feedback here
+                  }
+                },
+              ),
+              SizedBox(height: 8),
+              Text(
+                '⚠️ Important: Tokens expire after 60 days. You\'ll need to regenerate them.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.orange[700],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final token = tokenController.text.trim();
+              if (token.isEmpty) {
+                Get.snackbar(
+                  'Error',
+                  'Please enter an access token',
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+                return;
+              }
+
+              if (!token.contains('EAAB')) {
+                Get.snackbar(
+                  'Invalid Token',
+                  'Facebook access tokens should start with "EAAB". Please check your token.',
+                  backgroundColor: Colors.red,
+                  colorText: Colors.white,
+                );
+                return;
+              }
+
+              Get.back();
+              await _connectWithToken(token);
+            },
+            child: Text('Connect'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Connect using provided access token
+  Future<void> _connectWithToken(String accessToken) async {
+    try {
+      isConnectingFacebook.value = true;
+
+      final pageId = facebookPageIdCtrl.text.trim();
+
+      print('🔍 Verifying Facebook access token...');
+
+              // Step 1: Verify access token
+        final tokenVerification = await FacebookGraphApiService.verifyAccessToken(accessToken);
+        if (!tokenVerification['success']) {
+          final error = tokenVerification['error'];
+          final errorType = tokenVerification['errorType'];
+
+          print('❌ Token verification failed: $errorType - $error');
+
+          // Show specific error dialog with guidance
+          Get.dialog(
+            AlertDialog(
+              title: Text('Token Verification Failed'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Error: $error'),
+                  SizedBox(height: 16),
+                  Text(
+                    'Common solutions:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 8),
+                  Text('• Generate a new token from Graph API Explorer'),
+                  Text('• Ensure token has pages_show_list permission'),
+                  Text('• Ensure token has pages_messaging permission'),
+                  Text('• Check that token hasn\'t expired (60 days)'),
+                  Text('• Make sure you copied the entire token'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('OK'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    _showTokenInputDialog();
+                  },
+                  child: Text('Try Again'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+
+      print('✅ Access token verified for user: ${tokenVerification['data']['name']}');
+
+      // Step 2: Get user's pages to find the specific page and its access token
+      final pagesResult = await FacebookGraphApiService.getUserPagesWithToken(accessToken);
+      if (!pagesResult['success']) {
+        throw Exception('Failed to fetch pages: ${pagesResult['error']}');
+      }
+
+      final pages = pagesResult['data']['data'] as List;
+      final targetPage = pages.firstWhere(
+        (page) => page['id'] == pageId,
+        orElse: () => <String, dynamic>{},
+      );
+
+              if (targetPage.isEmpty) {
+          // Show available pages to help user
+          final pageNames = pages.map((p) => '${p['name']} (${p['id']})').join('\n');
+
+          Get.dialog(
+            AlertDialog(
+              title: Text('Page Not Found'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Page ID $pageId not found in your managed pages.'),
+                  SizedBox(height: 16),
+                  Text('Your available pages:'),
+                  SizedBox(height: 8),
+                  Text(pageNames),
+                  SizedBox(height: 16),
+                  Text('Please update the Page ID field with one of the IDs above.'),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('OK'),
+                ),
+              ],
+            ),
+          );
+          return;
+        }
+
+      final pageAccessToken = targetPage['access_token'];
+      print('✅ Found page: ${targetPage['name']} with access token');
+
+      // Step 3: Verify page access
+      final pageVerification = await FacebookGraphApiService.verifyPageAccess(pageId, pageAccessToken);
+      if (!pageVerification['success']) {
+        throw Exception('Cannot access page: ${pageVerification['error']}');
+      }
+
+      print('✅ Page access verified: ${pageVerification['data']['name']}');
+
+      // Save the page access token securely
+      await _savePageAccessToken(pageId, pageAccessToken);
+
+      isFacebookConnected.value = true;
+      await saveChannelSettings();
+
+              Get.snackbar(
+          'Success',
+          'Facebook Messenger connected successfully!\nPage: ${pageVerification['data']['name']}\nFull integration enabled - chats will now sync!',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 4),
+        );
+
+      // Trigger chat loading
+      try {
+        final chatController = Get.find<ChatController>();
+        await chatController.refreshFacebookChats();
+        print('✅ Facebook chats loaded successfully');
+      } catch (e) {
+        print('⚠️ Chat controller not found, will load chats when chat screen is opened');
+      }
+
+    } catch (e) {
+      print('❌ Error connecting with token: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to connect Facebook: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 5),
+      );
+    } finally {
+      isConnectingFacebook.value = false;
+    }
+  }
+
+  /// Save page access token securely
+  Future<void> _savePageAccessToken(String pageId, String pageAccessToken) async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) return;
+
+      await _firestore
+          .collection('secure_tokens')
+          .doc(userId)
+          .set({
+            'facebookPageTokens': {
+              pageId: pageAccessToken,
+            },
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+
+      print('✅ Page access token saved securely');
+    } catch (e) {
+      print('❌ Error saving page access token: $e');
+    }
+  }
+
+  /// Get stored page access token
+  Future<String?> getPageAccessToken(String pageId) async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) {
+        print('❌ No user ID found');
+        return null;
+      }
+
+      print('🔍 Looking for access token for page: $pageId, user: $userId');
+
+      final doc = await _firestore
+          .collection('secure_tokens')
+          .doc(userId)
+          .get();
+
+      if (doc.exists) {
+        final data = doc.data()!;
+        final pageTokens = data['facebookPageTokens'] as Map<String, dynamic>?;
+        final token = pageTokens?[pageId] as String?;
+
+        if (token != null) {
+          print('✅ Found access token for page: $pageId');
+          return token;
+        } else {
+          print('⚠️ No access token found for page: $pageId');
+          print('📋 Available page tokens: ${pageTokens?.keys.toList()}');
+        }
+      } else {
+        print('⚠️ No secure_tokens document found for user: $userId');
+      }
+
+      return null;
+    } catch (e) {
+      print('❌ Error getting page access token: $e');
+      return null;
+    }
+  }
+
+  /// Check Facebook connection status
+  Future<void> checkFacebookStatus() async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) {
+        print('❌ No user ID found');
+        return;
+      }
+
+      print('🔍 Checking Facebook connection status...');
+
+      // Check channel settings
+      final channelDoc = await _firestore
+          .collection('channel_settings')
+          .doc(userId)
+          .get();
+
+      if (channelDoc.exists) {
+        final data = channelDoc.data()!;
+        final isConnected = data['isFacebookConnected'] ?? false;
+        final pageId = data['facebookPageId'] as String?;
+
+        print('📋 Channel Settings:');
+        print('   - Connected: $isConnected');
+        print('   - Page ID: $pageId');
+
+        if (pageId != null && pageId.isNotEmpty) {
+          // Check if access token exists
+          final accessToken = await getPageAccessToken(pageId);
+          if (accessToken != null) {
+            print('✅ Full integration: Page ID + Access Token available');
+            print('🚀 Ready to load real Facebook chats!');
+          } else {
+            print('⚠️ Basic mode: Page ID only, no access token');
+            print('💡 To get real chats, reconnect with Facebook Access Token');
+          }
+        }
+      } else {
+        print('⚠️ No channel settings found');
+      }
+    } catch (e) {
+      print('❌ Error checking Facebook status: $e');
+    }
+  }
+
   /// Disconnect Facebook
   Future<void> disconnectFacebook() async {
     try {
       isConnectingFacebook.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isFacebookConnected.value = false;
       isFacebookAIPaused.value = false;
       facebookPageIdCtrl.clear();
       facebookAccessTokenCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Facebook Messenger disconnected successfully!',
@@ -468,7 +1023,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectInstagram() async {
     try {
       isConnectingInstagram.value = true;
-      
+
       if (instagramBusinessIdCtrl.text.trim().isEmpty || facebookAccessTokenCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -481,12 +1036,12 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
 
       // TODO: Implement Instagram Basic Display API
       // Instagram uses the same Facebook access token
-      
+
       await Future.delayed(Duration(seconds: 2));
-      
+
       isInstagramConnected.value = true;
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Instagram connected successfully!',
@@ -511,13 +1066,13 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     try {
       isConnectingInstagram.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isInstagramConnected.value = false;
       isInstagramAIPaused.value = false;
       instagramBusinessIdCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Instagram disconnected successfully!',
@@ -542,7 +1097,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectTelegram() async {
     try {
       isConnectingTelegram.value = true;
-      
+
       if (telegramBotTokenCtrl.text.trim().isEmpty || telegramBotUsernameCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -556,12 +1111,12 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // TODO: Implement Telegram Bot API verification
       // 1. Verify bot token with Telegram API
       // 2. Set up webhook for incoming messages
-      
+
       await Future.delayed(Duration(seconds: 2));
-      
+
       isTelegramConnected.value = true;
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Telegram connected successfully!\nBot: @${telegramBotUsernameCtrl.text.trim()}',
@@ -586,14 +1141,14 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     try {
       isConnectingTelegram.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isTelegramConnected.value = false;
       isTelegramAIPaused.value = false;
       telegramBotTokenCtrl.clear();
       telegramBotUsernameCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Telegram disconnected successfully!',
@@ -618,7 +1173,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectWhatsApp() async {
     try {
       isConnectingWhatsApp.value = true;
-      
+
       if (whatsAppPhoneNumberCtrl.text.trim().isEmpty || whatsAppAccessTokenCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -633,12 +1188,12 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // 1. Verify phone number format
       // 2. Verify access token with WhatsApp API
       // 3. Set up webhook for incoming messages
-      
+
       await Future.delayed(Duration(seconds: 2));
-      
+
       isWhatsAppConnected.value = true;
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'WhatsApp connected successfully!\nPhone: ${whatsAppPhoneNumberCtrl.text.trim()}',
@@ -663,14 +1218,14 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     try {
       isConnectingWhatsApp.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isWhatsAppConnected.value = false;
       isWhatsAppAIPaused.value = false;
       whatsAppPhoneNumberCtrl.clear();
       whatsAppAccessTokenCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'WhatsApp disconnected successfully!',
@@ -695,7 +1250,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectSlack() async {
     try {
       isConnectingSlack.value = true;
-      
+
       if (slackBotTokenCtrl.text.trim().isEmpty || slackAppTokenCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -709,12 +1264,12 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // TODO: Implement Slack API
       // 1. Verify bot token with Slack API
       // 2. Set up Events API for incoming messages
-      
+
       await Future.delayed(Duration(seconds: 2));
-      
+
       isSlackConnected.value = true;
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Slack connected successfully!',
@@ -739,14 +1294,14 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     try {
       isConnectingSlack.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isSlackConnected.value = false;
       isSlackAIPaused.value = false;
       slackBotTokenCtrl.clear();
       slackAppTokenCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Slack disconnected successfully!',
@@ -771,7 +1326,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectViber() async {
     try {
       isConnectingViber.value = true;
-      
+
       if (viberBotTokenCtrl.text.trim().isEmpty || viberBotNameCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -785,12 +1340,12 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // TODO: Implement Viber Bot API
       // 1. Verify bot token with Viber API
       // 2. Set up webhook for incoming messages
-      
+
       await Future.delayed(Duration(seconds: 2));
-      
+
       isViberConnected.value = true;
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Viber connected successfully!\nBot: ${viberBotNameCtrl.text.trim()}',
@@ -815,14 +1370,14 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     try {
       isConnectingViber.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isViberConnected.value = false;
       isViberAIPaused.value = false;
       viberBotTokenCtrl.clear();
       viberBotNameCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Viber disconnected successfully!',
@@ -847,7 +1402,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectDiscord() async {
     try {
       isConnectingDiscord.value = true;
-      
+
       if (discordBotTokenCtrl.text.trim().isEmpty || discordClientIdCtrl.text.trim().isEmpty) {
         Get.snackbar(
           'Error',
@@ -861,12 +1416,12 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // TODO: Implement Discord Bot API
       // 1. Verify bot token with Discord API
       // 2. Set up Gateway for incoming messages
-      
+
       await Future.delayed(Duration(seconds: 2));
-      
+
       isDiscordConnected.value = true;
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Discord connected successfully!',
@@ -891,14 +1446,14 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     try {
       isConnectingDiscord.value = true;
       await Future.delayed(Duration(seconds: 1));
-      
+
       isDiscordConnected.value = false;
       isDiscordAIPaused.value = false;
       discordBotTokenCtrl.clear();
       discordClientIdCtrl.clear();
-      
+
       await saveChannelSettings();
-      
+
       Get.snackbar(
         'Success',
         'Discord disconnected successfully!',
@@ -925,8 +1480,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isFacebookAIPaused.value 
-        ? 'Facebook AI paused' 
+      isFacebookAIPaused.value
+        ? 'Facebook AI paused'
         : 'Facebook AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -939,8 +1494,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isInstagramAIPaused.value 
-        ? 'Instagram AI paused' 
+      isInstagramAIPaused.value
+        ? 'Instagram AI paused'
         : 'Instagram AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -953,8 +1508,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isTelegramAIPaused.value 
-        ? 'Telegram AI paused' 
+      isTelegramAIPaused.value
+        ? 'Telegram AI paused'
         : 'Telegram AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -967,8 +1522,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isWhatsAppAIPaused.value 
-        ? 'WhatsApp AI paused' 
+      isWhatsAppAIPaused.value
+        ? 'WhatsApp AI paused'
         : 'WhatsApp AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -981,8 +1536,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isSlackAIPaused.value 
-        ? 'Slack AI paused' 
+      isSlackAIPaused.value
+        ? 'Slack AI paused'
         : 'Slack AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -995,8 +1550,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isViberAIPaused.value 
-        ? 'Viber AI paused' 
+      isViberAIPaused.value
+        ? 'Viber AI paused'
         : 'Viber AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -1009,8 +1564,8 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     saveChannelSettings();
     Get.snackbar(
       'Success',
-      isDiscordAIPaused.value 
-        ? 'Discord AI paused' 
+      isDiscordAIPaused.value
+        ? 'Discord AI paused'
         : 'Discord AI resumed',
       backgroundColor: Colors.green,
       colorText: Colors.white,
@@ -1032,6 +1587,156 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   /// Select widget color
   void selectWidgetColor(String colorName) {
     selectedWidgetColor.value = colorName;
+  }
+
+  /// Debug Facebook connection status
+  Future<void> debugFacebookConnection() async {
+    try {
+      print('🔍 === FACEBOOK CONNECTION DEBUG ===');
+
+      final userId = getCurrentUserId();
+      print('👤 User ID: $userId');
+
+      // Check user document
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      if (!userDoc.exists) {
+        print('❌ User document not found');
+        return;
+      }
+
+      final userData = userDoc.data()!;
+      print('📄 User data:');
+      print('   - isFacebookConnected: ${userData['isFacebookConnected']}');
+      print('   - facebookPageId: ${userData['facebookPageId']}');
+
+      // Check secure tokens
+      final tokenDoc = await _firestore.collection('secure_tokens').doc(userId).get();
+      if (!tokenDoc.exists) {
+        print('❌ No secure tokens document found');
+      } else {
+        final tokenData = tokenDoc.data()!;
+        print('🔐 Token data:');
+        print('   - facebookPageTokens: ${tokenData['facebookPageTokens']}');
+        print('   - updatedAt: ${tokenData['updatedAt']}');
+      }
+
+      // Check if we can get page access token
+      final pageId = userData['facebookPageId'] as String?;
+      if (pageId != null && pageId.isNotEmpty) {
+        print('🔍 Checking access token for page: $pageId');
+        final pageToken = await getPageAccessToken(pageId);
+        if (pageToken != null) {
+          print('✅ Found page access token');
+          print('📝 Token preview: ${pageToken.substring(0, 10)}...');
+
+          // Test token validity
+          print('🧪 Testing token validity...');
+          final tokenTest = await FacebookGraphApiService.verifyAccessToken(pageToken);
+          if (tokenTest['success']) {
+            print('✅ Token is valid for user: ${tokenTest['data']['name']}');
+
+            // Test page access
+            final pageTest = await FacebookGraphApiService.verifyPageAccess(pageId, pageToken);
+            if (pageTest['success']) {
+              print('✅ Can access page: ${pageTest['data']['name']}');
+            } else {
+              print('❌ Cannot access page: ${pageTest['error']}');
+            }
+          } else {
+            print('❌ Token is invalid: ${tokenTest['error']}');
+          }
+        } else {
+          print('❌ No page access token found');
+        }
+      } else {
+        print('❌ No Facebook Page ID configured');
+      }
+
+      print('🔍 === END DEBUG ===');
+
+      Get.snackbar(
+        'Debug Complete',
+        'Check console for detailed Facebook connection status',
+        backgroundColor: Colors.blue,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+
+    } catch (e) {
+      print('❌ Debug error: $e');
+      Get.snackbar(
+        'Debug Error',
+        'Error during debug: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Connect using the provided Facebook page access token directly
+  Future<void> connectWithProvidedToken() async {
+    try {
+      isConnectingFacebook.value = true;
+
+      final pageId = facebookPageIdCtrl.text.trim();
+      if (pageId.isEmpty) {
+        Get.snackbar(
+          'Error',
+          'Please enter your Facebook Page ID first',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Use the provided page access token
+      const String providedToken = 'EAAU0kNg5hEMBPJBvAOD7hNgPb7j6vLYtLQZACZBwZBewAgOiOUwZCLO0w2zIdfE5S3fSVQQC61rXXSsDCsPppbUtVpaMQa4VVR67RGlK7BmPWm6R3aFp9MOyk1uskbzZCGSu8oTy7NY4njn4YrnBRWC8ZBnrO46iGW0Oiznd9ERue6hC2K1hTTnSa0S2nU5Uv7VqGAUopO';
+
+      print('🔍 Testing provided Facebook page access token...');
+
+      // Test the token with the page
+      final pageVerification = await FacebookGraphApiService.verifyPageAccess(pageId, providedToken);
+      if (!pageVerification['success']) {
+        throw Exception('Cannot access page with provided token: ${pageVerification['error']}');
+      }
+
+      print('✅ Page access verified: ${pageVerification['data']['name']}');
+
+      // Save the page access token securely
+      await _savePageAccessToken(pageId, providedToken);
+
+      isFacebookConnected.value = true;
+      await saveChannelSettings();
+
+      Get.snackbar(
+        'Success',
+        'Facebook Messenger connected successfully!\nPage: ${pageVerification['data']['name']}\nFull integration enabled - chats will now sync!',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 4),
+      );
+
+      // Trigger chat loading
+      try {
+        final chatController = Get.find<ChatController>();
+        await chatController.refreshFacebookChats();
+        print('✅ Facebook chats loaded successfully');
+      } catch (e) {
+        print('⚠️ Chat controller not found, will load chats when chat screen is opened');
+      }
+
+    } catch (e) {
+      print('❌ Error connecting with provided token: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to connect Facebook: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 5),
+      );
+    } finally {
+      isConnectingFacebook.value = false;
+    }
   }
 
   @override

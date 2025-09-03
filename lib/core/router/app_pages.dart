@@ -16,6 +16,11 @@ import 'package:minechat/view/screens/edit_profile/business_edit_profile_screen.
 import 'package:minechat/view/screens/subscription/subscription_screen.dart';
 import 'package:minechat/view/screens/chat/chat_screen.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
+import 'package:minechat/view/screens/crm/crm_main_screen.dart';
+import 'package:minechat/view/screens/crm/crm_leads_screen.dart';
+import 'package:minechat/view/screens/crm/crm_opportunities_screen.dart';
+import 'package:minechat/view/screens/crm/add_lead_screen.dart';
+import 'package:minechat/controller/crm_controller/add_lead_controller.dart';
 
 import 'app_routes.dart';
 
@@ -54,5 +59,17 @@ class AppPages {
     GetPage(
         name: AppRoutes.chatConversation,
         page: () => ChatConversationScreen(chat: Get.arguments)),
+    
+    // CRM Pages
+    GetPage(name: AppRoutes.crmMain, page: () => const CrmMainScreen()),
+    GetPage(name: AppRoutes.crmLeads, page: () => CrmLeadsScreen()),
+    GetPage(name: AppRoutes.crmOpportunities, page: () => CrmOpportunitiesScreen()),
+    GetPage(
+      name: AppRoutes.addLead, 
+      page: () => const AddLeadScreen(),
+      binding: BindingsBuilder(() {
+        Get.lazyPut<AddLeadController>(() => AddLeadController());
+      }),
+    ),
   ];
 }

@@ -21,7 +21,14 @@ class AIAssistantSetupScreen extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
     final controller = Get.put(AIAssistantController());
-    final channelController = Get.put(ChannelController());
+    final channelController = Get.find<ChannelController>();
+    
+    // Safety check to ensure controllers are properly initialized
+    if (!Get.isRegistered<ChannelController>() || !Get.isRegistered<ThemeController>()) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
     final indexMap = {
       "AI Assistant": 0,

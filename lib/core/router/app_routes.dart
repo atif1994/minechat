@@ -16,4 +16,10 @@ class AppRoutes {
   static const subscription = '/subscription';
   static const chat                  = '/chat';
   static const chatConversation      = '/chat-conversation';
+  
+  // CRM Routes
+  static const crmMain = '/crm-main';
+  static const crmLeads = '/crm-leads';
+  static const crmOpportunities = '/crm-opportunities';
+  static const addLead = '/add-lead';
 }

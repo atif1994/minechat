@@ -45,6 +45,13 @@ class ChatScreen extends StatelessWidget {
             style: AppTextStyles.heading(context),
           ),
           const Spacer(),
+          // Refresh Button
+          IconButton(
+            onPressed: () => chatController.refreshFacebookChats(),
+            icon: const Icon(Icons.refresh, color: Colors.blue),
+            tooltip: 'Refresh Facebook Chats',
+          ),
+          const SizedBox(width: 8),
           GestureDetector(
             onTap: () => chatController.toggleCreateNewDropdown(),
             child: Container(
@@ -215,12 +222,22 @@ class ChatScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Connect your channels to start receiving messages',
+                    'Connect your Facebook page to see real conversations',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[500],
                     ),
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => Get.toNamed('/setup'),
+                    icon: const Icon(Icons.settings),
+                    label: const Text('Setup Channels'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
                   ),
                 ],
               ),
@@ -284,18 +301,18 @@ class ChatScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // Profile Image
+            // Profile Image with Platform Badge
             Stack(
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundImage: NetworkImage(chat['contactImage']),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    // Handle image error
-                  },
-                  child: chat['contactImage'].contains('placeholder')
+                  backgroundImage: chat['profileImageUrl']?.isNotEmpty == true
+                      ? NetworkImage(chat['profileImageUrl'])
+                      : null,
+                  backgroundColor: _getPlatformColor(chat['platform']),
+                  child: chat['profileImageUrl']?.isEmpty != false
                       ? Text(
-                          chat['contactName'][0].toUpperCase(),
+                          chat['contactName']?[0]?.toUpperCase() ?? '?',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
@@ -304,17 +321,20 @@ class ChatScreen extends StatelessWidget {
                         )
                       : null,
                 ),
-                if (chat['isOnline'])
+                // Platform indicator
                   Positioned(
-                    right: 0,
-                    bottom: 0,
+                  right: -2,
+                  bottom: -2,
                     child: Container(
-                      width: 12,
-                      height: 12,
+                    padding: const EdgeInsets.all(2),
                       decoration: BoxDecoration(
-                        color: Colors.green,
+                      color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: Colors.grey[300]!, width: 1),
+                    ),
+                    child: Text(
+                      chat['platformIcon'] ?? '💬',
+                      style: const TextStyle(fontSize: 10),
                       ),
                     ),
                   ),
@@ -354,20 +374,39 @@ class ChatScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Text(
-                        chat['channelIcon'],
-                        style: const TextStyle(fontSize: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: _getPlatformColor(chat['platform']).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          chat['platform'] ?? 'Unknown',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: _getPlatformColor(chat['platform']),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          chat['lastMessage'],
+                          chat['lastMessage'] ?? '',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[600],
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (chat['messageCount'] != null)
+                        Text(
+                          '${chat['messageCount']} msgs',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey[500],
                         ),
                       ),
                     ],
@@ -480,5 +519,28 @@ class ChatScreen extends StatelessWidget {
         }).toList(),
       ),
     );
+  }
+
+  Color _getPlatformColor(String? platform) {
+    switch (platform?.toLowerCase()) {
+      case 'messenger':
+        return const Color(0xFF0084FF);
+      case 'instagram':
+        return const Color(0xFFE1306C);
+      case 'whatsapp':
+        return const Color(0xFF25D366);
+      case 'telegram':
+        return const Color(0xFF0088CC);
+      case 'website':
+        return const Color(0xFF2196F3);
+      case 'slack':
+        return const Color(0xFF4A154B);
+      case 'discord':
+        return const Color(0xFF5865F2);
+      case 'viber':
+        return const Color(0xFF665CAC);
+      default:
+        return Colors.grey[600] ?? Colors.grey;
+    }
   }
 }

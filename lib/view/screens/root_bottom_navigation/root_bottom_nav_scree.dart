@@ -11,6 +11,7 @@ import 'package:minechat/core/widgets/app_bottom_nav_bar/nav_item.dart';
 import 'package:minechat/view/screens/account/account_screen.dart';
 import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 import '../chat/chat_screen.dart';
+import '../crm/crm_main_screen.dart';
 import '../setup/set_up.dart';
 
 class RootBottomNavScreen extends StatelessWidget {
@@ -23,7 +24,7 @@ class RootBottomNavScreen extends StatelessWidget {
     DashboardScreen(),
     ChatScreen(),
     AIAssistantSetupScreen(),
-    Placeholder(),
+    const CrmMainScreen(),
     AccountScreen(),
   ];
 
