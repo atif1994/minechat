@@ -8,7 +8,12 @@ class ProductServiceModel {
   final String userId;
   final DateTime createdAt;
   final DateTime updatedAt;
-  final String? selectedImage; // ✅ Plain string, not Rx
+
+  /// Legacy single image (keep for backward compatibility / primary image)
+  final String? selectedImage;
+
+  /// New: multiple images
+  final List<String> images;
 
   ProductServiceModel({
     required this.id,
@@ -21,8 +26,31 @@ class ProductServiceModel {
     required this.createdAt,
     required this.updatedAt,
     this.selectedImage,
+    this.images = const [], // default empty list
   });
 
+  // ---- Helpers ----
+  static DateTime _parseDate(dynamic v) {
+    if (v == null) return DateTime.now();
+    if (v is DateTime) return v;
+    // Firestore Timestamp support
+    try {
+      // Avoid importing firebase here; use duck-typing
+      final maybeToDate = (v as dynamic).toDate;
+      if (maybeToDate is Function) return (v as dynamic).toDate() as DateTime;
+    } catch (_) {}
+    // String ISO support
+    return DateTime.tryParse(v.toString()) ?? DateTime.now();
+  }
+
+  static List<String> _parseImages(dynamic v) {
+    if (v is List) {
+      return v.whereType<String>().toList();
+    }
+    return const [];
+  }
+
+  // ---- Serialization ----
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -32,13 +60,18 @@ class ProductServiceModel {
       'category': category,
       'features': features,
       'userId': userId,
+      // Keep ISO strings for compatibility; if you prefer Firestore Timestamps,
+      // set them in the controller when writing.
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
       'selectedImage': selectedImage ?? '',
+      'images': images, // 👈 new field
     };
   }
 
   factory ProductServiceModel.fromMap(Map<String, dynamic> map) {
+    final parsedImages = _parseImages(map['images']);
+
     return ProductServiceModel(
       id: map['id'] ?? '',
       name: map['name'] ?? '',
@@ -47,13 +80,14 @@ class ProductServiceModel {
       category: map['category'] ?? '',
       features: map['features'] ?? '',
       userId: map['userId'] ?? '',
-      createdAt: map['createdAt'] != null
-          ? DateTime.tryParse(map['createdAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      updatedAt: map['updatedAt'] != null
-          ? DateTime.tryParse(map['updatedAt'].toString()) ?? DateTime.now()
-          : DateTime.now(),
-      selectedImage: map['selectedImage'], // ✅ plain string
+      createdAt: _parseDate(map['createdAt']),
+      updatedAt: _parseDate(map['updatedAt']),
+      selectedImage: (map['selectedImage'] is String &&
+              (map['selectedImage'] as String).isNotEmpty)
+          ? map['selectedImage'] as String
+          : null,
+      // normalize empty string -> null
+      images: parsedImages,
     );
   }
 
@@ -68,6 +102,7 @@ class ProductServiceModel {
     DateTime? createdAt,
     DateTime? updatedAt,
     String? selectedImage,
+    List<String>? images,
   }) {
     return ProductServiceModel(
       id: id ?? this.id,
@@ -80,6 +115,7 @@ class ProductServiceModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       selectedImage: selectedImage ?? this.selectedImage,
+      images: images ?? this.images,
     );
   }
 }

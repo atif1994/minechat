@@ -128,10 +128,12 @@ class AIAssistantSetupScreen extends StatelessWidget {
   // ---------------------- Breadcrumbs ----------------------
   Widget _buildBreadcrumbs(
       BuildContext context, AIAssistantController controller) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     TextStyle activeStyle = AppTextStyles.bodyText(context).copyWith(
       fontSize: 13,
       fontWeight: FontWeight.w600,
-      color: AppColors.secondary,
+      color: isDark ? AppColors.white : AppColors.secondary,
     );
     TextStyle linkStyle = AppTextStyles.bodyText(context).copyWith(
       fontSize: 13,

@@ -45,6 +45,10 @@ class BusinessInfoController extends GetxController {
   var selectedFilePath = ''.obs;
   var uploadedFileUrl = ''.obs;
 
+  final fullPhone = ''.obs;   // e.g., +923001234567
+  final isoCode   = 'PK'.obs; // country ISO
+  final dialCode  = '+92'.obs;
+
   @override
   void onInit() {
     super.onInit();
