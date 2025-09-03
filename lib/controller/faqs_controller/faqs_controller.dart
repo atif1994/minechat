@@ -46,28 +46,28 @@ class FAQsController extends GetxController {
   Future<bool> checkAndRequestPermissions() async {
     try {
       print('🔍 Checking storage permissions...');
-      
+
       // Check storage permission
       PermissionStatus status = await Permission.storage.status;
       print('🔍 Storage permission status: $status');
-      
+
       if (status.isDenied) {
         print('🔍 Requesting storage permission...');
         status = await Permission.storage.request();
         print('🔍 Storage permission after request: $status');
       }
-      
+
       // For Android 13+ (API 33+), also check media permissions
       if (await Permission.photos.status.isDenied) {
         print('🔍 Requesting photos permission...');
         await Permission.photos.request();
       }
-      
+
       if (await Permission.manageExternalStorage.status.isDenied) {
         print('🔍 Requesting manage external storage permission...');
         await Permission.manageExternalStorage.request();
       }
-      
+
       return status.isGranted || status.isLimited;
     } catch (e) {
       print('❌ Permission check error: $e');
@@ -91,15 +91,13 @@ class FAQsController extends GetxController {
 
       print('🔍 Found ${querySnapshot.docs.length} FAQ documents');
 
-      final items = querySnapshot.docs
-          .map((doc) {
-            print('🔍 Processing FAQ document: ${doc.id}');
-            return FAQModel.fromMap({
-              'id': doc.id,
-              ...doc.data(),
-            });
-          })
-          .toList();
+      final items = querySnapshot.docs.map((doc) {
+        print('🔍 Processing FAQ document: ${doc.id}');
+        return FAQModel.fromMap({
+          'id': doc.id,
+          ...doc.data(),
+        });
+      }).toList();
 
       // Sort locally by createdAt desc
       items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -121,10 +119,11 @@ class FAQsController extends GetxController {
     print('🔍 Starting addIndividualFAQ...');
     print('🔍 Question: ${questionCtrl.text}');
     print('🔍 Answer: ${answerCtrl.text}');
-    
+
     if (!_validateForm()) {
       print('❌ Form validation failed');
-      Get.snackbar('Validation Error', 'Please fill in both question and answer',
+      Get.snackbar(
+          'Validation Error', 'Please fill in both question and answer',
           backgroundColor: Colors.red, colorText: Colors.white);
       return;
     }
@@ -133,14 +132,16 @@ class FAQsController extends GetxController {
       isSaving.value = true;
       final userId = getCurrentUserId();
       print('🔍 User ID: $userId');
-      
+
       if (userId.isEmpty) throw Exception("User not logged in");
 
       final faq = FAQModel(
-        id: '', // Will be set by Firestore
+        id: '',
+        // Will be set by Firestore
         question: questionCtrl.text.trim(),
         answer: answerCtrl.text.trim(),
-        category: 'General', // Default category
+        category: 'General',
+        // Default category
         userId: userId,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
@@ -149,9 +150,7 @@ class FAQsController extends GetxController {
       print('🔍 FAQ model created: ${faq.toMap()}');
       print('🔍 Adding to Firestore...');
 
-      final docRef = await _firestore
-          .collection('faqs')
-          .add(faq.toMap());
+      final docRef = await _firestore.collection('faqs').add(faq.toMap());
 
       print('✅ FAQ added to Firestore with ID: ${docRef.id}');
 
@@ -193,10 +192,10 @@ class FAQsController extends GetxController {
       print('🔍 Starting file upload process...');
       isUploading.value = true;
       final userId = getCurrentUserId();
-      
+
       print('🔍 User ID: $userId');
       if (userId.isEmpty) throw Exception("User not logged in");
-      
+
       print('🔍 Selected file path: ${selectedFile.value}');
       if (selectedFile.value.isEmpty) throw Exception("No file selected");
 
@@ -212,7 +211,7 @@ class FAQsController extends GetxController {
       // Read file as bytes for any file type
       List<int> fileBytes = await file.readAsBytes();
       String fileContent = '';
-      
+
       // Try to read as text for text-based files
       if (extension == 'txt' || extension == 'csv') {
         try {
@@ -243,7 +242,8 @@ class FAQsController extends GetxController {
       print('✅ File data saved to Firebase');
 
       // Process text content only for text files
-      if (fileContent.isNotEmpty && (extension == 'txt' || extension == 'csv')) {
+      if (fileContent.isNotEmpty &&
+          (extension == 'txt' || extension == 'csv')) {
         print('🔍 Processing file content for FAQs...');
         await _processFileContent(fileContent, userId);
         print('✅ File content processed');
@@ -254,7 +254,7 @@ class FAQsController extends GetxController {
       // Remember last picked name and clear selection
       lastPickedFileName.value = fileName;
       // Don't clear selectedFile.value here - keep it for potential re-upload
-      
+
       // Refresh AI Assistant's knowledge data
       try {
         print('🔍 Refreshing AI knowledge data...');
@@ -287,11 +287,13 @@ class FAQsController extends GetxController {
       for (int i = 0; i < lines.length - 1; i++) {
         final line = lines[i].trim();
         if (line.startsWith('Q:') || line.startsWith('Question:')) {
-          final question = line.replaceFirst(RegExp(r'^Q:\s*|Question:\s*'), '');
+          final question =
+              line.replaceFirst(RegExp(r'^Q:\s*|Question:\s*'), '');
           if (i + 1 < lines.length) {
             final nextLine = lines[i + 1].trim();
             if (nextLine.startsWith('A:') || nextLine.startsWith('Answer:')) {
-              final answer = nextLine.replaceFirst(RegExp(r'^A:\s*|Answer:\s*'), '');
+              final answer =
+                  nextLine.replaceFirst(RegExp(r'^A:\s*|Answer:\s*'), '');
               extractedFAQs.add({'question': question, 'answer': answer});
             }
           }
@@ -352,6 +354,49 @@ class FAQsController extends GetxController {
     } catch (e) {
       Get.snackbar('Error', 'Failed to delete FAQ: $e',
           backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  Future<void> addFAQDirect({
+    required String question,
+    required String answer,
+  }) async {
+    try {
+      if (question.trim().isEmpty || answer.trim().isEmpty) {
+        Get.snackbar('Validation', 'Please provide both question and answer',
+            backgroundColor: Colors.red, colorText: Colors.white);
+        return;
+      }
+
+      isSaving.value = true;
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) throw Exception('User not logged in');
+
+      final faq = FAQModel(
+        id: '',
+        question: question.trim(),
+        answer: answer.trim(),
+        category: 'General',
+        userId: userId,
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      final docRef = await _firestore.collection('faqs').add(faq.toMap());
+      faqs.insert(0, faq.copyWith(id: docRef.id));
+
+      // optional AI refresh, same as elsewhere
+      try {
+        Get.find<AIAssistantController>().refreshKnowledgeData();
+      } catch (_) {}
+
+      Get.snackbar('Success', 'FAQ added successfully!',
+          backgroundColor: Colors.green, colorText: Colors.white);
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to add FAQ: $e',
+          backgroundColor: Colors.red, colorText: Colors.white);
+    } finally {
+      isSaving.value = false;
     }
   }
 

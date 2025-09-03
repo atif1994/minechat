@@ -20,7 +20,7 @@ class RootBottomNavScreen extends StatelessWidget {
   final BottomNavController ctrl =
       Get.put(BottomNavController(), permanent: true);
 
-  final List<Widget> _pages =  [
+  final List<Widget> _pages = [
     DashboardScreen(),
     ChatScreen(),
     AIAssistantSetupScreen(),
@@ -31,6 +31,7 @@ class RootBottomNavScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    final scheme = Theme.of(context).colorScheme;
 
     return Obx(() {
       final index = ctrl.currentIndex.value;
@@ -71,6 +72,9 @@ class RootBottomNavScreen extends StatelessWidget {
           items: items,
           currentIndex: index,
           onTap: ctrl.changeTab,
+          backgroundColor: scheme.surface,
+          // ⬅ themed
+          inactiveColor: scheme.onSurface.withOpacity(.6),
         ),
         backgroundColor:
             isDark ? const Color(0XFF1D1D1D) : const Color(0xFFFFFFFF),

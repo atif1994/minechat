@@ -30,14 +30,16 @@ class NavItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     final labelStyle = AppTextStyles.bodyText(context).copyWith(
       fontSize: AppResponsive.scaleSize(context, 10),
-      color: active ? Colors.black : inactiveColor,
+      color: active ? scheme.onSurface : inactiveColor,
       fontWeight: FontWeight.w600,
       letterSpacing: 0.5,
     );
 
-    final Widget icon = _buildIcon();
+    final Widget icon = _buildIcon(context, scheme);
 
     final Widget label = active
         ? Text(item.label, style: labelStyle).withAppGradient()
@@ -60,36 +62,33 @@ class NavItemTile extends StatelessWidget {
     );
   }
 
-  Widget _buildIcon() {
-    if (_hasBuilder) {
-      return item.iconBuilder!(active); // ← dynamic icon
-    }
+  Widget _buildIcon(BuildContext context, ColorScheme scheme) {
+    if (_hasBuilder) return item.iconBuilder!(active);
+
     final path = active && item.activeIconPath != null
         ? item.activeIconPath!
         : (item.iconPath ?? '');
 
-    if (_isSvg) {
-      final tint = (active && item.activeIconPath == null)
-          ? const ColorFilter.mode(Color(0xFFB01D47), BlendMode.srcIn)
-          : (active
-              ? null
-              : const ColorFilter.mode(Color(0xFFB9C0CC), BlendMode.srcIn));
+    // Tint colors from theme
+    final Color inactiveTint = inactiveColor;
+    final Color activeTint = scheme.primary;
 
-      return SvgPicture.asset(
-        path,
-        width: iconSize,
-        height: iconSize,
-        colorFilter: tint,
-      );
+    if (_isSvg) {
+      final ColorFilter? tint = (active && item.activeIconPath == null)
+          ? ColorFilter.mode(activeTint, BlendMode.srcIn) // ⬅ themed active
+          : (!active
+              ? ColorFilter.mode(
+                  inactiveTint, BlendMode.srcIn) // ⬅ themed inactive
+              : null);
+
+      return SvgPicture.asset(path,
+          width: iconSize, height: iconSize, colorFilter: tint);
     } else {
-      return Image.asset(
-        path,
-        width: iconSize,
-        height: iconSize,
-        color: (active && item.activeIconPath == null)
-            ? const Color(0xFFB01D47)
-            : (active ? null : const Color(0xFFB9C0CC)),
-      );
+      final Color? color = (active && item.activeIconPath == null)
+          ? activeTint
+          : (!active ? inactiveTint : null);
+
+      return Image.asset(path, width: iconSize, height: iconSize, color: color);
     }
   }
 }

@@ -4,6 +4,9 @@ import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:minechat/controller/faqs_controller/faqs_controller.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
@@ -20,10 +23,11 @@ class FAQsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Scaffold(
-      backgroundColor: AppColors.g1,
+      backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
       body: SingleChildScrollView(
-        padding: AppSpacing.all(context, factor: 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -33,7 +37,27 @@ class FAQsScreen extends StatelessWidget {
 
             // Individual FAQ Entries Section
             _buildIndividualFAQSection(context),
-            AppSpacing.vertical(context, 0.04),
+            AppSpacing.vertical(context, 0.02),
+            // Always-show "+ Add More" button (outlined, red)
+            OutlinedButton.icon(
+              onPressed: () => _showQuickAddFAQDialog(context),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary, width: 1.4),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ),
+              icon: const Icon(Icons.add, color: AppColors.primary),
+              label: Text(
+                'Add More',
+                style: AppTextStyles.bodyText(context).copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            AppSpacing.vertical(context, 0.02),
 
             // Action Buttons Row
             Row(
@@ -41,8 +65,9 @@ class FAQsScreen extends StatelessWidget {
                 // Save Button
                 Expanded(
                   child: Container(
+                    height: 48,
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.red[400]!),
+                      border: Border.all(color: AppColors.primary),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextButton(
@@ -50,7 +75,7 @@ class FAQsScreen extends StatelessWidget {
                       child: Text(
                         'Save',
                         style: TextStyle(
-                          color: Colors.red[400],
+                          color: isDark ? AppColors.white : AppColors.primary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -62,19 +87,19 @@ class FAQsScreen extends StatelessWidget {
                 // Test AI Button
                 Expanded(
                   child: Container(
+                    height: 48,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.pink[400]!, Colors.red[400]!],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
                       borderRadius: BorderRadius.circular(12),
-                    ),
+                    ).withAppGradient,
                     child: TextButton.icon(
                       onPressed: () => Get.to(() =>
                           FAQsAITestingScreen(faqsController: controller)),
-                      icon:
-                          Icon(Icons.smart_toy, color: Colors.white, size: 20),
+                      icon: SvgPicture.asset(
+                        "assets/images/icons/icon_setup_test_ai_button.svg",width: 20,
+                        height: 20,
+                        colorFilter: const ColorFilter.mode(
+                            Colors.white, BlendMode.srcIn),
+                      ),
                       label: Text(
                         'Test AI',
                         style: TextStyle(
@@ -94,34 +119,59 @@ class FAQsScreen extends StatelessWidget {
   }
 
   Widget _buildFileUploadSection(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+    final linkStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 10,
+      color: Color(0xFF1677FF),
+      decoration: TextDecoration.underline,
+      decorationColor: Color(0xFF1677FF),
+      fontWeight: FontWeight.w500,
+    );
+
+    final subStyle = AppTextStyles.bodyText(context).copyWith(
+      fontSize: 10,
+      fontWeight: FontWeight.w400,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header
         Text(
           'Frequently Asked Questions',
-          style: AppTextStyles.heading(context),
+          style: AppTextStyles.bodyText(context).copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         AppSpacing.vertical(context, 0.01),
 
         // Instruction
-        Text(
-          "Upload any file to save in Firebase.",
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
+        RichText(
+          text: TextSpan(
+            children: [
+              TextSpan(
+                text: 'Upload file you want to import ',
+                style: subStyle,
+              ),
+              TextSpan(
+                text: '(see sample document)',
+                style: linkStyle,
+              ),
+            ],
           ),
         ),
-
-        AppSpacing.vertical(context, 0.02),
+        AppSpacing.vertical(context, 0.01),
 
         // File Upload Area
         GestureDetector(
           onTap: () => _pickFile(context),
           child: DottedBorder(
-            color: Colors.grey[400]!,
-            strokeWidth: 2,
-            dashPattern: const [6, 3],
+            color: isDark
+                ? Color(0XFFFFFFFF).withValues(alpha: .12)
+                : Color(0XFFEBEDF0),
+            strokeWidth: 1.6,
+            dashPattern: const [6, 6],
             borderType: BorderType.RRect,
             radius: const Radius.circular(12),
             child: Obx(() {
@@ -129,93 +179,100 @@ class FAQsScreen extends StatelessWidget {
 
               return Container(
                 width: double.infinity,
-                height: 140,
+                height: 150,
                 decoration: BoxDecoration(
-                  color: AppColors.g1,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: name.isEmpty
                     ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      AppAssets.uploadFile,
-                      height: 50,
-                      width: 50,
-                    ),
-                    const SizedBox(height: 10),
-                    Container(
-                      width: 180,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: TextButton(
-                        onPressed: controller.isUploading.value
-                            ? null
-                            : () => _pickFile(context),
-                        child: Text(
-                          controller.isUploading.value
-                              ? 'Uploading...'
-                              : 'Upload file',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-                    : Stack(
-                  children: [
-                    // File name centered
-                    Center(
-                      child: Text(
-                        name,
-                        style: TextStyle(
-                          color: Colors.green[800],
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-
-                    // Close button at top-right
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: GestureDetector(
-                        onTap: () => controller.clearFileSelection(),
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.primary,
-                            border: Border.all(
-                              color: Colors.red[300]!,
-                              width: 1.2,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: isDark
+                                    ? Color(0XFFF0F1F5).withValues(alpha: .12)
+                                    : Color(0XFFF0F1F5)),
+                            child: Center(
+                              child: SvgPicture.asset(
+                                "assets/images/icons/icon_setup_file_upload.svg",
+                                color: isDark
+                                    ? Color(0XFFFFFFFF)
+                                    : Color(0XFF15181F),
+                              ),
                             ),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 3,
-                                offset: Offset(1, 1),
-                              )
-                            ],
                           ),
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: AppColors.white,
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
+                            ).withAppGradient,
+                            child: const Text(
+                              'Upload file',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
                           ),
-                        ),
+                        ],
+                      )
+                    : Stack(
+                        children: [
+                          // File name centered
+                          Center(
+                            child: Text(
+                              name,
+                              style: TextStyle(
+                                color: Colors.green[800],
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+
+                          // Close button at top-right
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: GestureDetector(
+                              onTap: () => controller.clearFileSelection(),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: AppColors.primary,
+                                  border: Border.all(
+                                    color: Colors.red[300]!,
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Colors.black26,
+                                      blurRadius: 3,
+                                      offset: Offset(1, 1),
+                                    )
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(4),
+                                child: Icon(
+                                  Icons.close,
+                                  size: 16,
+                                  color: AppColors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               );
             }),
           ),
@@ -224,29 +281,23 @@ class FAQsScreen extends StatelessWidget {
     );
   }
 
-
-
   Widget _buildIndividualFAQSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Header
-        Text(
-          'Individual FAQ Entries',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey[800],
-          ),
-        ),
+        Text('Individual FAQ Entries',
+            style: AppTextStyles.bodyText(context).copyWith(
+                fontSize: AppResponsive.scaleSize(context, 14),
+                fontWeight: FontWeight.w500)),
         AppSpacing.vertical(context, 0.02),
 
         // Existing FAQs List
         Obx(() => Column(
-          children: controller.faqs
-              .map((faq) => _buildFAQCard(faq, context))
-              .toList(),
-        )),
+              children: controller.faqs
+                  .map((faq) => _buildFAQCard(faq, context))
+                  .toList(),
+            )),
 
         // Individual FAQ Form
         _buildIndividualFAQForm(context),
@@ -259,9 +310,8 @@ class FAQsScreen extends StatelessWidget {
       margin: const EdgeInsets.only(top: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.g1,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: Color(0XFFFFFFFF).withOpacity(0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -270,7 +320,6 @@ class FAQsScreen extends StatelessWidget {
           SignupTextField(
             label: 'Question',
             hintText: 'Enter your question',
-            prefixIcon: AppAssets.signupIconEmail,
             controller: controller.questionCtrl,
             errorText: controller.questionError,
             onChanged: (val) => controller.validateQuestion(val),
@@ -281,7 +330,6 @@ class FAQsScreen extends StatelessWidget {
           SignupTextField(
             label: 'Answer',
             hintText: 'Enter your answer',
-            prefixIcon: AppAssets.signupIconEmail,
             controller: controller.answerCtrl,
             errorText: controller.answerError,
             onChanged: (val) => controller.validateAnswer(val),
@@ -292,16 +340,16 @@ class FAQsScreen extends StatelessWidget {
           Container(
             width: double.infinity,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.red[400]!),
+              border: Border.all(color: AppColors.primary),
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextButton.icon(
               onPressed: () => controller.addIndividualFAQ(),
-              icon: Icon(Icons.add, color: Colors.red[400], size: 20),
+              icon: Icon(Icons.add, color: AppColors.primary, size: 20),
               label: Text(
                 'Add FAQ',
                 style: TextStyle(
-                  color: Colors.red[400],
+                  color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -483,6 +531,82 @@ class FAQsScreen extends StatelessWidget {
               child: Text('Save'),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  void _showQuickAddFAQDialog(BuildContext context) {
+    final qCtrl = TextEditingController();
+    final aCtrl = TextEditingController();
+    String qErr = '';
+    String aErr = '';
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setState) {
+            return AlertDialog(
+              title: const Text('Add FAQ'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Reuse your app textfield style
+                    SignupTextField(
+                      label: 'Question',
+                      hintText: 'Enter your question',
+                      controller: qCtrl,
+                    ),
+                    if (qErr.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(qErr,
+                            style: const TextStyle(color: Colors.red)),
+                      ),
+                    const SizedBox(height: 12),
+                    SignupTextField(
+                      label: 'Answer',
+                      hintText: 'Enter your answer',
+                      controller: aCtrl,
+                    ),
+                    if (aErr.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Text(aErr,
+                            style: const TextStyle(color: Colors.red)),
+                      ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    setState(() {
+                      qErr = qCtrl.text.trim().isEmpty
+                          ? 'Question is required'
+                          : '';
+                      aErr =
+                          aCtrl.text.trim().isEmpty ? 'Answer is required' : '';
+                    });
+                    if (qErr.isEmpty && aErr.isEmpty) {
+                      await controller.addFAQDirect(
+                        question: qCtrl.text,
+                        answer: aCtrl.text,
+                      );
+                      if (ctx.mounted) Navigator.of(ctx).pop();
+                    }
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
