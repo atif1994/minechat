@@ -721,7 +721,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
               }
 
               Get.back();
-              await _connectWithToken(token);
+              await connectWithToken(token);
             },
             child: Text('Connect'),
           ),
@@ -731,7 +731,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   }
 
   /// Connect using provided access token
-  Future<void> _connectWithToken(String accessToken) async {
+  Future<void> connectWithToken(String accessToken) async {
     try {
       isConnectingFacebook.value = true;
 
@@ -1730,6 +1730,85 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       Get.snackbar(
         'Error',
         'Failed to connect Facebook: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 5),
+      );
+    } finally {
+      isConnectingFacebook.value = false;
+    }
+  }
+
+  /// Connect to a specific Facebook page after OAuth
+  Future<void> connectToFacebookPage(String pageId) async {
+    try {
+      isConnectingFacebook.value = true;
+      print('🔗 Connecting to Facebook page: $pageId');
+
+      // Find the selected page data
+      final selectedPage = availablePages.firstWhere(
+        (page) => page['id'] == pageId,
+        orElse: () => throw Exception('Selected page not found'),
+      );
+
+      final pageName = selectedPage['name'] ?? 'Unknown Page';
+      print('📱 Connecting to page: $pageName');
+
+      // Save the page ID
+      facebookPageIdCtrl.text = pageId;
+      
+      // Set connection status
+      isFacebookConnected.value = true;
+      showPageSelector.value = false;
+      
+      // Save settings
+      await saveChannelSettings();
+
+      Get.snackbar(
+        'Success',
+        'Connected to Facebook page: $pageName',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+
+      print('✅ Facebook page connected successfully');
+
+    } catch (e) {
+      print('❌ Error connecting to Facebook page: $e');
+      Get.snackbar(
+        'Connection Error',
+        'Failed to connect to Facebook page: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+      rethrow;
+    } finally {
+      isConnectingFacebook.value = false;
+    }
+  }
+
+  /// Connect directly with the new access token
+  Future<void> connectDirectlyWithNewToken() async {
+    try {
+      isConnectingFacebook.value = true;
+      
+      // Use the new access token directly
+      const String newAccessToken = 'EAAU0kNg5hEMBPTfyfu1IyQTlMkfTrsF36p3Ipy0oRAo3MfeZAxVVDZA9ZC4ZB874XWxtQxBoPRNA8aJveBJWZBn7YqeQbAvsoHer25WGT0eKqQKTWaW82NvhRCZAZA29fPKw8pU8bUKW9VGlnQBGpGIFkrYIZCtlvweUXS2yGFvlDmFsgDUPfs79r8Cklc2wBLNMtVfk7rEZAq28JgEidZCEIcpTS4iaRZB6JrqiKZAu3N0ZBuA0KII59FykB3Op2JwZDZD';
+      
+      print('🔑 Using new access token for direct connection...');
+      
+      // Update the token field
+      facebookAccessTokenCtrl.text = newAccessToken;
+      
+      // Connect using the new token
+      await connectWithToken(newAccessToken);
+      
+    } catch (e) {
+      print('❌ Error in direct connection: $e');
+      Get.snackbar(
+        'Error',
+        'Direct connection failed: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: Duration(seconds: 5),

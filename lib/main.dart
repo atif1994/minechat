@@ -53,7 +53,19 @@ class _MineChatAppState extends State<MineChatApp> {
   @override
   void initState() {
     super.initState();
+    _setupDeepLinkHandling();
+  }
 
+  void _setupDeepLinkHandling() {
+    // Handle initial deep link if app was opened with one
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _handleInitialDeepLink();
+    });
+  }
+
+  void _handleInitialDeepLink() {
+    // This will be called when the app is opened with a deep link
+    // For now, we'll rely on the OAuth flow to handle the callback
   }
 
 
