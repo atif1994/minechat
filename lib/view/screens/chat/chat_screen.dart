@@ -32,6 +32,20 @@ class ChatScreen extends StatelessWidget {
           ],
         ),
       ),
+      
+      // Floating Action Button for quick refresh
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => chatController.refreshChats(),
+        backgroundColor: Colors.blue,
+        child: Obx(() => Icon(
+          chatController.isRefreshing ? Icons.hourglass_empty : Icons.refresh,
+          color: Colors.white,
+        )),
+        tooltip: 'Refresh Chats',
+      ),
+      
+      // Floating Action Button Location
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
     );
   }
 
@@ -45,13 +59,32 @@ class ChatScreen extends StatelessWidget {
             style: AppTextStyles.heading(context),
           ),
           const Spacer(),
+          
+
+
+          // Last refresh time
+          Obx(() => Text(
+            chatController.timeSinceLastRefresh,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+            ),
+          )),
+
+          const SizedBox(width: 8),
+          
           // Refresh Button
           IconButton(
-            onPressed: () => chatController.refreshFacebookChats(),
-            icon: const Icon(Icons.refresh, color: Colors.blue),
-            tooltip: 'Refresh Facebook Chats',
+            onPressed: () => chatController.refreshChats(),
+            icon: Obx(() => Icon(
+              chatController.isRefreshing ? Icons.hourglass_empty : Icons.refresh,
+              color: chatController.isRefreshing ? Colors.orange : Colors.blue,
+            )),
+            tooltip: 'Refresh Chats',
           ),
+          
           const SizedBox(width: 8),
+          
           GestureDetector(
             onTap: () => chatController.toggleCreateNewDropdown(),
             child: Container(
@@ -251,6 +284,10 @@ class ChatScreen extends StatelessWidget {
               itemCount: chatController.filteredChatList.length,
               itemBuilder: (context, index) {
                 final chat = chatController.filteredChatList[index];
+                final String contactName = chat['contactName'] ?? 'Unknown User';
+                final String profileImageUrl = chat['profileImageUrl'] ?? '';
+                print(contactName);
+                print(profileImageUrl);
                 return _buildChatItem(chat);
               },
             ),

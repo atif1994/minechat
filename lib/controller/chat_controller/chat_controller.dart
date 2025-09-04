@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
+import 'dart:async'; // Added for Timer
 
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -40,12 +41,246 @@ class ChatController extends GetxController {
     'Date Range'
   ];
 
+  // Add real-time update properties
+  Timer? _refreshTimer;
+  Timer? _timeUpdateTimer;
+  var _isRefreshing = false.obs; // Make this observable
+  var _lastRefreshTime = DateTime.now().obs; // Make this observable
+  var _timeSinceLastRefresh = '0s ago'.obs; // Make this observable
+  
   @override
   void onInit() {
     super.onInit();
     print('🔍 ChatController initialized');
-    loadChats();
+    
+    // Load initial chats
+    loadFacebookChats();
+    
+    // Start real-time updates
+    _startRealTimeUpdates();
+    
+    // Start time update timer
+    _startTimeUpdateTimer();
   }
+  
+  @override
+  void onClose() {
+    // Clean up timers
+    _refreshTimer?.cancel();
+    _timeUpdateTimer?.cancel();
+    super.onClose();
+  }
+  
+  /// Start real-time chat updates
+  void _startRealTimeUpdates() {
+    print('🔄 Starting real-time chat updates...');
+    
+    // Refresh every 30 seconds
+    _refreshTimer = Timer.periodic(Duration(seconds: 30), (timer) {
+      if (!_isRefreshing.value) {
+        print('🔄 Auto-refresh timer triggered');
+        _refreshChatsSilently();
+      }
+    });
+    
+    // Also check for new messages every 15 seconds
+    Timer.periodic(Duration(seconds: 15), (timer) {
+      if (!_isRefreshing.value) {
+        print('🔍 Auto message check triggered');
+        checkForNewMessages();
+      }
+    });
+    
+    print('✅ Real-time updates started - refreshing every 30s, checking messages every 15s');
+  }
+  
+  /// Start time update timer to keep UI reactive
+  void _startTimeUpdateTimer() {
+    _timeUpdateTimer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _updateTimeSinceLastRefresh();
+    });
+  }
+  
+  /// Update the time since last refresh
+  void _updateTimeSinceLastRefresh() {
+    final difference = DateTime.now().difference(_lastRefreshTime.value);
+    if (difference.inMinutes < 1) {
+      _timeSinceLastRefresh.value = '${difference.inSeconds}s ago';
+    } else if (difference.inHours < 1) {
+      _timeSinceLastRefresh.value = '${difference.inMinutes}m ago';
+    } else {
+      _timeSinceLastRefresh.value = '${difference.inHours}h ago';
+    }
+  }
+  
+  /// Refresh chats without showing loading indicator
+  Future<void> _refreshChatsSilently() async {
+    if (_isRefreshing.value) return;
+    
+    _isRefreshing.value = true;
+    try {
+      print('🔄 Silent refresh started...');
+      
+      // Check if we need to refresh (only if more than 1 minute has passed)
+      final timeSinceLastRefresh = DateTime.now().difference(_lastRefreshTime.value);
+      if (timeSinceLastRefresh.inMinutes < 1) {
+        print('⏰ Too soon to refresh (${timeSinceLastRefresh.inSeconds}s ago)');
+        return;
+      }
+      
+      await loadFacebookChats();
+      _lastRefreshTime.value = DateTime.now();
+      print('✅ Silent refresh completed');
+      
+      // After refresh, check for new messages
+      await checkForNewMessages();
+      
+    } catch (e) {
+      print('❌ Silent refresh failed: $e');
+    } finally {
+      _isRefreshing.value = false;
+    }
+  }
+  
+  /// Manual refresh with loading indicator
+  Future<void> refreshChats() async {
+    if (_isRefreshing.value) return;
+    
+    _isRefreshing.value = true;
+    try {
+      print('🔄 Manual refresh started...');
+      await loadFacebookChats();
+      _lastRefreshTime.value = DateTime.now();
+      
+      // Show success message
+      Get.snackbar(
+        'Chats Updated',
+        'Latest conversations loaded successfully',
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      
+      print('✅ Manual refresh completed');
+      
+    } catch (e) {
+      print('❌ Manual refresh failed: $e');
+      
+      // Show error message
+      Get.snackbar(
+        'Update Failed',
+        'Could not refresh chats: ${e.toString()}',
+        snackPosition: SnackPosition.TOP,
+        duration: Duration(seconds: 3),
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      _isRefreshing.value = false;
+    }
+  }
+  
+  /// Check for new messages and update unread counts
+  Future<void> checkForNewMessages() async {
+    try {
+      print('🔍 Checking for new messages...');
+      
+      // Get current page ID and access token
+      final channelController = Get.find<ChannelController>();
+      final facebookPageId = channelController.facebookPageIdCtrl.text.trim();
+      
+      if (facebookPageId.isEmpty) {
+        print('⚠️ No Facebook page ID available');
+        return;
+      }
+      
+      final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
+      if (pageAccessToken == null) {
+        print('⚠️ No page access token available');
+        return;
+      }
+      
+      // Fetch latest conversations to check for new messages
+      final conversationsResult = await FacebookGraphApiService.getPageConversationsWithToken(
+        facebookPageId,
+        pageAccessToken,
+      );
+      
+      if (conversationsResult['success'] && conversationsResult['data'] != null) {
+        final newConversations = conversationsResult['data'] as List;
+        print('📊 Found ${newConversations.length} conversations in latest check');
+        
+        int newMessageCount = 0;
+        List<String> updatedChats = [];
+        
+        // Update existing chats with new message counts and unread counts
+        for (final conversation in newConversations) {
+          final conversationId = conversation['id'];
+          final unreadCount = conversation['unread_count'] ?? 0;
+          final messageCount = conversation['message_count'] ?? 0;
+          
+          // Find existing chat and update it
+          final existingChatIndex = chatList.indexWhere((chat) => chat['id'] == conversationId);
+          if (existingChatIndex != -1) {
+            final existingChat = chatList[existingChatIndex];
+            
+            // Check if there are new messages
+            if (messageCount > (existingChat['messageCount'] ?? 0)) {
+              final contactName = existingChat['contactName'] ?? 'Unknown User';
+              print('🆕 New messages detected for $contactName: $messageCount vs ${existingChat['messageCount']}');
+              
+              // Update the chat with new data
+              final updatedChat = Map<String, dynamic>.from(existingChat);
+              updatedChat['messageCount'] = messageCount;
+              updatedChat['unreadCount'] = unreadCount;
+              updatedChat['lastMessageTime'] = DateTime.now();
+              
+              chatList[existingChatIndex] = updatedChat;
+              
+              newMessageCount++;
+              updatedChats.add(contactName);
+              
+              // Show notification for new messages
+              _showNewMessageNotification(contactName, messageCount - (existingChat['messageCount'] ?? 0));
+            }
+          }
+        }
+        
+        if (newMessageCount > 0) {
+          print('🎉 Found $newMessageCount chats with new messages: ${updatedChats.join(', ')}');
+          
+          // Show summary notification
+          Get.snackbar(
+            'New Messages! 📱',
+            '$newMessageCount conversations have new messages',
+            snackPosition: SnackPosition.TOP,
+            duration: Duration(seconds: 3),
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            icon: Icon(Icons.message, color: Colors.white),
+          );
+          
+          // Trigger UI update
+          update();
+        }
+        
+        print('✅ Message check completed');
+      }
+      
+    } catch (e) {
+      print('❌ Error checking for new messages: $e');
+    }
+  }
+  
+  /// Get refresh status
+  bool get isRefreshing => _isRefreshing.value;
+  
+  /// Get time since last refresh
+  String get timeSinceLastRefresh => _timeSinceLastRefresh.value;
+  
+  /// Get time since last refresh as observable
+  RxString get timeSinceLastRefreshObs => _timeSinceLastRefresh;
 
   String getCurrentUserId() {
     return FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -108,76 +343,123 @@ class ChatController extends GetxController {
         return;
       }
 
-      // Get the channel controller to access page access token
-      final channelController = Get.find<ChannelController>();
-      final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
-      
-      if (pageAccessToken == null) {
-        print('⚠️ No page access token found - cannot load real Facebook chats');
-        print('💡 To get real Facebook chats, you need to:');
-        print('   1. Go to https://developers.facebook.com/');
-        print('   2. Create/select your app');
-        print('   3. Go to Tools > Graph API Explorer');
-        print('   4. Generate Access Token with permissions: pages_show_list, pages_messaging');
-        print('   5. Reconnect your Facebook page with the access token');
+             // Get the channel controller to access page access token
+       final channelController = Get.find<ChannelController>();
+       final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
+       
+       if (pageAccessToken == null) {
+         print('⚠️ No page access token found - cannot load real Facebook chats');
+         print('💡 To get real Facebook chats, you need to:');
+         print('   1. Go to https://developers.facebook.com/');
+         print('   2. Create/select your app');
+         print('   3. Go to Tools > Graph API Explorer');
+         print('   4. Generate Access Token with permissions: pages_show_list, pages_messaging');
+         print('   5. Reconnect your Facebook page with the access token');
+         
+         Get.snackbar(
+           'Facebook Connected (Basic Mode)',
+           'To see real chats, reconnect with Facebook Access Token.\nTap for instructions.',
+           backgroundColor: Colors.orange,
+           colorText: Colors.white,
+           duration: Duration(seconds: 6),
+           onTap: (_) {
+             Get.dialog(
+               AlertDialog(
+                 title: Text('How to Get Real Facebook Chats'),
+                 content: Column(
+                   mainAxisSize: MainAxisSize.min,
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text('1. Go to Facebook Developers Console'),
+                     Text('2. Create/select your app'),
+                     Text('3. Go to Tools > Graph API Explorer'),
+                     Text('4. Generate Access Token'),
+                     Text('5. Add permissions: pages_show_list, pages_messaging'),
+                     Text('6. Reconnect your page with the token'),
+                   ],
+                 ),
+                 actions: [
+                   TextButton(
+                     onPressed: () => Get.back(),
+                     child: Text('Got it'),
+                   ),
+                 ],
+               ),
+             );
+           },
+         );
+         return; // Don't load mock data if no access token
+       }
+       
+        // Skip permissions check for now - focus on loading conversations
+        print('🔍 Skipping permissions check to focus on conversations...');
         
-        Get.snackbar(
-          'Facebook Connected (Basic Mode)',
-          'To see real chats, reconnect with Facebook Access Token.\nTap for instructions.',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-          duration: Duration(seconds: 6),
-          onTap: (_) {
-            Get.dialog(
-              AlertDialog(
-                title: Text('How to Get Real Facebook Chats'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('1. Go to Facebook Developers Console'),
-                    Text('2. Create/select your app'),
-                    Text('3. Go to Tools > Graph API Explorer'),
-                    Text('4. Generate Access Token'),
-                    Text('5. Add permissions: pages_show_list, pages_messaging'),
-                    Text('6. Reconnect your page with the token'),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Get.back(),
-                    child: Text('Got it'),
-                  ),
-                ],
-              ),
-            );
-          },
+        // Test what we can access
+        print('🧪 Testing basic page access...');
+        try {
+          final testResult = await FacebookGraphApiService.verifyPageAccess(facebookPageId, pageAccessToken);
+          print('🧪 Page access test result: $testResult');
+        } catch (e) {
+          print('⚠️ Page access test failed: $e');
+        }
+
+        // Test if we can access user profiles
+        print('🧪 Testing user profile access...');
+        try {
+          // Try to get a test user profile (this will fail if we don't have permissions)
+          final testUserResult = await FacebookGraphApiService.getUserProfile('123456789', pageAccessToken);
+          print('🧪 User profile test result: $testUserResult');
+        } catch (e) {
+          print('⚠️ User profile test failed: $e');
+        }
+
+        print('🔍 Fetching real Facebook conversations for page: $facebookPageId');
+
+        // Get conversations from Facebook Graph API using the page access token
+        final conversationsResult = await FacebookGraphApiService.getPageConversationsWithToken(
+          facebookPageId,
+          pageAccessToken,
         );
-        return; // Don't load mock data if no access token
+
+        print('📋 Conversations result: $conversationsResult');
+        print('📋 Success: ${conversationsResult['success']}');
+        print('📋 Data type: ${conversationsResult['data']?.runtimeType}');
+        print('📋 Data value: ${conversationsResult['data']}');
+        print('📋 Raw response: ${conversationsResult}');
+
+        if (!conversationsResult['success']) {
+          throw Exception('Failed to load conversations: ${conversationsResult['error']}');
+        }
+
+      // Safely handle the data field
+      final data = conversationsResult['data'];
+      List conversations;
+      
+      if (data is List) {
+        conversations = data;
+      } else if (data is int) {
+        print('⚠️ Facebook API returned count instead of conversations: $data');
+        conversations = []; // Empty list if no conversations
+      } else {
+        print('⚠️ Unexpected data type: ${data.runtimeType}');
+        conversations = [];
       }
-
-      print('🔍 Fetching real Facebook conversations for page: $facebookPageId');
-
-      // Get conversations from Facebook Graph API (backend approach)
-      final conversationsResult = await FacebookGraphApiService.getPageConversations(
-        facebookPageId,
-      );
-
-      if (!conversationsResult['success']) {
-        throw Exception('Failed to load conversations: ${conversationsResult['error']}');
-      }
-
-      final conversations = conversationsResult['data'] as List;
       print('✅ Loaded ${conversations.length} Facebook conversations');
+      
+      // Debug: Print the structure of the first conversation if available
+      if (conversations.isNotEmpty) {
+        print('📋 Sample conversation structure: ${conversations.first}');
+        print('🔍 Keys in first conversation: ${(conversations.first as Map<String, dynamic>).keys.toList()}');
+      }
 
       if (conversations.isEmpty) {
         print('ℹ️ No conversations found on this Facebook page');
         Get.snackbar(
           'Info',
-          'No conversations found on your Facebook page. Try sending a test message to your page first.',
+          'No conversations found on your Facebook page. This could mean:\n• No one has messaged your page yet\n• The page is new and has no conversations\n• Try sending a test message to your page first',
           backgroundColor: Colors.blue,
           colorText: Colors.white,
-          duration: Duration(seconds: 4),
+          duration: Duration(seconds: 6),
         );
         return;
       }
@@ -185,21 +467,168 @@ class ChatController extends GetxController {
       // Convert Facebook conversations to app format
       final facebookChats = <Map<String, dynamic>>[];
       
+      print('🔍 Processing ${conversations.length} conversations...');
+      print('📋 First conversation structure: ${conversations.isNotEmpty ? conversations.first : 'No conversations'}');
+      
       for (final conversation in conversations) {
         try {
+          print('🔍 Processing conversation: ${conversation['id']}');
+          print('📋 Conversation data: $conversation');
+          print('🔗 Link: ${conversation['link']}');
+          print('🕒 Updated time: ${conversation['updated_time']}');
+          
+          // Debug: Check if link exists and its structure
+          if (conversation['link'] != null) {
+            final link = conversation['link'].toString();
+            print('🔗 Raw link: $link');
+            print('🔗 Link type: ${link.runtimeType}');
+            print('🔗 Link contains /inbox/: ${link.contains('/inbox/')}');
+            print('🔗 Link contains /: ${link.contains('/')}');
+          } else {
+            print('⚠️ No link found in conversation');
+          }
+          
+          // Extract user ID from the participants array (Facebook API returns participants instead of link)
+          String userId = 'unknown';
+          String contactName = 'Unknown User'; // Initialize contact name
+          
+          // NEW: Try to get real participant information from the conversation
+          try {
+            print('🔍 Getting real participant information for conversation: ${conversation['id']}');
+            print('🔑 Using page access token: ${pageAccessToken.substring(0, 10)}...');
+            
+            final participantsResult = await FacebookGraphApiService.getConversationParticipants(
+              conversation['id'],
+              pageAccessToken,
+            );
+            
+            print('📋 Participants API result: $participantsResult');
+            print('📋 Participants success: ${participantsResult['success']}');
+            print('📋 Participants data: ${participantsResult['data']}');
+            
+            if (participantsResult['success'] && participantsResult['data'] != null) {
+              final convData = participantsResult['data'];
+              print('📋 Conversation data from participants API: $convData');
+              print('📋 Available keys: ${convData.keys.toList()}');
+              
+              // Check if we have participants
+              if (convData['participants'] != null && convData['participants'] is Map<String, dynamic>) {
+                final participants = convData['participants'];
+                print('👥 Real participants from API: $participants');
+                
+                if (participants['data'] != null && participants['data'] is List) {
+                  final participantsList = participants['data'] as List;
+                  print('👥 Participants list: $participantsList');
+                  print('👥 Participants length: ${participantsList.length}');
+                  
+                  if (participantsList.length >= 2) {
+                    // First participant is the user, second is the page
+                    final userParticipant = participantsList[0];
+                    print('👤 User participant: $userParticipant');
+                    
+                    if (userParticipant is Map<String, dynamic>) {
+                      final userParticipantId = userParticipant['id'];
+                      final userParticipantName = userParticipant['name'];
+                      
+                      print('👤 Real user participant ID: $userParticipantId, Name: $userParticipantName');
+                      print('👤 ID type: ${userParticipantId.runtimeType}');
+                      print('👤 Name type: ${userParticipantName.runtimeType}');
+                      
+                      // Check if this is a valid user ID (numeric and not the page ID)
+                      if (userParticipantId != null && 
+                          userParticipantId.toString() != facebookPageId &&
+                          RegExp(r'^\d+$').hasMatch(userParticipantId.toString())) {
+                        userId = userParticipantId.toString();
+                        contactName = userParticipantName ?? 'Unknown User';
+                        print('✅ Extracted real user ID: $userId, Name: $contactName');
+                      } else if (userParticipantName != null && userParticipantName != 'User inbox') {
+                        // If we have a real name but no valid ID, use the name
+                        print('📝 Using real participant name: $userParticipantName');
+                        contactName = userParticipantName;
+                      } else {
+                        print('⚠️ Invalid real user participant: ID=$userParticipantId, Name=$userParticipantName');
+                      }
+                    }
+                  } else {
+                    print('⚠️ Not enough participants: ${participantsList.length}');
+                  }
+                } else {
+                  print('⚠️ No participants data field or not a list: ${participants['data']}');
+                }
+              } else {
+                print('⚠️ No participants field or not a map: ${convData['participants']}');
+              }
+              
+              // If still no user ID, try to extract from link
+              if (userId == 'unknown' && convData['link'] != null) {
+                final link = convData['link'].toString();
+                print('🔗 Trying to extract user ID from real link: $link');
+                
+                // Facebook link format: /{pageId}/inbox/{userId}/?section=messages
+                final linkParts = link.split('/');
+                print('🔗 Link parts: $linkParts');
+                
+                if (linkParts.length >= 4 && linkParts[2] == 'inbox') {
+                  final potentialUserId = linkParts[3];
+                  print('🔗 Potential user ID from link: $potentialUserId');
+                  
+                  if (RegExp(r'^\d+$').hasMatch(potentialUserId) && potentialUserId != facebookPageId) {
+                    userId = potentialUserId;
+                    print('✅ Extracted user ID from real link: $userId');
+                  }
+                }
+              }
+            } else {
+              print('❌ Participants API failed: ${participantsResult['error']}');
+            }
+          } catch (e) {
+            print('⚠️ Error getting real participants: $e');
+            print('⚠️ Error stack trace: ${StackTrace.current}');
+          }
+          
+          // Fallback: If participants didn't give us a valid user ID, try to get it from messages
+          if (userId == 'unknown') {
+            print('🔍 Real participants didn\'t give valid user ID, trying messages...');
+            final userInfo = await _getUserInfoFromMessages(conversation['id'], pageAccessToken);
+            if (userInfo != null) {
+              userId = userInfo['id'];
+              contactName = userInfo['name'];
+              print('✅ Got user info from messages: $contactName (ID: $userId)');
+            }
+          }
+          
+          print('🔍 Final extracted user ID: $userId');
+          
+          // Use the real participant name we already have - don't try to fetch profiles
+          String profileImageUrl = '';
+          
+          if (contactName != 'Unknown User') {
+            print('✅ Using real participant name: $contactName');
+            // Generate a nice avatar based on the real name
+            profileImageUrl = 'https://dummyimage.com/100x100/0084FF/ffffff&text=${contactName.split(' ').take(2).map((n) => n[0]).join('').toUpperCase()}';
+          } else {
+            print('⚠️ No real name available, using fallback');
+            profileImageUrl = 'https://dummyimage.com/100x100/cccccc/666666&text=UnknownUser';
+          }
+          
           // Convert Facebook conversation to app format
           final appChat = {
             'id': 'fb_${conversation['id']}',
-            'contactName': conversation['participants']?[0]?['name'] ?? 'Unknown User',
-            'lastMessage': conversation['last_message']?['message'] ?? 'No messages yet',
+            'contactName': contactName,
+            'lastMessage': 'Conversation started', // Will be updated with real message if available
             'timestamp': _parseTimestamp(conversation['updated_time']),
             'unreadCount': conversation['unread_count'] ?? 0,
-            'profileImageUrl': 'https://ui-avatars.com/api/?name=${conversation['participants']?[0]?['name'] ?? 'User'}&background=random',
+            'profileImageUrl': profileImageUrl.isNotEmpty ? profileImageUrl : 'https://dummyimage.com/100x100/cccccc/666666&text=${contactName.replaceAll(' ', '')}',
             'platform': 'Facebook',
+            'platformIcon': '💬',
             'conversationId': conversation['id'],
             'pageId': facebookPageId,
+            'messageCount': conversation['message_count'] ?? 0,
+            'needsLastMessage': true, // Flag to indicate we need to fetch the last message
           };
           facebookChats.add(appChat);
+          
+          print('✅ Processed conversation: $contactName (${conversation['id']})');
         } catch (e) {
           print('❌ Error processing conversation ${conversation['id']}: $e');
         }
@@ -210,6 +639,12 @@ class ChatController extends GetxController {
       chatList.value = [...existingChats, ...facebookChats];
       
       print('✅ Added ${facebookChats.length} real Facebook chats to chat list');
+      
+      // Update last messages for conversations that need them (limit to first 10 to avoid too many API calls)
+      if (facebookChats.isNotEmpty) {
+        await _updateLastMessages(facebookChats.take(10).toList(), pageAccessToken);
+      }
+      
       applyFilter();
       
       // Show success message
@@ -238,69 +673,53 @@ class ChatController extends GetxController {
     }
   }
 
-  /// Load mock Facebook chats as fallback
-  void _loadMockFacebookChats() {
+  /// Update last messages for Facebook conversations
+  Future<void> _updateLastMessages(List<Map<String, dynamic>> conversations, String pageAccessToken) async {
     try {
-        final mockFacebookChats = [
-          {
-          'id': 'fb_mock_1',
-            'contactName': 'Grace Spencer',
-          'contactId': 'fb_user_1',
-            'lastMessage': 'Hi, there welcome to our store!',
-          'lastMessageTime': DateTime.now().subtract(Duration(hours: 2)).toIso8601String(),
-          'messageCount': 5,
-          'unreadCount': 0,
-          'platform': 'Messenger',
-          'platformIcon': '💬',
-          'platformColor': '#0084FF',
-          'profileImageUrl': 'https://ui-avatars.com/api/?name=GS&size=50&background=0084FF&color=fff',
-          'conversationId': 'mock_conv_1',
-          'isActive': true,
-            'timestamp': DateTime.now().subtract(Duration(hours: 2)),
-          },
-          {
-          'id': 'fb_mock_2',
-            'contactName': 'Lucas James',
-          'contactId': 'fb_user_2',
-          'lastMessage': 'Can you tell me more about your services?',
-          'lastMessageTime': DateTime.now().subtract(Duration(hours: 1)).toIso8601String(),
-          'messageCount': 12,
-          'unreadCount': 2,
-          'platform': 'Messenger',
-          'platformIcon': '💬',
-          'platformColor': '#0084FF',
-          'profileImageUrl': 'https://ui-avatars.com/api/?name=LJ&size=50&background=0084FF&color=fff',
-          'conversationId': 'mock_conv_2',
-          'isActive': true,
-            'timestamp': DateTime.now().subtract(Duration(hours: 1)),
-          },
-          {
-          'id': 'fb_mock_3',
-            'contactName': 'Sarah Wilson',
-          'contactId': 'fb_user_3',
-            'lastMessage': 'Do you have any discounts available?',
-          'lastMessageTime': DateTime.now().subtract(Duration(minutes: 30)).toIso8601String(),
-          'messageCount': 3,
-          'unreadCount': 1,
-          'platform': 'Messenger',
-          'platformIcon': '💬',
-          'platformColor': '#0084FF',
-          'profileImageUrl': 'https://ui-avatars.com/api/?name=SW&size=50&background=0084FF&color=fff',
-          'conversationId': 'mock_conv_3',
-          'isActive': true,
-            'timestamp': DateTime.now().subtract(Duration(minutes: 30)),
-        },
-      ];
-
-      // Remove existing mock Facebook chats
-      final existingChats = chatList.where((chat) => !chat['id'].toString().startsWith('fb_mock')).toList();
-      chatList.value = [...existingChats, ...mockFacebookChats];
+      print('🔄 Updating last messages for ${conversations.length} conversations...');
       
-      print('📝 Added ${mockFacebookChats.length} mock Facebook chats');
+      for (final conversation in conversations) {
+        if (conversation['needsLastMessage'] == true) {
+          try {
+            final conversationId = conversation['conversationId'];
+            final result = await FacebookGraphApiService.getConversationMessagesWithToken(
+              conversationId,
+              pageAccessToken,
+            );
+            
+            if (result['success'] && result['data'] != null) {
+              final message = result['data'];
+              final messageText = message['message'] ?? 'No message content';
+              
+              // Update the conversation in the chat list
+              final chatIndex = chatList.indexWhere((chat) => chat['id'] == conversation['id']);
+              if (chatIndex != -1) {
+                chatList[chatIndex]['lastMessage'] = messageText.length > 50 
+                    ? '${messageText.substring(0, 50)}...' 
+                    : messageText;
+                chatList[chatIndex]['needsLastMessage'] = false;
+                
+                print('✅ Updated last message for ${conversation['contactName']}: ${messageText.substring(0, messageText.length > 30 ? 30 : messageText.length)}...');
+              }
+            }
+            
+            // Small delay to avoid hitting rate limits
+            await Future.delayed(Duration(milliseconds: 100));
+            
+          } catch (e) {
+            print('⚠️ Failed to update last message for conversation ${conversation['conversationId']}: $e');
+          }
+        }
+      }
+      
+      print('✅ Last message update completed');
+      
     } catch (e) {
-      print('❌ Error loading mock Facebook chats: $e');
+      print('❌ Error updating last messages: $e');
     }
   }
+
+
 
   /// Load other channel chats (REAL DATA ONLY)
   Future<void> loadOtherChannelChats() async {
@@ -463,12 +882,6 @@ class ChatController extends GetxController {
     isFilterDropdownOpen.value = false;
   }
 
-  /// Refresh chats
-  Future<void> refreshChats() async {
-    chatList.clear();
-    await loadChats();
-  }
-
   /// Refresh only Facebook chats
   Future<void> refreshFacebookChats() async {
     try {
@@ -509,5 +922,80 @@ class ChatController extends GetxController {
     } else {
       return DateTime.now();
     }
+  }
+
+  /// Get user information from conversation messages
+  Future<Map<String, dynamic>?> _getUserInfoFromMessages(String conversationId, String pageAccessToken) async {
+    try {
+      print('🔍 Getting user info from messages for conversation: $conversationId');
+      
+      final messagesResult = await FacebookGraphApiService.getConversationMessagesWithToken(
+        conversationId,
+        pageAccessToken,
+      );
+      
+      if (messagesResult['success'] && messagesResult['data'] != null) {
+        final messages = messagesResult['data'];
+        if (messages is List && messages.isNotEmpty) {
+          // Look for the first message from a user (not from the page)
+          for (final message in messages) {
+            if (message['from'] != null && 
+                message['from']['id'] != null && 
+                message['from']['name'] != null) {
+              
+              final fromId = message['from']['id'].toString();
+              final fromName = message['from']['name'].toString();
+              
+              // Check if this is a real user (not the page)
+              if (fromId != '313808701826338' && RegExp(r'^\d+$').hasMatch(fromId)) {
+                print('✅ Found user from message: $fromName (ID: $fromId)');
+                return {
+                  'id': fromId,
+                  'name': fromName,
+                };
+              }
+            }
+          }
+        }
+      }
+      
+      return null;
+    } catch (e) {
+      print('⚠️ Error getting user info from messages: $e');
+      return null;
+    }
+  }
+  
+  /// Test method to manually trigger real-time updates
+  Future<void> testRealTimeUpdates() async {
+    print('🧪 Testing real-time updates...');
+    
+    // Test silent refresh
+    await _refreshChatsSilently();
+    
+    // Test message check
+    await checkForNewMessages();
+    
+    // Test manual refresh
+    await refreshChats();
+    
+    print('✅ Real-time update tests completed');
+  }
+  
+  /// Show notification for new messages
+  void _showNewMessageNotification(String contactName, int messageCount) {
+    final messageText = messageCount == 1 
+        ? 'New message from $contactName'
+        : '$messageCount new messages from $contactName';
+    
+    Get.snackbar(
+      '💬 New Message',
+      messageText,
+      snackPosition: SnackPosition.TOP,
+      duration: Duration(seconds: 2),
+      backgroundColor: Colors.blue,
+      colorText: Colors.white,
+      icon: Icon(Icons.chat_bubble, color: Colors.white),
+    );
   }
 }

@@ -9,10 +9,10 @@ class AppSpacing {
       EdgeInsets.all(AppResponsive.screenWidth(context) * 0.02 * factor);
 
   static EdgeInsets symmetric(
-    BuildContext context, {
-    double h = 0.04,
-    double v = 0.02,
-  }) => EdgeInsets.symmetric(
+      BuildContext context, {
+        double h = 0.04,
+        double v = 0.02,
+      }) => EdgeInsets.symmetric(
     horizontal: AppResponsive.screenWidth(context) * h,
     vertical: AppResponsive.screenHeight(context) * v,
   );

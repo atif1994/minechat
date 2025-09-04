@@ -13,6 +13,7 @@ import 'ai_testing_screen.dart';
 import 'ai_knowledge_screen.dart';
 import 'channel_screen.dart';
 
+
 class AIAssistantSetupScreen extends StatelessWidget {
   const AIAssistantSetupScreen({super.key});
 
@@ -21,14 +22,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
     final controller = Get.put(AIAssistantController());
-    final channelController = Get.find<ChannelController>();
-    
-    // Safety check to ensure controllers are properly initialized
-    if (!Get.isRegistered<ChannelController>() || !Get.isRegistered<ThemeController>()) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
+    final channelController = Get.put(ChannelController());
 
     final indexMap = {
       "AI Assistant": 0,
@@ -50,13 +44,13 @@ class AIAssistantSetupScreen extends StatelessWidget {
               // Main content - keeps all pages alive
               Expanded(
                 child: Obx(() => IndexedStack(
-                      index: indexMap[controller.currentStep.value] ?? 0,
-                      children: [
-                        _buildAIAssistantForm(controller, context),
-                        AIKnowledgeScreen(controller: controller),
-                        ChannelsScreen(),
-                      ],
-                    )),
+                  index: indexMap[controller.currentStep.value] ?? 0,
+                  children: [
+                    _buildAIAssistantForm(controller, context),
+                    AIKnowledgeScreen(controller: controller),
+                    ChannelsScreen(),
+                  ],
+                )),
               ),
             ],
           ),
@@ -169,7 +163,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
                 fontWeight: FontWeight.w600,
                 color: isDark ? Color(0XFFFFFFFF) : Color(0XFF222222),
               ) // Always active style since it's the main title
-              ),
+          ),
           Text(' > ', style: separatorStyle),
           GestureDetector(
             onTap: () => controller.currentStep.value = "AI Assistant",
@@ -289,8 +283,8 @@ class AIAssistantSetupScreen extends StatelessWidget {
                             color: isSelected
                                 ? AppColors.primary
                                 : isDark
-                                    ? Color(0XFFFFFFFF).withValues(alpha: .12)
-                                    : Color(0XFFEBEDF0),
+                                ? Color(0XFFFFFFFF).withValues(alpha: .12)
+                                : Color(0XFFEBEDF0),
                             width: 2),
                       ),
                       child: Text(
@@ -300,8 +294,8 @@ class AIAssistantSetupScreen extends StatelessWidget {
                             color: isSelected
                                 ? AppColors.primary
                                 : isDark
-                                    ? Color(0XFFFFFFFF)
-                                    : Color(0XFF222222),
+                                ? Color(0XFFFFFFFF)
+                                : Color(0XFF222222),
                             fontWeight: FontWeight.w500,
                             fontSize: AppResponsive.scaleSize(context, 14)),
                       ),
