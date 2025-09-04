@@ -11,6 +11,7 @@ class AppRoutes {
   static const forgotPassword = '/forgot-password';
   static const newPassword = '/new-password';
   static const account = '/account';
+  static const manageUserProfiles = '/manage-user-profiles';
   static const adminEditProfile = '/admin-edit-profile';
   static const businessEditProfile = '/business-edit-profile';
   static const subscription = '/subscription';

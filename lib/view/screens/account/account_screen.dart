@@ -11,7 +11,6 @@ import 'package:minechat/core/widgets/account/account_app_bar.dart';
 import 'package:minechat/core/widgets/account/account_option_tile.dart';
 import 'package:minechat/core/widgets/account/account_profile_card.dart';
 import 'package:minechat/core/widgets/edit_profile/logout_alert_dialog.dart';
-import 'package:minechat/view/screens/edit_profile/admin_edit_profile_screen.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -70,24 +69,26 @@ class AccountScreen extends StatelessWidget {
                       ),
                       child: Column(
                         children: [
-                          // Obx(() {
-                          //   final user = loginController.currentUser.value;
-                          //   return AccountOptionTile(
-                          //     title: 'Manage User Profiles',
-                          //     showProfileImage: true,
-                          //     profileImageUrl: user?.photoURL ?? '',
-                          //     trailingSvgPath: AppAssets.accountArrowRight,
-                          //     onTap: () {},
-                          //   );
-                          // }),
-                          AccountOptionTile(
-                            title: 'Edit User Profile',
-                            leadingSvgPath: AppAssets.accountEditUserProfile,
-                            trailingSvgPath: AppAssets.accountArrowRight,
-                            onTap: () =>
-                                Get.to(() => const AdminEditProfileScreen()),
-                            // Get.to(() => const BusinessEditProfileScreen()),
-                          ),
+                          Obx(() {
+                            final user = login.currentUser.value;
+                            return AccountOptionTile(
+                              title: 'Manage User Profiles',
+                              showProfileImage: true,
+                              profileImageUrl: user?.photoURL ?? '',
+                              trailingSvgPath: AppAssets.accountArrowRight,
+                              onTap: () {
+                                Get.toNamed(AppRoutes.manageUserProfiles);
+                              },
+                            );
+                          }),
+                          // AccountOptionTile(
+                          //   title: 'Edit User Profile',
+                          //   leadingSvgPath: AppAssets.accountEditUserProfile,
+                          //   trailingSvgPath: AppAssets.accountArrowRight,
+                          //   onTap: () =>
+                          //       Get.to(() => const AdminEditProfileScreen()),
+                          //   // Get.to(() => const BusinessEditProfileScreen()),
+                          // ),
                           Divider(
                             thickness: 0.8,
                             height: 0,

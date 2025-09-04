@@ -19,13 +19,24 @@ class AccountProfileCard extends StatelessWidget {
 
     return Obx(() {
       final user = loginController.currentUser.value;
+      final biz = loginController.businessAccount.value;
 
-      final isBusiness = user?.isBusinessAccount == true;
+      // Prefer company info from /business_accounts; fallback to user fields
+      final companyName =
+          (biz?['companyName'] as String?)?.trim().isNotEmpty == true
+              ? (biz?['companyName'] as String)
+              : (user?.companyName?.trim().isNotEmpty == true
+                  ? user!.companyName!
+                  : null);
 
-      final displayName =
-          isBusiness ? user?.companyName ?? 'Business' : user?.name ?? 'User';
+      final companyPhoto =
+          (biz?['photoURL'] as String?)?.trim().isNotEmpty == true
+              ? (biz?['photoURL'] as String)
+              : (user?.photoURL ?? '');
 
-      final profileUrl = user?.photoURL ?? '';
+      final displayName = companyName ?? 'Company';
+      final profileUrl =
+          companyPhoto; // may be empty → avatar handles placeholder
       final avatarSize = AppResponsive.radius(context, factor: 7);
 
       return Container(
@@ -41,13 +52,11 @@ class AccountProfileCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            // ✅ Use the custom reusable avatar widget
             AccountProfileImageAvatar(
               imageUrl: profileUrl,
               size: avatarSize,
             ),
             AppSpacing.horizontal(context, 0.02),
-
             Expanded(
               child: Text(
                 displayName,

@@ -1,5 +1,7 @@
 import 'package:get/get.dart';
-
+import 'package:minechat/view/screens/account/edit_profile/admin_edit_profile_screen.dart';
+import 'package:minechat/view/screens/account/edit_profile/business_edit_profile_screen.dart';
+import 'package:minechat/view/screens/account/manage_user_profiles/manage_user_profiles_screen.dart';
 import 'package:minechat/view/screens/splash/splash_screen.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
 import 'package:minechat/view/screens/login/login_screen.dart';
@@ -11,8 +13,6 @@ import 'package:minechat/view/screens/dashboard/dashboard_screen.dart';
 import 'package:minechat/view/screens/forgot_password/forgot_password_screen.dart';
 import 'package:minechat/view/screens/forgot_password/new_password_screen.dart';
 import 'package:minechat/view/screens/account/account_screen.dart';
-import 'package:minechat/view/screens/edit_profile/admin_edit_profile_screen.dart';
-import 'package:minechat/view/screens/edit_profile/business_edit_profile_screen.dart';
 import 'package:minechat/view/screens/subscription/subscription_screen.dart';
 import 'package:minechat/view/screens/chat/chat_screen.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
@@ -46,6 +46,7 @@ class AppPages {
         page: () => const ForgotPasswordScreen()),
     GetPage(name: AppRoutes.newPassword, page: () => const NewPasswordScreen()),
     GetPage(name: AppRoutes.account, page: () => const AccountScreen()),
+    GetPage(name: AppRoutes.manageUserProfiles, page: () => const ManageUserProfilesScreen()),
     GetPage(
         name: AppRoutes.adminEditProfile, page: () => AdminEditProfileScreen()),
     GetPage(
@@ -59,13 +60,14 @@ class AppPages {
     GetPage(
         name: AppRoutes.chatConversation,
         page: () => ChatConversationScreen(chat: Get.arguments)),
-    
+
     // CRM Pages
     GetPage(name: AppRoutes.crmMain, page: () => const CrmMainScreen()),
     GetPage(name: AppRoutes.crmLeads, page: () => CrmLeadsScreen()),
-    GetPage(name: AppRoutes.crmOpportunities, page: () => CrmOpportunitiesScreen()),
     GetPage(
-      name: AppRoutes.addLead, 
+        name: AppRoutes.crmOpportunities, page: () => CrmOpportunitiesScreen()),
+    GetPage(
+      name: AppRoutes.addLead,
       page: () => const AddLeadScreen(),
       binding: BindingsBuilder(() {
         Get.lazyPut<AddLeadController>(() => AddLeadController());
