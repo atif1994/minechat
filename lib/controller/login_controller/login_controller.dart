@@ -21,6 +21,8 @@ class LoginController extends GetxController {
   final isPasswordVisible = false.obs;
   final currentUser = Rx<UserModel?>(null);
 
+  final businessAccount = Rx<Map<String, dynamic>?>(null);
+
   // ====== VALIDATION ======
 
   void validateEmail(String value) {
@@ -116,18 +118,40 @@ class LoginController extends GetxController {
       !isLoading.value;
 
   Future<void> hydrateFromAuthIfNeeded() async {
-    if (currentUser.value != null) return; // already hydrated
+    if (currentUser.value != null && businessAccount.value != null) return;
+
     final u = _authService.currentUser;
     if (u == null) {
       currentUser.value = null;
+      businessAccount.value = null;
       return;
     }
+
     try {
+      // 1) users/{uid}
       final data = await _userRepository.getUser(u.uid);
-      currentUser.value = data; // <- drives AccountProfileCard
+      currentUser.value = data;
+
+      // 2) business_accounts/{uid}  (may not exist for admin/regular)
+      await _hydrateBusiness(u.uid);
     } catch (_) {
-      // keep silent or show a snackbar if you prefer
+      // swallow or add log/snackbar if you prefer
     }
+  }
+
+  Future<void> _hydrateBusiness(String uid) async {
+    try {
+      final biz = await _userRepository.getBusinessAccount(uid);
+      businessAccount.value = biz; // null if not found
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  // call this if you ever need to force-refresh
+  Future<void> refreshBusinessAccount() async {
+    final u = _authService.currentUser;
+    if (u != null) await _hydrateBusiness(u.uid);
   }
 
   // ====== AUTH FLOWS (same as yours) ======

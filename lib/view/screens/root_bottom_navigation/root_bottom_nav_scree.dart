@@ -33,6 +33,8 @@ class RootBottomNavScreen extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     final scheme = Theme.of(context).colorScheme;
 
+    Get.find<LoginController>().hydrateFromAuthIfNeeded();
+
     return Obx(() {
       final index = ctrl.currentIndex.value;
       final isDark = themeController.isDarkMode;
@@ -90,11 +92,16 @@ class _ProfileTabIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final login = Get.find<LoginController>(); // needs import
+    final login = Get.find<LoginController>();
     final size = AppResponsive.scaleSize(context, 24);
 
     return Obx(() {
-      final url = login.currentUser.value?.photoURL ?? '';
+      // ✅ Prefer business profile image; fallback to user photoURL
+      final biz = login.businessAccount.value;
+      final businessPhoto = (biz?['photoURL'] as String?) ?? '';
+      final userPhoto = login.currentUser.value?.photoURL ?? '';
+      final url = (businessPhoto.trim().isNotEmpty ? businessPhoto : userPhoto);
+
       final borderColor =
           active ? const Color(0xFFB01D47) : const Color(0xFFB9C0CC);
 
