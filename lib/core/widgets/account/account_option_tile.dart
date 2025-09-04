@@ -34,7 +34,7 @@ class AccountOptionTile extends StatelessWidget {
       // tile color will inherit from parent
       leading: showProfileImage
           ? AccountProfileImageAvatar(
-              imageUrl: '',
+              imageUrl: profileImageUrl ?? '',
               size: AppResponsive.radius(context, factor: 5),
             )
           : (leadingSvgPath != null
