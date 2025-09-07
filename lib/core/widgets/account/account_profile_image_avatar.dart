@@ -41,7 +41,7 @@ class AccountProfileImageAvatar extends StatelessWidget {
                   },
                   errorBuilder: (context, error, stackTrace) {
                     return Image.asset(
-                      AppAssets.minechatProfileAvatarLogoDummy,
+                      AppAssets.blankAdminProfile,
                       width: size,
                       height: size,
                       fit: BoxFit.cover,
@@ -49,7 +49,7 @@ class AccountProfileImageAvatar extends StatelessWidget {
                   },
                 )
               : Image.asset(
-                  AppAssets.minechatProfileAvatarLogoDummy,
+                  AppAssets.blankAdminProfile,
                   width: size,
                   height: size,
                   fit: BoxFit.cover,

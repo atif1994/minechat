@@ -12,12 +12,13 @@ class AppRoutes {
   static const newPassword = '/new-password';
   static const account = '/account';
   static const manageUserProfiles = '/manage-user-profiles';
+  static const addUserProfile = '/add-user-profile';
   static const adminEditProfile = '/admin-edit-profile';
   static const businessEditProfile = '/business-edit-profile';
   static const subscription = '/subscription';
-  static const chat                  = '/chat';
-  static const chatConversation      = '/chat-conversation';
-  
+  static const chat = '/chat';
+  static const chatConversation = '/chat-conversation';
+
   // CRM Routes
   static const crmMain = '/crm-main';
   static const crmLeads = '/crm-leads';

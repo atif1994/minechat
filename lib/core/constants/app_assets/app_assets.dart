@@ -10,8 +10,8 @@ class AppAssets {
       'assets/images/logos/logo_dashboard.png';
   static const String lightDart = 'assets/images/logos/lightandDarkLogo.svg';
   static const String minechatLogoDummy = "assets/images/logos/dummy_logo.png";
-  static const String minechatProfileAvatarLogoDummy =
-      "assets/images/logos/dummy_profile_avatar_logo.png";
+  // static const String minechatProfileAvatarLogoDummy =
+  //     "assets/images/logos/dummy_profile_avatar_logo.png";
   static const String darkMode = "assets/images/logos/darkmode.svg";
 
   // ===== SOCIAL MEDIA ICONS =====

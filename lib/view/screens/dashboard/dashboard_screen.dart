@@ -43,7 +43,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final url = login.currentUser.value?.photoURL ?? '';
             final ImageProvider avatarProvider = url.isNotEmpty
                 ? NetworkImage(url)
-                : const AssetImage(AppAssets.minechatProfileAvatarLogoDummy);
+                : const AssetImage(
+                    AppAssets.blankAdminProfile,
+                  );
             return DashboardAppBar(
               brandMarkPng: AppAssets.minechatDashboard,
               notificationIconSvg: AppAssets.dashboardNotification,

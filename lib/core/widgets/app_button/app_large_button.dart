@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
@@ -44,9 +45,6 @@ class AppLargeButton extends StatelessWidget {
     final decoration =
         useGradient ? baseDecoration.withAppGradient : baseDecoration;
 
-    final Color effectiveTextColor = textColor ??
-        ((useGradient || isLoading) ? Colors.white : const Color(0xff222222));
-
     return SizedBox(
       width: double.infinity,
       child: InkWell(
@@ -76,12 +74,9 @@ class AppLargeButton extends StatelessWidget {
                 Text(
                   label,
                   style: AppTextStyles.buttonText(context).copyWith(
-                    fontSize: font,
-                    fontWeight: FontWeight.w600,
-                    color: buttonEnabled || isLoading
-                        ? effectiveTextColor
-                        : const Color(0xffa8aebf),
-                  ),
+                      fontSize: font,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white),
                 ),
               ],
             ),
