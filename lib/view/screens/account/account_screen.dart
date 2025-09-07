@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/accounts_controller/manage_user_controller.dart';
 import 'package:minechat/controller/edit_profile_controller/admin_edit_profile_controller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
@@ -21,6 +22,10 @@ class AccountScreen extends StatelessWidget {
     final c = Get.put(AdminEditProfileController());
     final login = Get.find<LoginController>();
     login.hydrateFromAuthIfNeeded();
+
+    final managed = Get.isRegistered<ManageUserController>()
+        ? Get.find<ManageUserController>()
+        : Get.put(ManageUserController(), permanent: true);
 
     return Obx(() {
       final isDark = themeController.isDarkMode;
@@ -71,16 +76,21 @@ class AccountScreen extends StatelessWidget {
                         children: [
                           Obx(() {
                             final user = login.currentUser.value;
+                            final active = managed.activeProfile.value;
+                            final displayPhoto =
+                                active?.photoURL ?? user?.photoURL ?? '';
+
                             return AccountOptionTile(
                               title: 'Manage User Profiles',
                               showProfileImage: true,
-                              profileImageUrl: user?.photoURL ?? '',
+                              profileImageUrl: displayPhoto,
                               trailingSvgPath: AppAssets.accountArrowRight,
                               onTap: () {
                                 Get.toNamed(AppRoutes.manageUserProfiles);
                               },
                             );
                           }),
+
                           // AccountOptionTile(
                           //   title: 'Edit User Profile',
                           //   leadingSvgPath: AppAssets.accountEditUserProfile,

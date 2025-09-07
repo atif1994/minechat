@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:minechat/view/screens/account/edit_profile/admin_edit_profile_screen.dart';
 import 'package:minechat/view/screens/account/edit_profile/business_edit_profile_screen.dart';
+import 'package:minechat/view/screens/account/manage_user_profiles/add_user_profile_screen.dart';
 import 'package:minechat/view/screens/account/manage_user_profiles/manage_user_profiles_screen.dart';
 import 'package:minechat/view/screens/splash/splash_screen.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
@@ -46,7 +47,12 @@ class AppPages {
         page: () => const ForgotPasswordScreen()),
     GetPage(name: AppRoutes.newPassword, page: () => const NewPasswordScreen()),
     GetPage(name: AppRoutes.account, page: () => const AccountScreen()),
-    GetPage(name: AppRoutes.manageUserProfiles, page: () => const ManageUserProfilesScreen()),
+    GetPage(
+        name: AppRoutes.manageUserProfiles,
+        page: () => const ManageUserProfilesScreen()),
+    GetPage(
+        name: AppRoutes.addUserProfile,
+        page: () => const AddUserProfileScreen()),
     GetPage(
         name: AppRoutes.adminEditProfile, page: () => AdminEditProfileScreen()),
     GetPage(
