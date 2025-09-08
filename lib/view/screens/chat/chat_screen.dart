@@ -34,15 +34,7 @@ class ChatScreen extends StatelessWidget {
       ),
       
       // Floating Action Button for quick refresh
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => chatController.refreshChats(),
-        backgroundColor: Colors.blue,
-        child: Obx(() => Icon(
-          chatController.isRefreshing ? Icons.hourglass_empty : Icons.refresh,
-          color: Colors.white,
-        )),
-        tooltip: 'Refresh Chats',
-      ),
+
       
       // Floating Action Button Location
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -62,26 +54,26 @@ class ChatScreen extends StatelessWidget {
           
 
 
-          // Last refresh time
-          Obx(() => Text(
-            chatController.timeSinceLastRefresh,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
-          )),
-
-          const SizedBox(width: 8),
-          
-          // Refresh Button
-          IconButton(
-            onPressed: () => chatController.refreshChats(),
-            icon: Obx(() => Icon(
-              chatController.isRefreshing ? Icons.hourglass_empty : Icons.refresh,
-              color: chatController.isRefreshing ? Colors.orange : Colors.blue,
-            )),
-            tooltip: 'Refresh Chats',
-          ),
+          // // Last refresh time
+          // Obx(() => Text(
+          //   chatController.timeSinceLastRefresh,
+          //   style: TextStyle(
+          //     fontSize: 12,
+          //     color: Colors.grey[600],
+          //   ),
+          // )),
+          //
+          // const SizedBox(width: 8),
+          //
+          // // Refresh Button
+          // IconButton(
+          //   onPressed: () => chatController.refreshChats(),
+          //   icon: Obx(() => Icon(
+          //     chatController.isRefreshing ? Icons.hourglass_empty : Icons.refresh,
+          //     color: chatController.isRefreshing ? Colors.orange : Colors.blue,
+          //   )),
+          //   tooltip: 'Refresh Chats',
+          // ),
           
           const SizedBox(width: 8),
           
@@ -263,15 +255,15 @@ class ChatScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () => Get.toNamed('/setup'),
-                    icon: const Icon(Icons.settings),
-                    label: const Text('Setup Channels'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                  ),
+                  // ElevatedButton.icon(
+                  //   onPressed: () => Get.toNamed('/setup'),
+                  //   icon: const Icon(Icons.settings),
+                  //   label: const Text('Setup Channels'),
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: Colors.blue,
+                  //     foregroundColor: Colors.white,
+                  //   ),
+                  // ),
                 ],
               ),
             );

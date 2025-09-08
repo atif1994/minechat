@@ -71,27 +71,10 @@ class ChatController extends GetxController {
     super.onClose();
   }
   
-  /// Start real-time chat updates
+  /// Start real-time chat updates (disabled auto-refresh)
   void _startRealTimeUpdates() {
-    print('🔄 Starting real-time chat updates...');
-    
-    // Refresh every 30 seconds
-    _refreshTimer = Timer.periodic(Duration(seconds: 30), (timer) {
-      if (!_isRefreshing.value) {
-        print('🔄 Auto-refresh timer triggered');
-        _refreshChatsSilently();
-      }
-    });
-    
-    // Also check for new messages every 15 seconds
-    Timer.periodic(Duration(seconds: 15), (timer) {
-      if (!_isRefreshing.value) {
-        print('🔍 Auto message check triggered');
-        checkForNewMessages();
-      }
-    });
-    
-    print('✅ Real-time updates started - refreshing every 30s, checking messages every 15s');
+    print('🔄 Real-time updates disabled - no auto-refresh');
+    // Auto-refresh removed for better performance
   }
   
   /// Start time update timer to keep UI reactive
@@ -113,34 +96,7 @@ class ChatController extends GetxController {
     }
   }
   
-  /// Refresh chats without showing loading indicator
-  Future<void> _refreshChatsSilently() async {
-    if (_isRefreshing.value) return;
-    
-    _isRefreshing.value = true;
-    try {
-      print('🔄 Silent refresh started...');
-      
-      // Check if we need to refresh (only if more than 1 minute has passed)
-      final timeSinceLastRefresh = DateTime.now().difference(_lastRefreshTime.value);
-      if (timeSinceLastRefresh.inMinutes < 1) {
-        print('⏰ Too soon to refresh (${timeSinceLastRefresh.inSeconds}s ago)');
-        return;
-      }
-      
-      await loadFacebookChats();
-      _lastRefreshTime.value = DateTime.now();
-      print('✅ Silent refresh completed');
-      
-      // After refresh, check for new messages
-      await checkForNewMessages();
-      
-    } catch (e) {
-      print('❌ Silent refresh failed: $e');
-    } finally {
-      _isRefreshing.value = false;
-    }
-  }
+  /// Silent refresh removed for better performance
   
   /// Manual refresh with loading indicator
   Future<void> refreshChats() async {
@@ -182,95 +138,9 @@ class ChatController extends GetxController {
   }
   
   /// Check for new messages and update unread counts
+  /// Auto message checking removed for better performance
   Future<void> checkForNewMessages() async {
-    try {
-      print('🔍 Checking for new messages...');
-      
-      // Get current page ID and access token
-      final channelController = Get.find<ChannelController>();
-      final facebookPageId = channelController.facebookPageIdCtrl.text.trim();
-      
-      if (facebookPageId.isEmpty) {
-        print('⚠️ No Facebook page ID available');
-        return;
-      }
-      
-      final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
-      if (pageAccessToken == null) {
-        print('⚠️ No page access token available');
-        return;
-      }
-      
-      // Fetch latest conversations to check for new messages
-      final conversationsResult = await FacebookGraphApiService.getPageConversationsWithToken(
-        facebookPageId,
-        pageAccessToken,
-      );
-      
-      if (conversationsResult['success'] && conversationsResult['data'] != null) {
-        final newConversations = conversationsResult['data'] as List;
-        print('📊 Found ${newConversations.length} conversations in latest check');
-        
-        int newMessageCount = 0;
-        List<String> updatedChats = [];
-        
-        // Update existing chats with new message counts and unread counts
-        for (final conversation in newConversations) {
-          final conversationId = conversation['id'];
-          final unreadCount = conversation['unread_count'] ?? 0;
-          final messageCount = conversation['message_count'] ?? 0;
-          
-          // Find existing chat and update it
-          final existingChatIndex = chatList.indexWhere((chat) => chat['id'] == conversationId);
-          if (existingChatIndex != -1) {
-            final existingChat = chatList[existingChatIndex];
-            
-            // Check if there are new messages
-            if (messageCount > (existingChat['messageCount'] ?? 0)) {
-              final contactName = existingChat['contactName'] ?? 'Unknown User';
-              print('🆕 New messages detected for $contactName: $messageCount vs ${existingChat['messageCount']}');
-              
-              // Update the chat with new data
-              final updatedChat = Map<String, dynamic>.from(existingChat);
-              updatedChat['messageCount'] = messageCount;
-              updatedChat['unreadCount'] = unreadCount;
-              updatedChat['lastMessageTime'] = DateTime.now();
-              
-              chatList[existingChatIndex] = updatedChat;
-              
-              newMessageCount++;
-              updatedChats.add(contactName);
-              
-              // Show notification for new messages
-              _showNewMessageNotification(contactName, messageCount - (existingChat['messageCount'] ?? 0));
-            }
-          }
-        }
-        
-        if (newMessageCount > 0) {
-          print('🎉 Found $newMessageCount chats with new messages: ${updatedChats.join(', ')}');
-          
-          // Show summary notification
-          Get.snackbar(
-            'New Messages! 📱',
-            '$newMessageCount conversations have new messages',
-            snackPosition: SnackPosition.TOP,
-            duration: Duration(seconds: 3),
-            backgroundColor: Colors.green,
-            colorText: Colors.white,
-            icon: Icon(Icons.message, color: Colors.white),
-          );
-          
-          // Trigger UI update
-          update();
-        }
-        
-        print('✅ Message check completed');
-      }
-      
-    } catch (e) {
-      print('❌ Error checking for new messages: $e');
-    }
+    // Method disabled - no auto-checking
   }
   
   /// Get refresh status
@@ -688,18 +558,21 @@ class ChatController extends GetxController {
             );
             
             if (result['success'] && result['data'] != null) {
-              final message = result['data'];
-              final messageText = message['message'] ?? 'No message content';
-              
-              // Update the conversation in the chat list
-              final chatIndex = chatList.indexWhere((chat) => chat['id'] == conversation['id']);
-              if (chatIndex != -1) {
-                chatList[chatIndex]['lastMessage'] = messageText.length > 50 
-                    ? '${messageText.substring(0, 50)}...' 
-                    : messageText;
-                chatList[chatIndex]['needsLastMessage'] = false;
+              final messages = result['data'] as List;
+              if (messages.isNotEmpty) {
+                final message = messages.first; // Get the first (most recent) message
+                final messageText = message['message'] ?? 'No message content';
                 
-                print('✅ Updated last message for ${conversation['contactName']}: ${messageText.substring(0, messageText.length > 30 ? 30 : messageText.length)}...');
+                // Update the conversation in the chat list
+                final chatIndex = chatList.indexWhere((chat) => chat['id'] == conversation['id']);
+                if (chatIndex != -1) {
+                  chatList[chatIndex]['lastMessage'] = messageText.length > 50 
+                      ? '${messageText.substring(0, 50)}...' 
+                      : messageText;
+                  chatList[chatIndex]['needsLastMessage'] = false;
+                  
+                  print('✅ Updated last message for ${conversation['contactName']}: ${messageText.substring(0, messageText.length > 30 ? 30 : messageText.length)}...');
+                }
               }
             }
             
@@ -966,20 +839,9 @@ class ChatController extends GetxController {
     }
   }
   
-  /// Test method to manually trigger real-time updates
+  /// Test method disabled - auto-refresh removed
   Future<void> testRealTimeUpdates() async {
-    print('🧪 Testing real-time updates...');
-    
-    // Test silent refresh
-    await _refreshChatsSilently();
-    
-    // Test message check
-    await checkForNewMessages();
-    
-    // Test manual refresh
-    await refreshChats();
-    
-    print('✅ Real-time update tests completed');
+    print('🧪 Real-time updates disabled');
   }
   
   /// Show notification for new messages

@@ -281,6 +281,38 @@ class MessengerChannelWidget extends StatelessWidget {
           ),
         ),
         AppSpacing.vertical(context, 0.02),
+        // Token Exchange Button
+        SizedBox(
+          width: double.infinity,
+          child: Obx(() => ElevatedButton.icon(
+            onPressed: controller.isConnectingFacebook.value || controller.isOAuthInProgress.value
+                ? null
+                : () => controller.exchangeFacebookToken(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange[600],
+              foregroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(vertical: 16),
+            ),
+            icon: (controller.isConnectingFacebook.value || controller.isOAuthInProgress.value)
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Icon(Icons.refresh, size: 20),
+            label: (controller.isConnectingFacebook.value || controller.isOAuthInProgress.value)
+                ? Text('Exchanging...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
+                : Text(
+                    '🔄 Exchange for Never-Expiring Token',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+          )),
+        ),
+        AppSpacing.vertical(context, 0.01),
+        
         // Direct connection button with provided token
         SizedBox(
           width: double.infinity,
