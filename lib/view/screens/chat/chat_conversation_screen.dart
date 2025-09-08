@@ -98,6 +98,13 @@ class ChatConversationScreen extends StatelessWidget {
       ),
       actions: [
         IconButton(
+          icon: const Icon(Icons.refresh, color: Colors.black),
+          onPressed: () {
+            conversationController.loadMessages();
+            Get.snackbar('Info', 'Refreshing messages...');
+          },
+        ),
+        IconButton(
           icon: Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -200,34 +207,36 @@ class ChatConversationScreen extends StatelessWidget {
 
   Widget _buildMessagesList() {
     return Obx(() {
+      // Show loading indicator while messages are being loaded
       if (conversationController.isLoading.value) {
         return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(),
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.purple),
+              ),
               SizedBox(height: 16),
-              Text('Loading messages...'),
+              Text(
+                'Loading messages...',
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
             ],
           ),
         );
       }
-
+      
+      // Show no messages message only after loading is complete
       if (conversationController.messages.isEmpty) {
         return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
-              SizedBox(height: 16),
+              Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey),
+              SizedBox(height: 12),
               Text(
                 'No messages yet',
-                style: TextStyle(fontSize: 18, color: Colors.grey),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Start the conversation!',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ],
           ),
@@ -363,7 +372,10 @@ class ChatConversationScreen extends StatelessWidget {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
+                    ),
                   )
                 : const Icon(Icons.send, color: Colors.blue),
           )),
@@ -377,8 +389,8 @@ class ChatConversationController extends GetxController {
   final messageController = TextEditingController();
   var messages = <Map<String, dynamic>>[].obs;
   var isAIMode = true.obs;
-  var isLoading = false.obs;
-  var isSending = false.obs;
+  var isLoading = true.obs; // Add loading state
+  var isSending = false.obs; // Add sending state
   
   // Facebook conversation data
   String? conversationId;
@@ -404,15 +416,16 @@ class ChatConversationController extends GetxController {
   /// Load real messages from Facebook Messenger
   Future<void> loadMessages() async {
     try {
-      isLoading.value = true;
+      isLoading.value = true; // Start loading
       print('📥 Loading messages for conversation: $conversationId');
       
       // Get Facebook credentials
       await _getFacebookCredentials();
       
       if (pageAccessToken == null || facebookPageId == null) {
-        print('⚠️ No Facebook credentials available');
-        _loadMockMessages();
+        print('⚠️ No Facebook credentials available, trying to get them...');
+        // Don't load mock messages, try to get real credentials
+        isLoading.value = false; // Stop loading
         return;
       }
       
@@ -421,9 +434,15 @@ class ChatConversationController extends GetxController {
       
     } catch (e) {
       print('❌ Error loading messages: $e');
-      _loadMockMessages();
+      // Don't load mock messages, show error instead
+      Get.snackbar(
+        'Error',
+        'Failed to load messages: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
-      isLoading.value = false;
+      isLoading.value = false; // Always stop loading
     }
   }
   
@@ -436,9 +455,25 @@ class ChatConversationController extends GetxController {
       if (facebookPageId!.isNotEmpty) {
         pageAccessToken = await channelController.getPageAccessToken(facebookPageId!);
         print('✅ Got Facebook credentials - Page: $facebookPageId, Token: ${pageAccessToken?.substring(0, 10)}...');
+      } else {
+        // Use the updated token from config if no page ID is set
+        print('⚠️ No page ID found, using config token');
+        pageAccessToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
+        facebookPageId = '313808701826338'; // Use the page ID from your token
+        print('✅ Using config token for page: $facebookPageId');
+      }
+      
+      // Get valid token with automatic refresh if needed
+      final validToken = await FacebookGraphApiService.getValidToken();
+      if (validToken != null) {
+        pageAccessToken = validToken;
+        print('🔄 Using automatically refreshed token: ${validToken.substring(0, 10)}...');
       }
     } catch (e) {
       print('❌ Error getting Facebook credentials: $e');
+      // Fallback to config token
+      pageAccessToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
+      facebookPageId = '313808701826338';
     }
   }
   
@@ -447,50 +482,93 @@ class ChatConversationController extends GetxController {
     try {
       print('🔍 Loading Facebook messages for conversation: $conversationId');
       
-      // Get messages from Facebook API
-      final messagesResult = await FacebookGraphApiService.getConversationMessagesWithToken(
-        conversationId!,
-        pageAccessToken!,
-      );
+      // First check token permissions
+      final permissionsResult = await FacebookGraphApiService.checkTokenPermissions(pageAccessToken!);
+      if (permissionsResult['success']) {
+        print('✅ Token permissions: ${permissionsResult['data']}');
+      } else {
+        print('⚠️ Could not check permissions: ${permissionsResult['error']}');
+      }
+      
+      // Get messages from Facebook API - try conversation info first for fb_t_ IDs
+      final messagesResult = conversationId!.startsWith('fb_t_') 
+          ? await FacebookGraphApiService.getConversationInfoOnly(
+              conversationId!,
+              pageAccessToken!,
+            )
+          : await FacebookGraphApiService.getConversationMessagesWithToken(
+              conversationId!,
+              pageAccessToken!,
+            );
       
       if (messagesResult['success'] && messagesResult['data'] != null) {
-        final facebookMessages = messagesResult['data'] as List;
-        print('📊 Found ${facebookMessages.length} Facebook messages');
+        final facebookData = messagesResult['data'] as List;
+        final dataType = messagesResult['type'] ?? 'unknown';
+        print('📊 Found ${facebookData.length} Facebook data items (type: $dataType)');
         
-        // Convert Facebook messages to our format
-        final convertedMessages = <Map<String, dynamic>>[];
-        
-        for (final message in facebookMessages) {
-          final isFromUser = message['from']?['id'] != facebookPageId;
-          final messageText = message['message'] ?? '';
-          final timestamp = message['created_time'] ?? DateTime.now().toIso8601String();
+        if (dataType == 'conversation_info') {
+          // We got conversation info, not messages
+          final conversationInfo = facebookData.first;
+          print('📋 Conversation Info: $conversationInfo');
           
-          if (messageText.isNotEmpty) {
-            convertedMessages.add({
-              'id': message['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-              'text': messageText,
-              'timestamp': _formatTimestamp(timestamp),
-              'isFromUser': isFromUser,
-              'isAI': false, // Facebook messages are from real users
-              'facebookMessageId': message['id'],
-            });
+          // Show a message indicating we can see the conversation but can't load messages
+          final infoMessage = {
+            'id': 'info_${DateTime.now().millisecondsSinceEpoch}',
+            'text': 'Conversation loaded. Messages may require additional permissions to view.',
+            'timestamp': _getCurrentTime(),
+            'isFromUser': false,
+            'isAI': true,
+            'isInfo': true,
+          };
+          
+          messages.value = [infoMessage];
+          print('✅ Loaded conversation info (messages require additional permissions)');
+        } else {
+          // Convert Facebook messages to our format
+          final convertedMessages = <Map<String, dynamic>>[];
+          
+          for (final message in facebookData) {
+            final isFromUser = message['from']?['id'] != facebookPageId;
+            final messageText = message['message'] ?? '';
+            final timestamp = message['created_time'] ?? DateTime.now().toIso8601String();
+            
+            if (messageText.isNotEmpty) {
+              convertedMessages.add({
+                'id': message['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                'text': messageText,
+                'timestamp': _formatTimestamp(timestamp),
+                'isFromUser': isFromUser,
+                'isAI': false, // Facebook messages are from real users
+                'facebookMessageId': message['id'],
+              });
+            }
           }
+          
+          // Sort messages by timestamp (oldest first)
+          convertedMessages.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+          
+          messages.value = convertedMessages;
+          print('✅ Loaded ${convertedMessages.length} real Facebook messages');
         }
-        
-        // Sort messages by timestamp (oldest first)
-        convertedMessages.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-        
-        messages.value = convertedMessages;
-        print('✅ Loaded ${convertedMessages.length} real Facebook messages');
         
       } else {
         print('⚠️ Failed to load Facebook messages: ${messagesResult['error']}');
-        _loadMockMessages();
+        Get.snackbar(
+          'Error',
+          'Failed to load Facebook messages: ${messagesResult['error']}',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
       
     } catch (e) {
       print('❌ Error loading Facebook messages: $e');
-      _loadMockMessages();
+      Get.snackbar(
+        'Error',
+        'Error loading Facebook messages: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     }
   }
   
@@ -517,17 +595,33 @@ class ChatConversationController extends GetxController {
 
   /// Send message to Facebook Messenger
   Future<void> sendMessage() async {
-    if (messageController.text.trim().isEmpty) return;
-    if (pageAccessToken == null || conversationId == null) {
-      print('⚠️ Cannot send message - no Facebook credentials');
-      return;
-    }
-
+    if (messageController.text.trim().isEmpty || isSending.value) return;
+    
     try {
-      isSending.value = true;
+      isSending.value = true; // Start sending
+      
+      // Ensure we have credentials
+      if (pageAccessToken == null || conversationId == null) {
+        print('⚠️ No credentials, getting them...');
+        await _getFacebookCredentials();
+      }
+      
+      if (pageAccessToken == null || conversationId == null) {
+        print('❌ Cannot send message - no Facebook credentials available');
+        Get.snackbar(
+          'Error',
+          'Cannot send message - Facebook not connected',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
       final messageText = messageController.text.trim();
       
       print('📤 Sending message to Facebook: $messageText');
+      print('📤 Using token: ${pageAccessToken!.substring(0, 20)}...');
+      print('📤 To conversation: $conversationId');
       
       // Add message to local list immediately
       final newMessage = {
@@ -577,7 +671,7 @@ class ChatConversationController extends GetxController {
         colorText: Colors.white,
       );
     } finally {
-      isSending.value = false;
+      isSending.value = false; // Always stop sending
     }
   }
   

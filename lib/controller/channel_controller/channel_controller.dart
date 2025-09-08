@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
+import 'package:minechat/core/services/facebook_token_exchange_service.dart';
 
 class ChannelController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -845,6 +846,13 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
 
       // Save the page access token securely
       await _savePageAccessToken(pageId, pageAccessToken);
+
+      // Initialize tokens for automatic refresh
+      FacebookGraphApiService.initializeTokens(
+        pageToken: pageAccessToken,
+        pageId: pageId,
+        expiryTime: DateTime.now().add(Duration(days: 60)), // Long-lived tokens last 60 days
+      );
 
       isFacebookConnected.value = true;
       await saveChannelSettings();
@@ -1690,7 +1698,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       }
 
       // Use the provided page access token
-      const String providedToken = 'EAAU0kNg5hEMBPJBvAOD7hNgPb7j6vLYtLQZACZBwZBewAgOiOUwZCLO0w2zIdfE5S3fSVQQC61rXXSsDCsPppbUtVpaMQa4VVR67RGlK7BmPWm6R3aFp9MOyk1uskbzZCGSu8oTy7NY4njn4YrnBRWC8ZBnrO46iGW0Oiznd9ERue6hC2K1hTTnSa0S2nU5Uv7VqGAUopO';
+      const String providedToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
 
       print('🔍 Testing provided Facebook page access token...');
 
@@ -1815,6 +1823,109 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       );
     } finally {
       isConnectingFacebook.value = false;
+    }
+  }
+
+  /// Exchange short-lived Facebook token for long-lived token
+  Future<void> exchangeFacebookToken() async {
+    try {
+      isConnectingFacebook.value = true;
+      
+      const String shortLivedToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
+      
+      print('🔄 Starting Facebook token exchange...');
+      
+      // Complete token exchange process
+      final result = await FacebookTokenExchangeService.completeTokenExchange(
+        shortLivedToken: shortLivedToken,
+      );
+      
+      if (result['success']) {
+        final pages = result['pages'] as List<Map<String, dynamic>>;
+        
+        if (pages.isNotEmpty) {
+          // Use the first page token (never-expiring)
+          final pageToken = pages.first['access_token'];
+          final pageId = pages.first['id'];
+          final pageName = pages.first['name'];
+          
+          print('✅ Token exchange successful!');
+          print('📄 Page: $pageName (ID: $pageId)');
+          print('🔑 Never-expiring page token obtained');
+          
+          // Update the page ID and token
+          facebookPageIdCtrl.text = pageId;
+          facebookAccessTokenCtrl.text = pageToken;
+          
+          // Save to Firestore
+          await _savePageAccessToken(pageId, pageToken);
+          
+          // Initialize tokens for automatic refresh
+          FacebookGraphApiService.initializeTokens(
+            pageToken: pageToken,
+            pageId: pageId,
+            expiryTime: null, // Never-expiring page tokens don't have expiry
+          );
+          
+          isFacebookConnected.value = true;
+          await saveChannelSettings();
+          
+          Get.snackbar(
+            'Success! 🎉',
+            'Facebook token exchanged successfully!\nPage: $pageName\n✅ Never-expiring token obtained!',
+            backgroundColor: Colors.green,
+            colorText: Colors.white,
+            duration: Duration(seconds: 5),
+          );
+          
+          // Trigger chat loading
+          try {
+            final chatController = Get.find<ChatController>();
+            await chatController.refreshFacebookChats();
+            print('✅ Facebook chats loaded successfully');
+          } catch (e) {
+            print('⚠️ Chat controller not found, will load chats when chat screen is opened');
+          }
+        } else {
+          throw Exception('No pages found in token exchange result');
+        }
+      } else {
+        throw Exception(result['error'] ?? 'Token exchange failed');
+      }
+    } catch (e) {
+      print('❌ Error exchanging Facebook token: $e');
+      Get.snackbar(
+        'Token Exchange Failed',
+        'Failed to exchange Facebook token: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 5),
+      );
+    } finally {
+      isConnectingFacebook.value = false;
+    }
+  }
+
+  /// Check if current token is expired and needs refresh
+  Future<void> checkAndRefreshFacebookToken() async {
+    try {
+      const String currentToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
+      
+      print('🔍 Checking Facebook token validity...');
+      
+      final verification = await FacebookTokenExchangeService.verifyToken(
+        token: currentToken,
+      );
+      
+      if (verification['success'] && verification['valid']) {
+        print('✅ Current token is still valid');
+        return;
+      }
+      
+      print('⚠️ Token is expired or invalid, attempting refresh...');
+      await exchangeFacebookToken();
+    } catch (e) {
+      print('❌ Error checking token: $e');
     }
   }
 

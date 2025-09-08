@@ -1,6 +1,6 @@
 class AppConfig {
   // OpenAI Configuration
-  static const String openaiApiKey = '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';
+  static const String openaiApiKey = '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';
   static const String openaiBaseUrl = 'https://api.openai.com/v1';
   
   // Database Configuration
@@ -15,7 +15,7 @@ class AppConfig {
   static const String sessionSecret = 'WlTAaM2vuXjxbaDMzNeXU4D6S3OpFDqjWkQCc3c81ErxQj0nttsz7at7EZzEunm2c50fp8gLbsGxeLwL3iYYww==';
   
   // Social Media Configuration
-  static const String facebookPageAccessToken = 'EAAU0kNg5hEMBPJBvAOD7hNgPb7j6vLYtLQZACZBwZBewAgOiOUwZCLO0w2zIdfE5S3fSVQQC61rXXSsDCsPppbUtVpaMQa4VVR67RGlK7BmPWm6R3aFp9MOyk1uskbzZCGSu8oTy7NY4njn4YrnBRWC8ZBnrO46iGW0Oiznd9ERue6hC2K1hTTnSa0S2nU5Uv7VqGAUopO';
+  static const String facebookPageAccessToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
   static const String facebookAppId = '1465171591136323';
   static const String facebookAppSecret = 'b122dd71abfb19e33ac3b06383a0a718';
   
