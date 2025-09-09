@@ -15,7 +15,7 @@ class AIAssistantController extends GetxController {
   final AIAssistantRepository _repository = AIAssistantRepository();
   final AIKnowledgeRepository _knowledgeRepository = AIKnowledgeRepository();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  var currentStep = "AI Assistant".obs; // default active step
+  var currentStep = "AI Assistant".obs; // default active ste
   // Form Controllers
   final nameCtrl = TextEditingController();
   final introMessageCtrl = TextEditingController();
