@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../config/app_config.dart';
 import '../../model/data/ai_knowledge_model.dart';
 import '../../model/data/product_service_model.dart';
 import '../../model/data/faq_model.dart';
 
 class OpenAIService {
-  static const String _baseUrl = AppConfig.openaiBaseUrl;
-  static const String _apiKey = AppConfig.openaiApiKey;
+  // OpenAI API Configuration
+  static const String _apiKey = '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';
+  static const String _baseUrl = 'https://api.openai.com/v1';
 
+  /// Generate AI response using direct OpenAI API
   static Future<String> generateResponse({
     required String userMessage,
     required String assistantName,
@@ -27,6 +28,7 @@ class OpenAIService {
     );
   }
 
+  /// Generate AI response with business knowledge using direct OpenAI API
   static Future<String> generateResponseWithKnowledge({
     required String userMessage,
     required String assistantName,
@@ -39,6 +41,19 @@ class OpenAIService {
     List<FAQModel>? faqs,
   }) async {
     try {
+      // Build system prompt
+      String systemPrompt = _buildSystemPrompt(
+        assistantName: assistantName,
+        introMessage: introMessage,
+        shortDescription: shortDescription,
+        aiGuidelines: aiGuidelines,
+        responseLength: responseLength,
+        businessInfo: businessInfo,
+        productsServices: productsServices,
+        faqs: faqs,
+      );
+
+      // Make API request
       final response = await http.post(
         Uri.parse('$_baseUrl/chat/completions'),
         headers: {
@@ -50,21 +65,12 @@ class OpenAIService {
           'messages': [
             {
               'role': 'system',
-              'content': _buildEnhancedSystemPrompt(
-                assistantName: assistantName,
-                introMessage: introMessage,
-                shortDescription: shortDescription,
-                aiGuidelines: aiGuidelines,
-                responseLength: responseLength,
-                businessInfo: businessInfo,
-                productsServices: productsServices,
-                faqs: faqs,
-              ),
+              'content': systemPrompt,
             },
             {
               'role': 'user',
               'content': userMessage,
-            },
+            }
           ],
           'max_tokens': _getMaxTokens(responseLength),
           'temperature': 0.7,
@@ -73,46 +79,17 @@ class OpenAIService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final content = data['choices'][0]['message']['content'];
-        if (content != null && content.isNotEmpty) {
-          return content;
-        } else {
-          print('OpenAI API returned empty content');
-          return 'Sorry, I could not generate a response.';
-        }
+        return data['choices'][0]['message']['content'] ?? 'No response generated';
       } else {
-        print('OpenAI API Error: ${response.statusCode} - ${response.body}');
-        if (response.statusCode == 401) {
-          return 'Authentication error. Please check your API key.';
-        } else if (response.statusCode == 429) {
-          return 'Rate limit exceeded. Please try again later.';
-        } else {
-          return 'Sorry, I encountered an error. Please try again.';
-        }
+        return 'Error: ${response.statusCode} - ${response.body}';
       }
     } catch (e) {
-      print('OpenAI Service Error: $e');
-      return 'Sorry, I encountered an error. Please try again.';
+      return 'Error: $e';
     }
   }
 
+  /// Build system prompt with business information
   static String _buildSystemPrompt({
-    required String assistantName,
-    required String introMessage,
-    required String shortDescription,
-    required String aiGuidelines,
-    required String responseLength,
-  }) {
-    return _buildEnhancedSystemPrompt(
-      assistantName: assistantName,
-      introMessage: introMessage,
-      shortDescription: shortDescription,
-      aiGuidelines: aiGuidelines,
-      responseLength: responseLength,
-    );
-  }
-
-  static String _buildEnhancedSystemPrompt({
     required String assistantName,
     required String introMessage,
     required String shortDescription,
@@ -152,17 +129,16 @@ Thank You Message: ${businessInfo.thankYouMessage}
 ''';
     }
 
-    // Add Products & Services
+    // Add Products/Services
     if (productsServices != null && productsServices.isNotEmpty) {
-      prompt += '\n\nPRODUCTS & SERVICES:\n';
+      prompt += '\n\nPRODUCTS/SERVICES:\n';
       for (int i = 0; i < productsServices.length; i++) {
-        final product = productsServices[i];
+        final item = productsServices[i];
         prompt += '''
-${i + 1}. Name: ${product.name}
-   Description: ${product.description}
-   Price: ${product.price}
-   Category: ${product.category}
-   Features: ${product.features}
+${i + 1}. ${item.name}
+   Description: ${item.description}
+   Price: ${item.price}
+   Category: ${item.category}
 ''';
       }
     }
@@ -173,46 +149,40 @@ ${i + 1}. Name: ${product.name}
       for (int i = 0; i < faqs.length; i++) {
         final faq = faqs[i];
         prompt += '''
-${i + 1}. Q: ${faq.question}
-   A: ${faq.answer}
-   Category: ${faq.category}
+Q${i + 1}: ${faq.question}
+A${i + 1}: ${faq.answer}
 ''';
       }
     }
 
-    prompt += '''
-
-INSTRUCTIONS:
-- Use the business information to answer questions about the company
-- Use the products/services information to help customers with product inquiries
-- Use the FAQs to provide quick answers to common questions
-- If a question matches an FAQ, provide the exact answer from the FAQ
-- Always be helpful, professional, and maintain the assistant's personality
-- If you don't have information about something, politely say so and offer to help with what you do know
-''';
-
     return prompt;
   }
 
+  /// Get response style based on length preference
   static String _getResponseStyle(String responseLength) {
-    switch (responseLength) {
-      case 'Short':
-        return 'Keep responses concise and to the point (1-2 sentences).';
-      case 'Long':
-        return 'Provide detailed, comprehensive responses with examples when helpful.';
+    switch (responseLength.toLowerCase()) {
+      case 'short':
+        return 'Keep responses concise and to the point (1-2 sentences)';
+      case 'medium':
+        return 'Provide detailed but not overly long responses (2-4 sentences)';
+      case 'long':
+        return 'Give comprehensive and detailed responses (4+ sentences)';
       default:
-        return 'Provide balanced responses that are neither too short nor too long.';
+        return 'Provide appropriate length responses based on the question';
     }
   }
 
+  /// Get max tokens based on response length
   static int _getMaxTokens(String responseLength) {
-    switch (responseLength) {
-      case 'Short':
+    switch (responseLength.toLowerCase()) {
+      case 'short':
         return 100;
-      case 'Long':
+      case 'medium':
+        return 300;
+      case 'long':
         return 500;
       default:
-        return 250;
+        return 300;
     }
   }
 }

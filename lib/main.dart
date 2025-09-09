@@ -12,7 +12,6 @@ import 'package:minechat/controller/auth_controller/auth_controller.dart';
 import 'package:minechat/controller/crm_controller/crm_controller.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
-import 'package:minechat/core/services/otp_service/firestore_init.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/core/router/app_pages.dart';
 

@@ -1,4 +1,4 @@
-import 'package:cloud_functions/cloud_functions.dart';
+import 'dart:math';
 
 class OtpService {
   OtpService._();
@@ -8,32 +8,36 @@ class OtpService {
   factory OtpService() => _instance;
 
   static const int codeLength = 6;
-  static const String _region = 'us-central1';
 
-  FirebaseFunctions get _fx => FirebaseFunctions.instanceFor(region: _region);
-
-  /// Send a 6-digit OTP to the given email via Cloud Function (and Trigger Email extension).
-  Future<void> sendOtp({required String email}) async {
-    final res = await _fx.httpsCallable('sendOtpEmail').call({'email': email});
-    final data = (res.data as Map?) ?? {};
-    if (data['ok'] != true) {
-      throw data['error'] ?? 'Failed to send OTP';
-    }
+  /// Generate a random 6-digit OTP code
+  String generateOtp() {
+    final random = Random();
+    return (100000 + random.nextInt(900000)).toString();
   }
 
-  /// Verify OTP on the server and (for forgot-password) create a reset session.
-  /// Returns a resetToken string (use it only in forgot-password flow).
+  /// Send a 6-digit OTP to the given email (simplified version)
+  /// Note: This is a placeholder implementation. In production, you would
+  /// integrate with an email service like SendGrid, AWS SES, or similar.
+  Future<void> sendOtp({required String email}) async {
+    // For now, just simulate sending OTP
+    // In a real app, you would call an email service here
+    print('OTP would be sent to: $email');
+    await Future.delayed(const Duration(seconds: 1));
+  }
+
+  /// Verify OTP code (simplified version)
+  /// Note: This is a placeholder implementation. In production, you would
+  /// verify against a stored OTP in your database.
   Future<String> verifyOtpAndIssueResetSession({
     required String email,
     required String code,
   }) async {
-    final res = await _fx
-        .httpsCallable('verifyOtpAndIssueResetSession')
-        .call({'email': email, 'code': code});
-    final data = (res.data as Map?) ?? {};
-    if (data['ok'] == true && data['resetToken'] is String) {
-      return data['resetToken'] as String;
+    // For now, just simulate verification
+    // In a real app, you would verify against stored OTP
+    if (code.length == 6 && code.contains(RegExp(r'^\d+$'))) {
+      // Generate a mock reset token
+      return 'mock_reset_token_${DateTime.now().millisecondsSinceEpoch}';
     }
-    throw data['error'] ?? 'Verification failed';
+    throw 'Invalid OTP code';
   }
 }
