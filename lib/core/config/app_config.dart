@@ -1,11 +1,8 @@
 class AppConfig {
   // OpenAI Configuration
-  // Note: API key is now managed securely through APIKeyService
+  // static const String openaiApiKey = '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';
+  static const String openaiApiKey = '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';
   static const String openaiBaseUrl = 'https://api.openai.com/v1';
-
-  // Legacy API key for migration purposes only - will be removed after migration
-  @Deprecated('Use APIKeyService instead')
-  static const String openaiApiKey = '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';
 
   // Database Configuration
   static const String databaseUrl = 'postgresql://neondb_owner:npg_slWPg2Mi8Vvf@ep-sweet-flower-a2dt9w33.eu-central-1.aws.neon.tech/neondb?sslmode=require';
