@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Rules for user profiles
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Rules for business accounts
+    match /business_accounts/{accountId} {
+      allow read, write: if request.auth != null && request.auth.uid == accountId;
+    }
+    
+    // Rules for admin accounts
+    match /admin_users/{adminId} {
+      allow read, write: if request.auth != null && request.auth.uid == adminId;
+    }
+    
+    // Rules for manage and add user profiles
+    match /manage_users/{docId} {
+      allow read: if request.auth != null
+                  && resource.data.ownerUid == request.auth.uid;
+      allow create, update: if request.auth != null
+                  && request.resource.data.ownerUid == request.auth.uid;
+      allow delete: if request.auth != null
+                  && resource.data.ownerUid == request.auth.uid;
+    }
+    
+    // Allow public read for templates during initialization
+    match /mailTemplates/{template} {
+      allow read: if true;
+      allow write: if true; // Temporary for initialization
+    }
+    
+    // Client should NOT read or write OTPs now (server callables do it)
+    match /otpCodes/{email} {
+      allow read, write: if false;
+    }
+    
+    // Reset sessions also server-only
+    match /passwordResetSessions/{token} {
+      allow read, write: if false;
+    }
+    
+    // Keep Trigger Email queue open for create (server writes anyway)
+    match /mail/{doc} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+    
+    // AI Assistants rules
+    match /ai_assistants/{assistantId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    
+    // AI Knowledge rules
+    match /ai_knowledge/{docId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || request.auth.uid == request.resource.data.userId);
+    }
+    
+    // Products & Services rules
+    match /products_services/{docId} {
+      // Allow create if request userId matches auth user
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow read/update/delete only if owner
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // FAQs rules
+    match /faqs/{docId} {
+      // Allow create if request userId matches auth user
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow read/update/delete only if owner
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // FAQ Files rules
+    match /faq_files/{docId} {
+      // Allow create if request userId matches auth user
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      // Allow read/update/delete only if owner
+      allow read, update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+    
+    // Channel Settings rules
+    match /channel_settings/{docId} {
+      // Allow read/write if user owns the document
+      allow read, write: if request.auth != null && request.auth.uid == docId;
+    }
+    
+    // ✅ Secure tokens collection for storing sensitive data like Facebook page access tokens
+    match /secure_tokens/{userId} {
+      // Allow read/write only if user owns the document
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ✅ CRM Leads collection
+    match /leads/{userId}/leads/{leadId} {
+      // Allow read/write if user owns the leads
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // ✅ CRM Opportunities collection  
+    match /opportunities/{userId}/opportunities/{opportunityId} {
+      // Allow read/write if user owns the opportunities
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Test collection (for debugging)
+    match /test/{docId} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
