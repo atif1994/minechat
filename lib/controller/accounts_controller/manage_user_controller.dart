@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:get/get.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
@@ -17,6 +18,9 @@ class ManageUserController extends GetxController {
   /// Currently "switched" managed user; null = show owner/admin
   final activeProfile = Rx<ManageUserModel?>(null);
 
+  /// Stream subscription for managing the Firestore listener
+  StreamSubscription<List<ManageUserModel>>? _streamSubscription;
+
   String get ownerUid =>
       Get.find<LoginController>().currentUser.value?.uid ?? '';
 
@@ -34,19 +38,41 @@ class ManageUserController extends GetxController {
     // Also bind when the login.currentUser arrives later
     ever<UserModel?>(login.currentUser, (u) {
       final uid = u?.uid ?? '';
-      if (uid.isNotEmpty) _bindStream(uid);
+      if (uid.isNotEmpty) {
+        _bindStream(uid);
+      } else {
+        // User logged out, clear data and cancel stream
+        _clearData();
+      }
     });
   }
 
   void _bindStream(String uid) {
-    repo.streamByOwner(uid).listen((list) {
-      profiles.assignAll(list);
-      // keep activeProfile in sync with latest snapshot (id match)
-      final activeId = activeProfile.value?.id;
-      if (activeId != null) {
-        activeProfile.value = list.firstWhereOrNull((e) => e.id == activeId);
-      }
-    });
+    // Cancel existing subscription if any
+    _streamSubscription?.cancel();
+    
+    _streamSubscription = repo.streamByOwner(uid).listen(
+      (list) {
+        profiles.assignAll(list);
+        // keep activeProfile in sync with latest snapshot (id match)
+        final activeId = activeProfile.value?.id;
+        if (activeId != null) {
+          activeProfile.value = list.firstWhereOrNull((e) => e.id == activeId);
+        }
+      },
+      onError: (error) {
+        // Handle permission errors gracefully
+        print('ManageUserController stream error: $error');
+        _clearData();
+      },
+    );
+  }
+
+  void _clearData() {
+    _streamSubscription?.cancel();
+    _streamSubscription = null;
+    profiles.clear();
+    activeProfile.value = null;
   }
 
   /// Switch UI context to a managed user (affects AccountScreen tile)
@@ -128,5 +154,11 @@ class ManageUserController extends GetxController {
     } finally {
       isBusy.value = false;
     }
+  }
+
+  @override
+  void onClose() {
+    _streamSubscription?.cancel();
+    super.onClose();
   }
 }
