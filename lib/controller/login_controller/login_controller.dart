@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 import 'package:minechat/model/repositories/user_repository.dart';
 import 'package:minechat/model/data/user_model.dart';
+import 'package:minechat/controller/accounts_controller/manage_user_controller.dart';
 
 import '../../view/screens/signUp/business_account_form.dart';
 
@@ -325,6 +326,11 @@ class LoginController extends GetxController {
 
   Future<void> signOut() async {
     try {
+      // Dispose of controllers that have active streams
+      if (Get.isRegistered<ManageUserController>()) {
+        Get.delete<ManageUserController>();
+      }
+      
       await _authService.signOut();
       currentUser.value = null;
       Get.snackbar(

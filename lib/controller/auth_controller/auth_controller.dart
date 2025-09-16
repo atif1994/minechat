@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
+import 'package:minechat/controller/accounts_controller/manage_user_controller.dart';
 import 'package:minechat/core/services/firebase_auth_service.dart';
 import 'package:minechat/view/screens/onboarding/onboarding_screen.dart';
 import 'package:minechat/view/screens/root_bottom_navigation/root_bottom_nav_scree.dart';
@@ -82,6 +83,11 @@ class AuthController extends GetxController {
   /// Sign out user
   Future<void> signOut() async {
     try {
+      // Dispose of controllers that have active streams
+      if (Get.isRegistered<ManageUserController>()) {
+        Get.delete<ManageUserController>();
+      }
+      
       await _authService.signOut();
       _storage.remove(_hasCompletedOnboardingKey);
       _storage.remove(_hasCompletedSetupKey);
