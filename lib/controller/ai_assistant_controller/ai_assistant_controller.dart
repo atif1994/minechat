@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:minechat/model/data/ai_assistant_model.dart';
 import '../../model/data/chat_mesage_model.dart';
 import '../../model/repositories/ai_assistant_repository.dart';
@@ -176,14 +178,127 @@ class AIAssistantController extends GetxController {
     }
   }
 
-  void addMessage(String message, MessageType type) {
+  void addMessage(String message, MessageType type, {String? attachedFilePath, String? attachedFileName, String? attachedFileType}) {
     chatMessages.add(ChatMessageModel(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       message: message,
       type: type,
       timestamp: DateTime.now(),
       aiAssistantId: currentAIAssistant.value?.id,
+      attachedFilePath: attachedFilePath,
+      attachedFileName: attachedFileName,
+      attachedFileType: attachedFileType,
     ));
+  }
+
+  /// Send message with file attachment
+  Future<void> sendMessageWithAttachment(String message, File file) async {
+    if (message.trim().isEmpty && file.path.isEmpty) return;
+
+    final fileName = file.path.split('/').last;
+    final fileExtension = fileName.split('.').last.toLowerCase();
+    final fileType = _getFileType(fileExtension);
+
+    // Add user message with attachment
+    addMessage(
+      message.trim().isEmpty ? 'Sent a file' : message,
+      MessageType.user,
+      attachedFilePath: file.path,
+      attachedFileName: fileName,
+      attachedFileType: fileType,
+    );
+    
+    // Show loading indicator
+    isLoading.value = true;
+    
+    try {
+      final assistant = currentAIAssistant.value;
+      if (assistant == null) {
+        addMessage("I'm not yet configured. Please set me up first.", MessageType.ai);
+        return;
+      }
+
+      // Process file and send to AI for analysis
+      final aiResponse = await OpenAIService.generateResponseWithFile(
+        userMessage: message.trim().isEmpty ? '' : message,
+        assistantName: assistant.name,
+        introMessage: assistant.introMessage,
+        shortDescription: assistant.shortDescription,
+        aiGuidelines: assistant.aiGuidelines,
+        responseLength: assistant.responseLength,
+        attachedFile: file,
+        fileType: fileType,
+        businessInfo: businessInfo.value,
+        productsServices: productsServices,
+        faqs: faqs,
+      );
+      
+      addMessage(aiResponse, MessageType.ai);
+    } catch (e) {
+      print('Error processing file attachment: $e');
+      addMessage("Sorry, I encountered an error processing your file. Please try again.", MessageType.ai);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Pick and send image
+  Future<void> pickAndSendImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        final file = File(image.path);
+        await sendMessageWithAttachment('', file);
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick image: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Pick and send document
+  Future<void> pickAndSendDocument() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? file = await picker.pickMedia();
+      
+      if (file != null) {
+        final fileObj = File(file.path);
+        await sendMessageWithAttachment('', fileObj);
+      }
+    } catch (e) {
+      print('Error picking document: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to pick document: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Determine file type based on extension
+  String _getFileType(String extension) {
+    final imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    final documentExtensions = ['pdf', 'doc', 'docx', 'txt', 'rtf'];
+    
+    if (imageExtensions.contains(extension)) {
+      return 'image';
+    } else if (documentExtensions.contains(extension)) {
+      return 'document';
+    } else {
+      return 'file';
+    }
   }
   Future<AIAssistantModel?> getCurrentUserAIAssistant() async {
     final userId = getCurrentUserId();
