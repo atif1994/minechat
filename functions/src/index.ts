@@ -764,3 +764,104 @@ export const fbGetPagesWithTokensFromUser = onRequest(
     }
   }
 );
+
+/**
+ * POST /fbStorePageToken
+ * Body: { pageAccessToken, pageId?, source? }
+ * Stores a Facebook page access token in Firestore with validation
+ */
+export const fbStorePageToken = onRequest(
+  { region: "us-central1", cors: true, secrets: [FB_APP_ID, FB_APP_SECRET] },
+  async (req, res) => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method Not Allowed" });
+        return;
+      }
+      const pageAccessToken = String(req.body?.pageAccessToken || "").trim();
+      const pageId = String(req.body?.pageId || "").trim();
+      const source = String(req.body?.source || "manual").trim();
+      
+      if (!pageAccessToken) {
+        res.status(400).json({ error: "Missing pageAccessToken" });
+        return;
+      }
+
+      // 1) Debug token to check validity and get page info
+      const appAccessToken = `${FB_APP_ID.value()}|${FB_APP_SECRET.value()}`;
+      const debugUrl = new URL("https://graph.facebook.com/v21.0/debug_token");
+      debugUrl.searchParams.set("input_token", pageAccessToken);
+      debugUrl.searchParams.set("access_token", appAccessToken);
+
+      let r = await fetch(debugUrl);
+      let data = (await r.json()) as any;
+      
+      if (!r.ok) {
+        console.error("[fbStorePageToken] debug failed", r.status, data);
+        res.status(400).json({ error: "Invalid token or debug failed", details: data });
+        return;
+      }
+
+      const debugData = (data?.data ?? {}) as any;
+      const isValid = !!debugData.is_valid;
+      const expiresAtSec = Number(debugData.expires_at || 0) || 0;
+      const tokenPageId = String(debugData.profile_id || pageId || "");
+
+      if (!isValid) {
+        res.status(400).json({ error: "Token is invalid", debugData });
+        return;
+      }
+
+      // 2) Get page info if we have a page ID
+      let pageInfo = {};
+      if (tokenPageId) {
+        const pageUrl = new URL(`https://graph.facebook.com/v21.0/${tokenPageId}`);
+        pageUrl.searchParams.set("fields", "id,name,category");
+        pageUrl.searchParams.set("access_token", pageAccessToken);
+
+        r = await fetch(pageUrl);
+        if (r.ok) {
+          const pageData = (await r.json()) as any;
+          pageInfo = {
+            pageName: pageData.name || "",
+            pageCategory: pageData.category || "",
+          };
+        }
+      }
+
+      // 3) Store in Firestore
+      const docRef = db
+        .collection("integrations")
+        .doc("facebook")
+        .collection("pages")
+        .doc(tokenPageId || "unknown");
+
+      await docRef.set(
+        {
+          pageId: tokenPageId,
+          source,
+          pageAccessToken,
+          isValid,
+          expiresAt: expiresAtSec
+            ? admin.firestore.Timestamp.fromDate(new Date(expiresAtSec * 1000))
+            : null,
+          checkedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          ...pageInfo,
+        },
+        { merge: true }
+      );
+
+      res.json({ 
+        ok: true, 
+        pageId: tokenPageId, 
+        isValid, 
+        expiresAt: expiresAtSec,
+        message: "Page access token stored successfully"
+      });
+    } catch (err) {
+      console.error("[fbStorePageToken] exception", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
