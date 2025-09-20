@@ -25,7 +25,7 @@ android {
         applicationId = "com.minechatapp.minechat"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion flutter.minSdkVersion        // ✅ Updated to meet Firebase's requirements
+        minSdkVersion 23       // ✅ Updated to meet Firebase's requirements
         targetSdkVersion 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName

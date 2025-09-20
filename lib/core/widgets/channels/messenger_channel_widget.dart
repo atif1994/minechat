@@ -5,7 +5,9 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
-import 'package:minechat/core/services/facebook_graph_api_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MessengerChannelWidget extends StatelessWidget {
   final ChannelController controller;
@@ -236,7 +238,7 @@ class MessengerChannelWidget extends StatelessWidget {
               child: Obx(() => ElevatedButton(
                 onPressed: controller.isConnectingFacebook.value || controller.isOAuthInProgress.value
                     ? null
-                    : () => _startFacebookConnection(context),
+                    : _connectDirectlyWithToken,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -250,7 +252,7 @@ class MessengerChannelWidget extends StatelessWidget {
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       )
-                    : Text('Connect Facebook'),
+                    : Text('🚀 Connect with Stored Token'),
               )),
             ),
           ],
@@ -270,7 +272,7 @@ class MessengerChannelWidget extends StatelessWidget {
               SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Quick Connect: Use the provided token to instantly connect and view all your Facebook Messenger chats',
+                  'One-Click Connect: Click the green button above to instantly connect your Facebook page and view all Messenger conversations',
                   style: TextStyle(
                     color: Colors.green[800],
                     fontSize: 13,
@@ -313,7 +315,7 @@ class MessengerChannelWidget extends StatelessWidget {
         ),
         AppSpacing.vertical(context, 0.01),
         
-        // Direct connection button with provided token
+        // Direct connection button with deployed token
         SizedBox(
           width: double.infinity,
           child: Obx(() => ElevatedButton.icon(
@@ -338,7 +340,7 @@ class MessengerChannelWidget extends StatelessWidget {
             label: (controller.isConnectingFacebook.value || controller.isOAuthInProgress.value)
                 ? Text('Connecting...', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600))
                 : Text(
-                    '🚀 Connect Directly with Token & Go to Chat',
+                    '🚀 Connect Facebook & View Messages',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
           )),
@@ -513,79 +515,9 @@ class MessengerChannelWidget extends StatelessWidget {
   }
 
   void _startFacebookConnection(BuildContext context) async {
-    try {
-      // Show connection dialog
-      Get.dialog(
-        AlertDialog(
-          title: Text('Connect Facebook Business Chat'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'To connect your Facebook Business Chat:',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
-              SizedBox(height: 12),
-              Text('1. Make sure you\'re logged into Facebook'),
-              Text('2. Click "Start Connection" below'),
-              Text('3. Complete Facebook authentication'),
-              Text('4. Select your business page'),
-              Text('5. All your Facebook chats will appear in the chat screen'),
-              SizedBox(height: 12),
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.green[50],
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.green[200]!),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.check_circle, color: Colors.green[700], size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'No tokens needed - server integration is ready!',
-                        style: TextStyle(
-                          color: Colors.green[700],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Get.back();
-                _initiateFacebookOAuth();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
-              child: Text('Start Connection'),
-            ),
-          ],
-        ),
-      );
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to show connection dialog: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
+    // OAuth flow removed - now using stored token directly
+    print('🚀 Connecting with stored token...');
+    _connectDirectlyWithToken();
   }
 
   void _initiateFacebookOAuth() async {
@@ -789,42 +721,17 @@ class MessengerChannelWidget extends StatelessWidget {
     }
   }
 
-  /// Direct connection method using the provided token
+  /// Connect using Firebase Functions (secure token management)
   void _connectDirectlyWithToken() async {
     try {
-      // Use the new access token directly
-      final accessToken = 'EAAU0kNg5hEMBPTfyfu1IyQTlMkfTrsF36p3Ipy0oRAo3MfeZAxVVDZA9ZC4ZB874XWxtQxBoPRNA8aJveBJWZBn7YqeQbAvsoHer25WGT0eKqQKTWaW82NvhRCZAZA29fPKw8pU8bUKW9VGlnQBGpGIFkrYIZCtlvweUXS2yGFvlDmFsgDUPfs79r8Cklc2wBLNMtVfk7rEZAq28JgEidZCEIcpTS4iaRZB6JrqiKZAu3N0ZBuA0KII59FykB3Op2JwZDZD';
+      print('🚀 Connecting via Firebase Functions...');
       
-      print('🚀 Connecting directly with NEW access token...');
+      // Call Firebase Functions to get the stored token and connect
+      final result = await _connectViaFirebaseFunctions();
       
-      // First, get the user's pages to find the first available page
-      final pagesResult = await FacebookGraphApiService.getUserPagesWithToken(accessToken);
-      if (!pagesResult['success']) {
-        throw Exception('Failed to fetch pages: ${pagesResult['error']}');
-      }
-      
-      final pages = pagesResult['data']['data'] as List;
-      if (pages.isEmpty) {
-        throw Exception('No Facebook pages found for this token');
-      }
-      
-      // Use the first available page
-      final firstPage = pages.first;
-      final pageId = firstPage['id'];
-      final pageName = firstPage['name'];
-      
-      print('✅ Found page: $pageName (ID: $pageId)');
-      
-      // Set the page ID in the controller
-      controller.facebookPageIdCtrl.text = pageId;
-      
-      // Connect using the token
-      await controller.connectWithToken(accessToken);
-      
-      // If successful, refresh chats and navigate
-      if (controller.isFacebookConnected.value) {
-        final chatController = Get.find<ChatController>();
-        await chatController.refreshFacebookChats();
+      if (result['success']) {
+        final pageId = result['pageId'];
+        final pageName = result['pageName'] ?? 'Facebook Page';
         
         Get.snackbar(
           '🎉 Connected Successfully!',
@@ -836,17 +743,57 @@ class MessengerChannelWidget extends StatelessWidget {
         
         // Navigate to chat screen to show all loaded chats
         Get.toNamed('/chat');
+      } else {
+        throw Exception(result['error'] ?? 'Connection failed');
       }
       
     } catch (e) {
-      print('❌ Direct connection failed: $e');
+      print('❌ Firebase Functions connection failed: $e');
       Get.snackbar(
         'Connection Failed',
-        'Failed to connect: $e',
+        'Failed to connect via Firebase Functions: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: Duration(seconds: 5),
       );
+    }
+  }
+
+  /// Connect via Firebase Functions (secure approach)
+  Future<Map<String, dynamic>> _connectViaFirebaseFunctions() async {
+    try {
+      // Call the Firebase Function to use the stored token
+      final response = await http.post(
+        Uri.parse('https://fbconnectwithstoredtoken-pk4veizsnq-uc.a.run.app'),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'action': 'connect_and_load_chats',
+          'userId': FirebaseAuth.instance.currentUser?.uid ?? '',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'success': true,
+          'pageId': data['pageId'],
+          'pageName': data['pageName'],
+          'message': data['message'],
+        };
+      } else {
+        final errorData = jsonDecode(response.body);
+        return {
+          'success': false,
+          'error': errorData['error'] ?? 'Unknown error',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'error': 'Network error: $e',
+      };
     }
   }
 }

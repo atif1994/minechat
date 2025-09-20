@@ -529,7 +529,108 @@ export const fbSendMessage = onRequest(
 );
 
 /**
- * Daily check & rotate page tokens (if invalid/expiring)
+ * Hourly check & refresh tokens (if expiring in next 2 hours)
+ */
+export const fbRefreshLongLivedTokens = onSchedule(
+  {
+    region: "us-central1",
+    schedule: "every 1 hours",
+    timeZone: "UTC",
+    secrets: [FB_APP_ID, FB_APP_SECRET],
+  },
+  async () => {
+    try {
+      console.log("🔄 Starting hourly Facebook token refresh...");
+      
+      // Check user tokens
+      const userTokenRef = db.collection("facebook_tokens").doc("user_token");
+      const userTokenDoc = await userTokenRef.get();
+      
+      if (userTokenDoc.exists) {
+        const userTokenData = userTokenDoc.data() as any;
+        const longLivedToken = userTokenData.longLivedUserToken;
+        const expiresAt = userTokenData.expiresAt?.toDate();
+        
+        // Check if token expires in next 2 hours
+        if (expiresAt && expiresAt.getTime() - Date.now() < 2 * 3600 * 1000) {
+          console.log("⚠️ Long-lived user token expires soon, attempting refresh...");
+          
+          try {
+            // Try to refresh the long-lived token
+            const refreshUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
+            refreshUrl.searchParams.set("grant_type", "fb_exchange_token");
+            refreshUrl.searchParams.set("client_id", FB_APP_ID.value());
+            refreshUrl.searchParams.set("client_secret", FB_APP_SECRET.value());
+            refreshUrl.searchParams.set("fb_exchange_token", longLivedToken);
+
+            const refreshResponse = await fetch(refreshUrl);
+            const refreshData = (await refreshResponse.json()) as any;
+            
+            if (refreshResponse.ok && refreshData.access_token) {
+              // Update with new token
+              await userTokenRef.set({
+                longLivedUserToken: refreshData.access_token,
+                expiresAt: refreshData.expires_in ? 
+                  admin.firestore.Timestamp.fromDate(new Date(Date.now() + refreshData.expires_in * 1000)) : 
+                  null,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              });
+              
+              console.log("✅ Long-lived user token refreshed successfully");
+            } else {
+              console.log("❌ Failed to refresh long-lived token:", refreshData);
+            }
+          } catch (err) {
+            console.error("❌ Error refreshing long-lived token:", err);
+          }
+        } else {
+          console.log("✅ Long-lived user token is still valid");
+        }
+      }
+
+      // Check page tokens (these should never expire, but let's verify)
+      const pagesCol = db.collection("integrations").doc("facebook").collection("pages");
+      const pagesSnapshot = await pagesCol.get();
+      const appAccessToken = `${FB_APP_ID.value()}|${FB_APP_SECRET.value()}`;
+
+      for (const doc of pagesSnapshot.docs) {
+        try {
+          const pageId = doc.id;
+          const pageData = doc.data();
+          const pageToken = pageData.pageAccessToken;
+
+          // Debug the page token
+          const debugUrl = new URL("https://graph.facebook.com/v21.0/debug_token");
+          debugUrl.searchParams.set("input_token", pageToken);
+          debugUrl.searchParams.set("access_token", appAccessToken);
+
+          const debugResponse = await fetch(debugUrl);
+          const debugData = (await debugResponse.json()) as any;
+          const debugInfo = (debugData?.data ?? {}) as any;
+          const isValid = !!debugInfo.is_valid;
+
+          await pagesCol.doc(pageId).set({
+            isValid,
+            checkedAt: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+
+          if (!isValid) {
+            console.log(`⚠️ Page token for ${pageId} is invalid`);
+          }
+        } catch (err) {
+          console.error(`❌ Error checking page token ${doc.id}:`, err);
+        }
+      }
+
+      console.log("✅ Hourly Facebook token refresh completed");
+    } catch (err) {
+      console.error("❌ Error in daily token refresh:", err);
+    }
+  }
+);
+
+/**
+ * Daily check & rotate page tokens (if invalid/expiring) - Legacy function
  */
 export const fbRotatePageToken = onSchedule(
   {
@@ -766,6 +867,110 @@ export const fbGetPagesWithTokensFromUser = onRequest(
 );
 
 /**
+ * POST /fbExchangeForLongLivedToken
+ * Body: { shortLivedToken }
+ * Exchanges short-lived token for long-lived token (60 days)
+ */
+export const fbExchangeForLongLivedToken = onRequest(
+  { region: "us-central1", cors: true, secrets: [FB_APP_ID, FB_APP_SECRET] },
+  async (req, res) => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method Not Allowed" });
+        return;
+      }
+      
+      const shortLivedToken = String(req.body?.shortLivedToken || "").trim();
+      if (!shortLivedToken) {
+        res.status(400).json({ error: "Missing shortLivedToken" });
+        return;
+      }
+
+      // Exchange short-lived token for long-lived token
+      const exchangeUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
+      exchangeUrl.searchParams.set("grant_type", "fb_exchange_token");
+      exchangeUrl.searchParams.set("client_id", FB_APP_ID.value());
+      exchangeUrl.searchParams.set("client_secret", FB_APP_SECRET.value());
+      exchangeUrl.searchParams.set("fb_exchange_token", shortLivedToken);
+
+      const exchangeResponse = await fetch(exchangeUrl);
+      const exchangeData = (await exchangeResponse.json()) as any;
+      
+      if (!exchangeResponse.ok) {
+        console.error("[fbExchangeForLongLivedToken] exchange failed", exchangeResponse.status, exchangeData);
+        res.status(400).json({ error: "Token exchange failed", details: exchangeData });
+        return;
+      }
+
+      const longLivedToken = exchangeData.access_token;
+      const expiresIn = exchangeData.expires_in; // seconds
+
+      // Get user's pages with the long-lived token
+      const pagesUrl = new URL("https://graph.facebook.com/v21.0/me/accounts");
+      pagesUrl.searchParams.set("fields", "id,name,access_token,category");
+      pagesUrl.searchParams.set("access_token", longLivedToken);
+
+      const pagesResponse = await fetch(pagesUrl);
+      const pagesData = (await pagesResponse.json()) as any;
+      
+      if (!pagesResponse.ok) {
+        console.error("[fbExchangeForLongLivedToken] pages failed", pagesResponse.status, pagesData);
+        res.status(400).json({ error: "Failed to fetch pages", details: pagesData });
+        return;
+      }
+
+      const pages = pagesData.data || [];
+      if (pages.length === 0) {
+        res.status(400).json({ error: "No Facebook pages found" });
+        return;
+      }
+
+      // Store the long-lived user token and page tokens
+      const userTokenRef = db.collection("facebook_tokens").doc("user_token");
+      await userTokenRef.set({
+        longLivedUserToken: longLivedToken,
+        expiresAt: expiresIn ? admin.firestore.Timestamp.fromDate(new Date(Date.now() + expiresIn * 1000)) : null,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      // Store each page token
+      for (const page of pages) {
+        const pageRef = db
+          .collection("integrations")
+          .doc("facebook")
+          .collection("pages")
+          .doc(page.id);
+        
+        await pageRef.set({
+          pageId: page.id,
+          pageName: page.name,
+          pageCategory: page.category || "",
+          pageAccessToken: page.access_token, // Never expires!
+          userToken: longLivedToken,
+          source: "long_lived_exchange",
+          isValid: true,
+          expiresAt: null, // Page tokens never expire
+          checkedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+
+      res.json({
+        ok: true,
+        message: "Successfully exchanged for long-lived token and stored page tokens",
+        pagesCount: pages.length,
+        pages: pages.map((p: any) => ({ id: p.id, name: p.name })),
+        userTokenExpiresIn: expiresIn,
+      });
+
+    } catch (err) {
+      console.error("[fbExchangeForLongLivedToken] exception", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
  * POST /fbStorePageToken
  * Body: { pageAccessToken, pageId?, source? }
  * Stores a Facebook page access token in Firestore with validation
@@ -861,6 +1066,210 @@ export const fbStorePageToken = onRequest(
       });
     } catch (err) {
       console.error("[fbStorePageToken] exception", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
+ * POST /fbConnectWithStoredToken
+ * Body: { action, userId }
+ * Uses stored Facebook token to connect and load chats securely
+ */
+export const fbConnectWithStoredToken = onRequest(
+  { region: "us-central1", cors: true },
+  async (req, res) => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method Not Allowed" });
+        return;
+      }
+      
+      const action = String(req.body?.action || "").trim();
+      const userId = String(req.body?.userId || "").trim();
+      
+      if (!action || !userId) {
+        res.status(400).json({ error: "Missing action or userId" });
+        return;
+      }
+
+      if (action !== "connect_and_load_chats") {
+        res.status(400).json({ error: "Invalid action" });
+        return;
+      }
+
+      // Get the stored page access token from Firestore
+      const pagesCollection = db
+        .collection("integrations")
+        .doc("facebook")
+        .collection("pages");
+
+      const pagesSnapshot = await pagesCollection.get();
+      
+      if (pagesSnapshot.empty) {
+        res.status(404).json({ error: "No Facebook page tokens found" });
+        return;
+      }
+
+      // Use the first available page token
+      const firstPageDoc = pagesSnapshot.docs[0];
+      const pageData = firstPageDoc.data();
+      
+      const pageId = pageData.pageId;
+      const pageAccessToken = pageData.pageAccessToken;
+      const pageName = pageData.pageName || "Facebook Page";
+      
+      if (!pageAccessToken) {
+        res.status(400).json({ error: "No valid page access token found" });
+        return;
+      }
+
+      // Update user's channel settings to mark Facebook as connected
+      const userChannelSettings = db.collection("channel_settings").doc(userId);
+      await userChannelSettings.set({
+        isFacebookConnected: true,
+        facebookPageId: pageId,
+        facebookPageName: pageName,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      // Get conversations using the stored token with more detailed fields
+      const conversationsUrl = new URL(`https://graph.facebook.com/v21.0/${pageId}/conversations`);
+      conversationsUrl.searchParams.set("fields", "id,updated_time,message_count,unread_count,participants,can_reply");
+      conversationsUrl.searchParams.set("access_token", pageAccessToken);
+
+      const conversationsResponse = await fetch(conversationsUrl);
+      
+      if (!conversationsResponse.ok) {
+        console.error("[fbConnectWithStoredToken] conversations failed", conversationsResponse.status);
+        res.status(400).json({ error: "Failed to fetch conversations" });
+        return;
+      }
+
+      const conversationsData = (await conversationsResponse.json()) as any;
+      const conversations = conversationsData.data || [];
+
+      // Process conversations to get real user data (optimized with parallel processing)
+      const enhancedConversations = [];
+      console.log(`🚀 Processing ${conversations.length} conversations in parallel...`);
+      
+      // Process conversations in parallel with timeout
+      const conversationPromises = conversations.map(async (conv: any) => {
+        try {
+          console.log(`📞 Processing conversation: ${conv.id}`);
+          
+          // Get user profile information
+          let userProfile = null;
+          let lastMessage = null;
+          
+          if (conv.participants && conv.participants.data && conv.participants.data.length > 0) {
+            const participant = conv.participants.data[0];
+            const userId = participant.id;
+            
+            // Parallel fetch for profile and messages
+            const [profileResult, messageResult] = await Promise.allSettled([
+              // Get user profile with timeout
+              fetch(`https://graph.facebook.com/v21.0/${userId}?fields=id,name,picture&access_token=${pageAccessToken}`, {
+                signal: AbortSignal.timeout(5000) // 5 second timeout
+              }),
+              // Get last message with timeout
+              fetch(`https://graph.facebook.com/v21.0/${conv.id}/messages?fields=id,message,from,created_time&limit=1&access_token=${pageAccessToken}`, {
+                signal: AbortSignal.timeout(5000) // 5 second timeout
+              })
+            ]);
+            
+            // Process profile result
+            if (profileResult.status === 'fulfilled' && profileResult.value.ok) {
+              try {
+                userProfile = (await profileResult.value.json()) as any;
+                console.log(`✅ Got profile for ${userId}: ${userProfile.name}`);
+              } catch (e) {
+                console.log(`⚠️ Could not parse profile for ${userId}: ${e}`);
+              }
+            } else {
+              console.log(`⚠️ Could not get profile for ${userId}: ${profileResult.status}`);
+            }
+            
+            // Process message result
+            if (messageResult.status === 'fulfilled' && messageResult.value.ok) {
+              try {
+                const messagesData = (await messageResult.value.json()) as any;
+                if (messagesData.data && messagesData.data.length > 0) {
+                  lastMessage = messagesData.data[0];
+                  console.log(`✅ Got last message for ${conv.id}`);
+                }
+              } catch (e) {
+                console.log(`⚠️ Could not parse messages for ${conv.id}: ${e}`);
+              }
+            } else {
+              console.log(`⚠️ Could not get messages for ${conv.id}: ${messageResult.status}`);
+            }
+          }
+          
+          return {
+            id: `fb_${conv.id}`,
+            conversationId: conv.id,
+            pageId: pageId,
+            lastUpdate: conv.updated_time,
+            messageCount: conv.message_count || 0,
+            unreadCount: conv.unread_count || 0,
+            userName: userProfile?.name || `Facebook User ${conv.id}`,
+            userProfilePicture: userProfile?.picture?.data?.url || null,
+            lastMessage: lastMessage?.message || "No messages yet",
+            lastMessageTime: lastMessage?.created_time || conv.updated_time,
+            canReply: conv.can_reply || false,
+          };
+          
+        } catch (e) {
+          console.error(`❌ Error processing conversation ${conv.id}: ${e}`);
+          // Fallback to basic data
+          return {
+            id: `fb_${conv.id}`,
+            conversationId: conv.id,
+            pageId: pageId,
+            lastUpdate: conv.updated_time,
+            messageCount: conv.message_count || 0,
+            unreadCount: conv.unread_count || 0,
+            userName: `Facebook User ${conv.id}`,
+            userProfilePicture: null,
+            lastMessage: "No messages yet",
+            lastMessageTime: conv.updated_time,
+            canReply: false,
+          };
+        }
+      });
+      
+      // Wait for all conversations to be processed
+      const results = await Promise.allSettled(conversationPromises);
+      
+      // Collect successful results
+      for (const result of results) {
+        if (result.status === 'fulfilled') {
+          enhancedConversations.push(result.value);
+        }
+      }
+      
+      console.log(`✅ Successfully processed ${enhancedConversations.length}/${conversations.length} conversations`);
+
+      // Store enhanced conversations in user's chat data
+      const userChatsRef = db.collection("user_chats").doc(userId);
+      const chatData = {
+        facebookChats: enhancedConversations,
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      await userChatsRef.set(chatData, { merge: true });
+
+      res.json({
+        ok: true,
+        pageId: pageId,
+        pageName: pageName,
+        conversationsCount: conversations.length,
+        message: "Successfully connected and loaded Facebook chats"
+      });
+
+    } catch (err) {
+      console.error("[fbConnectWithStoredToken] exception", err);
       res.status(500).json({ error: "Internal Server Error" });
     }
   }

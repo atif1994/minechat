@@ -218,7 +218,83 @@ class ChatController extends GetxController {
       final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
 
       if (pageAccessToken == null) {
-        print('⚠️ No page access token found - cannot load real Facebook chats');
+        print('⚠️ No page access token found - trying to load from stored data');
+        
+        // Try to load Facebook chats from stored data (Firebase Functions)
+        try {
+          final userChatsDoc = await _firestore
+              .collection('user_chats')
+              .doc(userId)
+              .get();
+
+          if (userChatsDoc.exists) {
+            final chatData = userChatsDoc.data();
+            final facebookChatsData = chatData?['facebookChats'] as List<dynamic>?;
+
+            if (facebookChatsData != null && facebookChatsData.isNotEmpty) {
+              print('✅ Found ${facebookChatsData.length} stored Facebook chats');
+              
+              // Convert stored Facebook chats to app format
+              final facebookChats = <Map<String, dynamic>>[];
+              
+              for (final chatData in facebookChatsData) {
+                final chat = chatData as Map<String, dynamic>;
+                
+                // Use real user data if available
+                final userName = chat['userName'] ?? 'Facebook User ${chat['conversationId'] ?? 'Unknown'}';
+                final userProfilePicture = chat['userProfilePicture'] ?? 'https://dummyimage.com/100x100/cccccc/666666&text=FB';
+                final lastMessage = chat['lastMessage'] ?? 'No messages yet';
+                final lastMessageTime = chat['lastMessageTime'] ?? chat['lastUpdate'];
+                
+                // Check if we have real data vs fallback data
+                final hasRealName = userName.startsWith('Facebook User') == false;
+                final hasRealProfilePicture = userProfilePicture.startsWith('https://dummyimage.com') == false;
+                final hasRealMessage = lastMessage != 'No messages yet';
+                
+                print('📊 Chat data quality: $userName - Real name: $hasRealName, Real picture: $hasRealProfilePicture, Real message: $hasRealMessage');
+                
+                final appChat = {
+                  'id': chat['id'] ?? 'unknown',
+                  'contactName': userName,
+                  'lastMessage': lastMessage, 
+                  'timestamp': _parseTimestamp(lastMessageTime),
+                  'unreadCount': chat['unreadCount'] ?? 0,
+                  'profileImageUrl': userProfilePicture,
+                  'platform': 'Facebook',
+                  'platformIcon': '💬',
+                  'conversationId': chat['conversationId'],
+                  'pageId': chat['pageId'],
+                  'messageCount': chat['messageCount'] ?? 0,
+                  'needsLastMessage': false,
+                  'canReply': chat['canReply'] ?? false,
+                };
+                facebookChats.add(appChat);
+                
+                print('✅ Loaded real Facebook chat: $userName - "$lastMessage"');
+              }
+
+              // Update chat list - remove any existing Facebook chats first
+              final existingChats = chatList.where((chat) => !chat['id'].toString().startsWith('fb_')).toList();
+              chatList.value = [...existingChats, ...facebookChats];
+
+              print('✅ Added ${facebookChats.length} Facebook chats from stored data');
+              
+              Get.snackbar(
+                'Facebook Chats Loaded!',
+                'Successfully loaded ${facebookChats.length} Facebook conversations with real user data.',
+                backgroundColor: Colors.green,
+                colorText: Colors.white,
+                duration: Duration(seconds: 3),
+              );
+              
+              return; // Success - chats loaded from stored data
+            }
+          }
+        } catch (e) {
+          print('❌ Error loading stored Facebook chats: $e');
+        }
+        
+        print('⚠️ No stored Facebook chats found - cannot load real Facebook chats');
         print('💡 To get real Facebook chats, you need to:');
         print('   1. Go to https://developers.facebook.com/');
         print('   2. Create/select your app');
