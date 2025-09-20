@@ -35,7 +35,7 @@ class ChatController extends GetxController {
   // Filter options
   final List<String> filterOptions = [
     'Today',
-    'Yesterday', 
+    'Yesterday',
     'This Week',
     'This Month',
     'Date Range'
@@ -47,22 +47,22 @@ class ChatController extends GetxController {
   var _isRefreshing = false.obs; // Make this observable
   var _lastRefreshTime = DateTime.now().obs; // Make this observable
   var _timeSinceLastRefresh = '0s ago'.obs; // Make this observable
-  
+
   @override
   void onInit() {
     super.onInit();
     print('🔍 ChatController initialized');
-    
+
     // Load initial chats
     loadFacebookChats();
-    
+
     // Start real-time updates
     _startRealTimeUpdates();
-    
+
     // Start time update timer
     _startTimeUpdateTimer();
   }
-  
+
   @override
   void onClose() {
     // Clean up timers
@@ -70,20 +70,20 @@ class ChatController extends GetxController {
     _timeUpdateTimer?.cancel();
     super.onClose();
   }
-  
+
   /// Start real-time chat updates (disabled auto-refresh)
   void _startRealTimeUpdates() {
     print('🔄 Real-time updates disabled - no auto-refresh');
     // Auto-refresh removed for better performance
   }
-  
+
   /// Start time update timer to keep UI reactive
   void _startTimeUpdateTimer() {
     _timeUpdateTimer = Timer.periodic(Duration(seconds: 1), (timer) {
       _updateTimeSinceLastRefresh();
     });
   }
-  
+
   /// Update the time since last refresh
   void _updateTimeSinceLastRefresh() {
     final difference = DateTime.now().difference(_lastRefreshTime.value);
@@ -95,19 +95,19 @@ class ChatController extends GetxController {
       _timeSinceLastRefresh.value = '${difference.inHours}h ago';
     }
   }
-  
+
   /// Silent refresh removed for better performance
-  
+
   /// Manual refresh with loading indicator
   Future<void> refreshChats() async {
     if (_isRefreshing.value) return;
-    
+
     _isRefreshing.value = true;
     try {
       print('🔄 Manual refresh started...');
       await loadFacebookChats();
       _lastRefreshTime.value = DateTime.now();
-      
+
       // Show success message
       Get.snackbar(
         'Chats Updated',
@@ -117,12 +117,12 @@ class ChatController extends GetxController {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-      
+
       print('✅ Manual refresh completed');
-      
+
     } catch (e) {
       print('❌ Manual refresh failed: $e');
-      
+
       // Show error message
       Get.snackbar(
         'Update Failed',
@@ -136,19 +136,19 @@ class ChatController extends GetxController {
       _isRefreshing.value = false;
     }
   }
-  
+
   /// Check for new messages and update unread counts
   /// Auto message checking removed for better performance
   Future<void> checkForNewMessages() async {
     // Method disabled - no auto-checking
   }
-  
+
   /// Get refresh status
   bool get isRefreshing => _isRefreshing.value;
-  
+
   /// Get time since last refresh
   String get timeSinceLastRefresh => _timeSinceLastRefresh.value;
-  
+
   /// Get time since last refresh as observable
   RxString get timeSinceLastRefreshObs => _timeSinceLastRefresh;
 
@@ -168,15 +168,15 @@ class ChatController extends GetxController {
 
       // Load Facebook Messenger chats (REAL DATA ONLY)
       await loadFacebookChats();
-      
+
       // Load other channel chats (REAL DATA ONLY)
       await loadOtherChannelChats();
 
       // Apply current filter
       applyFilter();
-      
+
       print('✅ Chat loading completed - showing only real data');
-      
+
     } catch (e) {
       print('❌ Error loading chats: $e');
       Get.snackbar(
@@ -195,7 +195,7 @@ class ChatController extends GetxController {
     try {
       print('📥 Loading Facebook chats...');
       final userId = getCurrentUserId();
-      
+
       // Get user's Facebook page settings
       final userDoc = await _firestore
           .collection('channel_settings')
@@ -213,98 +213,98 @@ class ChatController extends GetxController {
         return;
       }
 
-             // Get the channel controller to access page access token
-       final channelController = Get.find<ChannelController>();
-       final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
-       
-       if (pageAccessToken == null) {
-         print('⚠️ No page access token found - cannot load real Facebook chats');
-         print('💡 To get real Facebook chats, you need to:');
-         print('   1. Go to https://developers.facebook.com/');
-         print('   2. Create/select your app');
-         print('   3. Go to Tools > Graph API Explorer');
-         print('   4. Generate Access Token with permissions: pages_show_list, pages_messaging');
-         print('   5. Reconnect your Facebook page with the access token');
-         
-         Get.snackbar(
-           'Facebook Connected (Basic Mode)',
-           'To see real chats, reconnect with Facebook Access Token.\nTap for instructions.',
-           backgroundColor: Colors.orange,
-           colorText: Colors.white,
-           duration: Duration(seconds: 6),
-           onTap: (_) {
-             Get.dialog(
-               AlertDialog(
-                 title: Text('How to Get Real Facebook Chats'),
-                 content: Column(
-                   mainAxisSize: MainAxisSize.min,
-                   crossAxisAlignment: CrossAxisAlignment.start,
-                   children: [
-                     Text('1. Go to Facebook Developers Console'),
-                     Text('2. Create/select your app'),
-                     Text('3. Go to Tools > Graph API Explorer'),
-                     Text('4. Generate Access Token'),
-                     Text('5. Add permissions: pages_show_list, pages_messaging'),
-                     Text('6. Reconnect your page with the token'),
-                   ],
-                 ),
-                 actions: [
-                   TextButton(
-                     onPressed: () => Get.back(),
-                     child: Text('Got it'),
-                   ),
-                 ],
-               ),
-             );
-           },
-         );
-         return; // Don't load mock data if no access token
-       }
-       
-        // Skip permissions check for now - focus on loading conversations
-        print('🔍 Skipping permissions check to focus on conversations...');
-        
-        // Test what we can access
-        print('🧪 Testing basic page access...');
-        try {
-          final testResult = await FacebookGraphApiService.verifyPageAccess(facebookPageId, pageAccessToken);
-          print('🧪 Page access test result: $testResult');
-        } catch (e) {
-          print('⚠️ Page access test failed: $e');
-        }
+      // Get the channel controller to access page access token
+      final channelController = Get.find<ChannelController>();
+      final pageAccessToken = await channelController.getPageAccessToken(facebookPageId);
 
-        // Test if we can access user profiles
-        print('🧪 Testing user profile access...');
-        try {
-          // Try to get a test user profile (this will fail if we don't have permissions)
-          final testUserResult = await FacebookGraphApiService.getUserProfile('123456789', pageAccessToken);
-          print('🧪 User profile test result: $testUserResult');
-        } catch (e) {
-          print('⚠️ User profile test failed: $e');
-        }
+      if (pageAccessToken == null) {
+        print('⚠️ No page access token found - cannot load real Facebook chats');
+        print('💡 To get real Facebook chats, you need to:');
+        print('   1. Go to https://developers.facebook.com/');
+        print('   2. Create/select your app');
+        print('   3. Go to Tools > Graph API Explorer');
+        print('   4. Generate Access Token with permissions: pages_show_list, pages_messaging');
+        print('   5. Reconnect your Facebook page with the access token');
 
-        print('🔍 Fetching real Facebook conversations for page: $facebookPageId');
-
-        // Get conversations from Facebook Graph API using the page access token
-        final conversationsResult = await FacebookGraphApiService.getPageConversationsWithToken(
-          facebookPageId,
-          pageAccessToken,
+        Get.snackbar(
+          'Facebook Connected (Basic Mode)',
+          'To see real chats, reconnect with Facebook Access Token.\nTap for instructions.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: Duration(seconds: 6),
+          onTap: (_) {
+            Get.dialog(
+              AlertDialog(
+                title: Text('How to Get Real Facebook Chats'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('1. Go to Facebook Developers Console'),
+                    Text('2. Create/select your app'),
+                    Text('3. Go to Tools > Graph API Explorer'),
+                    Text('4. Generate Access Token'),
+                    Text('5. Add permissions: pages_show_list, pages_messaging'),
+                    Text('6. Reconnect your page with the token'),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Get.back(),
+                    child: Text('Got it'),
+                  ),
+                ],
+              ),
+            );
+          },
         );
+        return; // Don't load mock data if no access token
+      }
 
-        print('📋 Conversations result: $conversationsResult');
-        print('📋 Success: ${conversationsResult['success']}');
-        print('📋 Data type: ${conversationsResult['data']?.runtimeType}');
-        print('📋 Data value: ${conversationsResult['data']}');
-        print('📋 Raw response: ${conversationsResult}');
+      // Skip permissions check for now - focus on loading conversations
+      print('🔍 Skipping permissions check to focus on conversations...');
 
-        if (!conversationsResult['success']) {
-          throw Exception('Failed to load conversations: ${conversationsResult['error']}');
-        }
+      // Test what we can access
+      print('🧪 Testing basic page access...');
+      try {
+        final testResult = await FacebookGraphApiService.verifyPageAccess(facebookPageId, pageAccessToken);
+        print('🧪 Page access test result: $testResult');
+      } catch (e) {
+        print('⚠️ Page access test failed: $e');
+      }
+
+      // Test if we can access user profiles
+      print('🧪 Testing user profile access...');
+      try {
+        // Try to get a test user profile (this will fail if we don't have permissions)
+        final testUserResult = await FacebookGraphApiService.getUserProfile('123456789', pageAccessToken);
+        print('🧪 User profile test result: $testUserResult');
+      } catch (e) {
+        print('⚠️ User profile test failed: $e');
+      }
+
+      print('🔍 Fetching real Facebook conversations for page: $facebookPageId');
+
+      // Get conversations from Facebook Graph API using the page access token
+      final conversationsResult = await FacebookGraphApiService.getPageConversationsWithToken(
+        facebookPageId,
+        pageAccessToken,
+      );
+
+      print('📋 Conversations result: $conversationsResult');
+      print('📋 Success: ${conversationsResult['success']}');
+      print('📋 Data type: ${conversationsResult['data']?.runtimeType}');
+      print('📋 Data value: ${conversationsResult['data']}');
+      print('📋 Raw response: ${conversationsResult}');
+
+      if (!conversationsResult['success']) {
+        throw Exception('Failed to load conversations: ${conversationsResult['error']}');
+      }
 
       // Safely handle the data field
       final data = conversationsResult['data'];
       List conversations;
-      
+
       if (data is List) {
         conversations = data;
       } else if (data is int) {
@@ -315,7 +315,7 @@ class ChatController extends GetxController {
         conversations = [];
       }
       print('✅ Loaded ${conversations.length} Facebook conversations');
-      
+
       // Debug: Print the structure of the first conversation if available
       if (conversations.isNotEmpty) {
         print('📋 Sample conversation structure: ${conversations.first}');
@@ -336,17 +336,17 @@ class ChatController extends GetxController {
 
       // Convert Facebook conversations to app format
       final facebookChats = <Map<String, dynamic>>[];
-      
+
       print('🔍 Processing ${conversations.length} conversations...');
       print('📋 First conversation structure: ${conversations.isNotEmpty ? conversations.first : 'No conversations'}');
-      
+
       for (final conversation in conversations) {
         try {
           print('🔍 Processing conversation: ${conversation['id']}');
           print('📋 Conversation data: $conversation');
           print('🔗 Link: ${conversation['link']}');
           print('🕒 Updated time: ${conversation['updated_time']}');
-          
+
           // Debug: Check if link exists and its structure
           if (conversation['link'] != null) {
             final link = conversation['link'].toString();
@@ -357,55 +357,55 @@ class ChatController extends GetxController {
           } else {
             print('⚠️ No link found in conversation');
           }
-          
+
           // Extract user ID from the participants array (Facebook API returns participants instead of link)
           String userId = 'unknown';
           String contactName = 'Unknown User'; // Initialize contact name
-          
+
           // NEW: Try to get real participant information from the conversation
           try {
             print('🔍 Getting real participant information for conversation: ${conversation['id']}');
             print('🔑 Using page access token: ${pageAccessToken.substring(0, 10)}...');
-            
+
             final participantsResult = await FacebookGraphApiService.getConversationParticipants(
               conversation['id'],
               pageAccessToken,
             );
-            
+
             print('📋 Participants API result: $participantsResult');
             print('📋 Participants success: ${participantsResult['success']}');
             print('📋 Participants data: ${participantsResult['data']}');
-            
+
             if (participantsResult['success'] && participantsResult['data'] != null) {
               final convData = participantsResult['data'];
               print('📋 Conversation data from participants API: $convData');
               print('📋 Available keys: ${convData.keys.toList()}');
-              
+
               // Check if we have participants
               if (convData['participants'] != null && convData['participants'] is Map<String, dynamic>) {
                 final participants = convData['participants'];
                 print('👥 Real participants from API: $participants');
-                
+
                 if (participants['data'] != null && participants['data'] is List) {
                   final participantsList = participants['data'] as List;
                   print('👥 Participants list: $participantsList');
                   print('👥 Participants length: ${participantsList.length}');
-                  
+
                   if (participantsList.length >= 2) {
                     // First participant is the user, second is the page
                     final userParticipant = participantsList[0];
                     print('👤 User participant: $userParticipant');
-                    
+
                     if (userParticipant is Map<String, dynamic>) {
                       final userParticipantId = userParticipant['id'];
                       final userParticipantName = userParticipant['name'];
-                      
+
                       print('👤 Real user participant ID: $userParticipantId, Name: $userParticipantName');
                       print('👤 ID type: ${userParticipantId.runtimeType}');
                       print('👤 Name type: ${userParticipantName.runtimeType}');
-                      
+
                       // Check if this is a valid user ID (numeric and not the page ID)
-                      if (userParticipantId != null && 
+                      if (userParticipantId != null &&
                           userParticipantId.toString() != facebookPageId &&
                           RegExp(r'^\d+$').hasMatch(userParticipantId.toString())) {
                         userId = userParticipantId.toString();
@@ -428,20 +428,20 @@ class ChatController extends GetxController {
               } else {
                 print('⚠️ No participants field or not a map: ${convData['participants']}');
               }
-              
+
               // If still no user ID, try to extract from link
               if (userId == 'unknown' && convData['link'] != null) {
                 final link = convData['link'].toString();
                 print('🔗 Trying to extract user ID from real link: $link');
-                
+
                 // Facebook link format: /{pageId}/inbox/{userId}/?section=messages
                 final linkParts = link.split('/');
                 print('🔗 Link parts: $linkParts');
-                
+
                 if (linkParts.length >= 4 && linkParts[2] == 'inbox') {
                   final potentialUserId = linkParts[3];
                   print('🔗 Potential user ID from link: $potentialUserId');
-                  
+
                   if (RegExp(r'^\d+$').hasMatch(potentialUserId) && potentialUserId != facebookPageId) {
                     userId = potentialUserId;
                     print('✅ Extracted user ID from real link: $userId');
@@ -455,7 +455,7 @@ class ChatController extends GetxController {
             print('⚠️ Error getting real participants: $e');
             print('⚠️ Error stack trace: ${StackTrace.current}');
           }
-          
+
           // Fallback: If participants didn't give us a valid user ID, try to get it from messages
           if (userId == 'unknown') {
             print('🔍 Real participants didn\'t give valid user ID, trying messages...');
@@ -466,12 +466,12 @@ class ChatController extends GetxController {
               print('✅ Got user info from messages: $contactName (ID: $userId)');
             }
           }
-          
+
           print('🔍 Final extracted user ID: $userId');
-          
+
           // Use the real participant name we already have - don't try to fetch profiles
           String profileImageUrl = '';
-          
+
           if (contactName != 'Unknown User') {
             print('✅ Using real participant name: $contactName');
             // Generate a nice avatar based on the real name
@@ -480,7 +480,7 @@ class ChatController extends GetxController {
             print('⚠️ No real name available, using fallback');
             profileImageUrl = 'https://dummyimage.com/100x100/cccccc/666666&text=UnknownUser';
           }
-          
+
           // Convert Facebook conversation to app format
           final appChat = {
             'id': 'fb_${conversation['id']}',
@@ -497,7 +497,7 @@ class ChatController extends GetxController {
             'needsLastMessage': true, // Flag to indicate we need to fetch the last message
           };
           facebookChats.add(appChat);
-          
+
           print('✅ Processed conversation: $contactName (${conversation['id']})');
         } catch (e) {
           print('❌ Error processing conversation ${conversation['id']}: $e');
@@ -507,16 +507,16 @@ class ChatController extends GetxController {
       // Update chat list - remove any existing Facebook chats first
       final existingChats = chatList.where((chat) => !chat['id'].toString().startsWith('fb_')).toList();
       chatList.value = [...existingChats, ...facebookChats];
-      
+
       print('✅ Added ${facebookChats.length} real Facebook chats to chat list');
-      
+
       // Update last messages for conversations that need them (limit to first 10 to avoid too many API calls)
       if (facebookChats.isNotEmpty) {
         await _updateLastMessages(facebookChats.take(10).toList(), pageAccessToken);
       }
-      
+
       applyFilter();
-      
+
       // Show success message
       if (facebookChats.isNotEmpty) {
         Get.snackbar(
@@ -527,7 +527,7 @@ class ChatController extends GetxController {
           duration: Duration(seconds: 3),
         );
       }
-      
+
     } catch (e) {
       print('❌ Error loading Facebook chats: $e');
       Get.snackbar(
@@ -537,7 +537,7 @@ class ChatController extends GetxController {
         colorText: Colors.white,
         duration: Duration(seconds: 5),
       );
-      
+
       // Only show mock data if explicitly requested for testing
       // _loadMockFacebookChats(); // Commented out - no more fake data!
     }
@@ -547,7 +547,7 @@ class ChatController extends GetxController {
   Future<void> _updateLastMessages(List<Map<String, dynamic>> conversations, String pageAccessToken) async {
     try {
       print('🔄 Updating last messages for ${conversations.length} conversations...');
-      
+
       for (final conversation in conversations) {
         if (conversation['needsLastMessage'] == true) {
           try {
@@ -556,37 +556,37 @@ class ChatController extends GetxController {
               conversationId,
               pageAccessToken,
             );
-            
+
             if (result['success'] && result['data'] != null) {
               final messages = result['data'] as List;
               if (messages.isNotEmpty) {
                 final message = messages.first; // Get the first (most recent) message
                 final messageText = message['message'] ?? 'No message content';
-                
+
                 // Update the conversation in the chat list
                 final chatIndex = chatList.indexWhere((chat) => chat['id'] == conversation['id']);
                 if (chatIndex != -1) {
-                  chatList[chatIndex]['lastMessage'] = messageText.length > 50 
-                      ? '${messageText.substring(0, 50)}...' 
+                  chatList[chatIndex]['lastMessage'] = messageText.length > 50
+                      ? '${messageText.substring(0, 50)}...'
                       : messageText;
                   chatList[chatIndex]['needsLastMessage'] = false;
-                  
+
                   print('✅ Updated last message for ${conversation['contactName']}: ${messageText.substring(0, messageText.length > 30 ? 30 : messageText.length)}...');
                 }
               }
             }
-            
+
             // Small delay to avoid hitting rate limits
             await Future.delayed(Duration(milliseconds: 100));
-            
+
           } catch (e) {
             print('⚠️ Failed to update last message for conversation ${conversation['conversationId']}: $e');
           }
         }
       }
-      
+
       print('✅ Last message update completed');
-      
+
     } catch (e) {
       print('❌ Error updating last messages: $e');
     }
@@ -599,7 +599,7 @@ class ChatController extends GetxController {
     // TODO: Implement other channel integrations
     // For now, only load real data - no mock data
     print('ℹ️ Other channel integrations not yet implemented - only Facebook data will be shown');
-    
+
     // You can uncomment this for testing, but it will show fake data
     // _loadMockOtherChannelChats();
   }
@@ -667,10 +667,10 @@ class ChatController extends GetxController {
         filtered = filtered.where((chat) => chat['unreadCount'] > 0).toList();
         break;
       case 'Groups':
-        // TODO: Implement groups filter
+      // TODO: Implement groups filter
         break;
       case 'Filter':
-        // TODO: Implement date filter
+      // TODO: Implement date filter
         break;
       default: // Inbox - show all
         break;
@@ -782,7 +782,7 @@ class ChatController extends GetxController {
   /// Parse timestamp from various formats
   DateTime _parseTimestamp(dynamic timestamp) {
     if (timestamp == null) return DateTime.now();
-    
+
     if (timestamp is String) {
       try {
         return DateTime.parse(timestamp);
@@ -801,24 +801,24 @@ class ChatController extends GetxController {
   Future<Map<String, dynamic>?> _getUserInfoFromMessages(String conversationId, String pageAccessToken) async {
     try {
       print('🔍 Getting user info from messages for conversation: $conversationId');
-      
+
       final messagesResult = await FacebookGraphApiService.getConversationMessagesWithToken(
         conversationId,
         pageAccessToken,
       );
-      
+
       if (messagesResult['success'] && messagesResult['data'] != null) {
         final messages = messagesResult['data'];
         if (messages is List && messages.isNotEmpty) {
           // Look for the first message from a user (not from the page)
           for (final message in messages) {
-            if (message['from'] != null && 
-                message['from']['id'] != null && 
+            if (message['from'] != null &&
+                message['from']['id'] != null &&
                 message['from']['name'] != null) {
-              
+
               final fromId = message['from']['id'].toString();
               final fromName = message['from']['name'].toString();
-              
+
               // Check if this is a real user (not the page)
               if (fromId != '313808701826338' && RegExp(r'^\d+$').hasMatch(fromId)) {
                 print('✅ Found user from message: $fromName (ID: $fromId)');
@@ -831,25 +831,25 @@ class ChatController extends GetxController {
           }
         }
       }
-      
+
       return null;
     } catch (e) {
       print('⚠️ Error getting user info from messages: $e');
       return null;
     }
   }
-  
+
   /// Test method disabled - auto-refresh removed
   Future<void> testRealTimeUpdates() async {
     print('🧪 Real-time updates disabled');
   }
-  
+
   /// Show notification for new messages
   void _showNewMessageNotification(String contactName, int messageCount) {
-    final messageText = messageCount == 1 
+    final messageText = messageCount == 1
         ? 'New message from $contactName'
         : '$messageCount new messages from $contactName';
-    
+
     Get.snackbar(
       '💬 New Message',
       messageText,

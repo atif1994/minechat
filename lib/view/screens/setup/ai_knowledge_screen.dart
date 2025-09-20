@@ -17,23 +17,43 @@ import 'faqs_screen.dart';
 
 import '../../../controller/ai_assistant_controller/ai_assistant_controller.dart';
 
-class AIKnowledgeScreen extends StatelessWidget {
+class AIKnowledgeScreen extends StatefulWidget {
   final AIAssistantController controller;
 
   const AIKnowledgeScreen({super.key, required this.controller});
 
   @override
+  State<AIKnowledgeScreen> createState() => _AIKnowledgeScreenState();
+}
+
+class _AIKnowledgeScreenState extends State<AIKnowledgeScreen> {
+  late BusinessInfoController businessInfoController;
+  late ProductsServicesController productsServicesController;
+  late FAQsController faqsController;
+  late AIKnowledgeController knowledgeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeControllers();
+  }
+
+  void _initializeControllers() {
+    businessInfoController =
+        Get.put(BusinessInfoController(), permanent: true);
+    productsServicesController =
+        Get.put(ProductsServicesController(), permanent: true);
+    faqsController = Get.put(FAQsController(), permanent: true);
+    knowledgeController = Get.put(AIKnowledgeController(), permanent: true);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
-    // Init controllers
-    final businessInfoController = Get.put(BusinessInfoController());
-    final productsServicesController = Get.put(ProductsServicesController());
-    final faqsController = Get.put(FAQsController());
-    final knowledgeController = Get.put(AIKnowledgeController());
 
     return Scaffold(
-      backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
+      backgroundColor: isDark ? const Color(0XFF0A0A0A) : const Color(0XFFF4F6FC),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -42,8 +62,7 @@ class AIKnowledgeScreen extends StatelessWidget {
           // Top Tabs
           Row(
             children: [
-              _buildTab(
-                  'Business Information', 0, knowledgeController, context),
+              _buildTab('Business Information', 0, knowledgeController, context),
               AppSpacing.horizontal(context, 0.03),
               _buildTab('Products & Services', 1, knowledgeController, context),
               AppSpacing.horizontal(context, 0.03),
@@ -57,12 +76,21 @@ class AIKnowledgeScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               return IndexedStack(
+                key: const ValueKey('ai_knowledge_indexed_stack'),
                 index: knowledgeController.selectedTabIndex.value,
                 children: [
-                  BusinessInformation(controller: businessInfoController),
+                  BusinessInformation(
+                    key: const ValueKey('business_information'),
+                    controller: businessInfoController,
+                  ),
                   ProductsServicesScreen(
-                      controller: productsServicesController),
-                  FAQsScreen(controller: faqsController),
+                    key: const ValueKey('products_services'),
+                    controller: productsServicesController,
+                  ),
+                  FAQsScreen(
+                    key: const ValueKey('faqs'),
+                    controller: faqsController,
+                  ),
                 ],
               );
             }),
@@ -73,13 +101,14 @@ class AIKnowledgeScreen extends StatelessWidget {
   }
 
   Widget _buildTab(
-    String title,
-    int index,
-    AIKnowledgeController controller,
-    context,
-  ) {
+      String title,
+      int index,
+      AIKnowledgeController controller,
+      BuildContext context,
+      ) {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
+
     return GestureDetector(
       onTap: () => controller.selectedTabIndex.value = index,
       child: Obx(() {
@@ -87,20 +116,17 @@ class AIKnowledgeScreen extends StatelessWidget {
         return Text(
           title,
           style: AppTextStyles.bodyText(context).copyWith(
-              color: isSelected
-                  ? isDark
-                      ? AppColors.white
-                      : AppColors.secondary
-                  : Colors.grey[600],
-              decoration:
-                  isSelected ? TextDecoration.underline : TextDecoration.none,
-              decorationColor: isSelected
-                  ? isDark
-                      ? AppColors.white
-                      : AppColors.secondary
-                  : Colors.transparent,
-              fontSize: AppResponsive.scaleSize(context, 13),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400),
+            color: isSelected
+                ? (isDark ? AppColors.white : AppColors.secondary)
+                : Colors.grey[600],
+            decoration:
+            isSelected ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: isSelected
+                ? (isDark ? AppColors.white : AppColors.secondary)
+                : Colors.transparent,
+            fontSize: AppResponsive.scaleSize(context, 13),
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+          ),
         );
       }),
     );

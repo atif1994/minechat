@@ -8,6 +8,7 @@ import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
+import 'package:minechat/core/widgets/chat/enhanced_message_bubble.dart';
 
 import '../../../model/data/chat_mesage_model.dart';
 
@@ -158,6 +159,14 @@ class _AITestingScreenState extends State<AITestingScreen> {
 
   Widget _buildMessageBubble(ChatMessageModel message, int index) {
     final isUser = message.type == MessageType.user;
+    final isAI = message.type == MessageType.ai;
+
+
+    return EnhancedMessageBubble(
+      message: message.message,
+      isUser: isUser,
+      isAI: isAI,
+      timestamp: _formatTime(message.timestamp),
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -235,6 +244,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
           ],
         ],
       ),
+
     );
   }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
@@ -20,22 +21,30 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-
+  // Initialize Firebase App Check
+  await FirebaseAppCheck.instance.activate(
+    androidProvider: AndroidProvider.debug,
+    appleProvider: AppleProvider.debug,
+  );
 
   await GetStorage.init();
 
   // Controllers Initialization - Use permanent to prevent disposal
+  // Initialize core controllers first
   Get.put(LoginController(), permanent: true);
-  Get.put(DashboardController(), permanent: true);
   Get.put(AuthController(), permanent: true);
-  Get.put(SubscriptionController(), permanent: true);
-  Get.put(CrmController(), permanent: true);
-  Get.put(ChannelController(), permanent: true);
-  Get.put(ChatController(), permanent: true);
   Get.put(ThemeController(), permanent: true);
   
-  // Ensure all controllers are properly initialized
-  print('✅ All controllers initialized successfully');
+  // Initialize other controllers after UI is ready
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    Get.put(DashboardController(), permanent: true);
+    Get.put(SubscriptionController(), permanent: true);
+    Get.put(CrmController(), permanent: true);
+    Get.put(ChannelController(), permanent: true);
+    Get.put(ChatController(), permanent: true);
+    
+    print('✅ All controllers initialized successfully');
+  });
 
   runApp(const MineChatApp());
 }

@@ -18,58 +18,72 @@ class ForgotPasswordScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(ForgotPasswordController());
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-            size: AppResponsive.iconSize(context, factor: 1.5),
+    return GestureDetector(
+      onTap: () {
+        // Dismiss keyboard when tapping outside
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(
+              Icons.arrow_back,
+              color: Colors.black,
+              size: AppResponsive.iconSize(context, factor: 1.5),
+            ),
+            onPressed: () {
+              // Dismiss keyboard before navigating back
+              FocusScope.of(context).unfocus();
+              Get.back();
+            },
           ),
-          onPressed: () => Get.back(),
         ),
-      ),
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: AppSpacing.all(context, factor: 2),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ForgotPasswordHeader(
-                        title: AppTexts.forgotPasswordHeaderTitle,
-                        subtitle: AppTexts.forgotPasswordHeaderSubTitle,
-                      ),
-                      AppSpacing.vertical(context, 0.03),
-                      SignupTextField(
-                        label: AppTexts.signupEmailLabel,
-                        hintText: AppTexts.dummyEmailText,
-                        prefixIcon: AppAssets.signupIconEmail,
-                        controller: controller.emailCtrl,
-                        errorText: controller.emailError,
-                        onChanged: controller.validateEmail,
-                      ),
-                      const Spacer(),
-                      Padding(
-                        padding: AppSpacing.symmetric(context, v: 0.05, h: 0),
-                        child: AppLargeButton(
-                          label: AppTexts.forgotPasswordButton,
-                          onTap: controller.submit,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                padding: AppSpacing.all(context, factor: 2),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ForgotPasswordHeader(
+                          title: AppTexts.forgotPasswordHeaderTitle,
+                          subtitle: AppTexts.forgotPasswordHeaderSubTitle,
                         ),
-                      ),
-                    ],
+                        AppSpacing.vertical(context, 0.03),
+                        SignupTextField(
+                          label: AppTexts.signupEmailLabel,
+                          hintText: AppTexts.dummyEmailText,
+                          prefixIcon: AppAssets.signupIconEmail,
+                          controller: controller.emailCtrl,
+                          errorText: controller.emailError,
+                          onChanged: controller.validateEmail,
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: AppSpacing.symmetric(context, v: 0.05, h: 0),
+                          child: AppLargeButton(
+                            label: AppTexts.forgotPasswordButton,
+                            onTap: () {
+                              // Dismiss keyboard before submitting
+                              FocusScope.of(context).unfocus();
+                              controller.submit();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
       ),
     );

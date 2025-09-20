@@ -54,25 +54,47 @@ class ProductsServicesController extends GetxController {
     try {
       isLoading.value = true;
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+      if (user == null) {
+        print("❌ No authenticated user found");
+        return;
+      }
 
+      print("🔍 Loading products for user: ${user.uid}");
+      
       final snapshot = await _firestore
           .collection('products_services')
           .where('userId', isEqualTo: user.uid)
           .get();
 
-      productsServices.value = snapshot.docs
-          .map((doc) => ProductServiceModel.fromMap({
-                'id': doc.id,
-                ...doc.data(),
-              }))
+      final loadedProducts = snapshot.docs
+          .map((doc) {
+            final data = doc.data();
+            // Ensure the document ID is properly set
+            data['id'] = doc.id;
+            final product = ProductServiceModel.fromMap(data);
+            print("📦 Loaded product: ${product.name} (ID: ${product.id})");
+            return product;
+          })
           .toList();
 
-      print(
-          "✅ Loaded ${productsServices.length} products for user: ${user.uid}");
+      // Filter out products with empty IDs to prevent errors
+      final validProducts = loadedProducts.where((p) => p.id.isNotEmpty).toList();
+      productsServices.value = validProducts;
+
+      print("✅ Loaded ${productsServices.length} valid products for user: ${user.uid}");
+      print("📦 Products list updated - triggering UI refresh");
+      
+      // Log any products with empty IDs that were filtered out
+      final emptyIdProducts = loadedProducts.where((p) => p.id.isEmpty).toList();
+      if (emptyIdProducts.isNotEmpty) {
+        print("⚠️ Filtered out ${emptyIdProducts.length} products with empty IDs");
+        for (final product in emptyIdProducts) {
+          print("⚠️ Product with empty ID: ${product.name}");
+        }
+      }
     } catch (e) {
       print('❌ Error loading products: $e');
-      Get.snackbar('Error', 'Failed to load products');
+      Get.snackbar('Error', 'Failed to load products: ${e.toString()}');
     } finally {
       isLoading.value = false;
     }
@@ -168,7 +190,7 @@ class ProductsServicesController extends GetxController {
         throw Exception("Failed to get document reference");
       }
 
-      _clearForm();
+      clearForm();
       Get.snackbar('Success', 'Product added successfully!');
       print("✅ Product added with ID: ${docRef.id}");
 
@@ -199,6 +221,13 @@ class ProductsServicesController extends GetxController {
 
   Future<void> updateProductService(String productId) async {
     if (!_validateForm()) return;
+
+    // Validate product ID
+    if (productId.isEmpty) {
+      print("❌ Cannot update product: Empty product ID");
+      Get.snackbar('Error', 'Cannot update product: Invalid product ID');
+      return;
+    }
 
     try {
       isSaving.value = true;
@@ -243,7 +272,7 @@ class ProductsServicesController extends GetxController {
         productsServices[index] = updatedProduct;
       }
 
-      _clearForm();
+      clearForm();
       isEditing.value = false;
       editingProductId.value = '';
       Get.snackbar('Success', 'Product updated successfully!');
@@ -265,8 +294,30 @@ class ProductsServicesController extends GetxController {
 
   Future<void> deleteProductService(String productId) async {
     try {
+      // Validate product ID
+      if (productId.isEmpty) {
+        print("❌ Cannot delete product: Empty product ID");
+        Get.snackbar('Error', 'Cannot delete product: Invalid product ID');
+        return;
+      }
+
       print("🗑 Deleting product: $productId");
-      await _firestore.collection('products_services').doc(productId).delete();
+      
+      // Check if product exists in Firestore first
+      final docRef = _firestore.collection('products_services').doc(productId);
+      final docSnapshot = await docRef.get();
+      
+      if (!docSnapshot.exists) {
+        print("⚠️ Product not found in Firestore, removing from local list only");
+        productsServices.removeWhere((p) => p.id == productId);
+        Get.snackbar('Success', 'Product removed from local list');
+        return;
+      }
+
+      // Delete from Firestore
+      await docRef.delete();
+      
+      // Remove from local list
       productsServices.removeWhere((p) => p.id == productId);
       Get.snackbar('Success', 'Product deleted successfully!');
       print("✅ Product deleted: $productId");
@@ -279,11 +330,18 @@ class ProductsServicesController extends GetxController {
       }
     } catch (e) {
       print('❌ Error deleting product: $e');
-      Get.snackbar('Error', 'Failed to delete product');
+      Get.snackbar('Error', 'Failed to delete product: ${e.toString()}');
     }
   }
 
   void loadForEdit(ProductServiceModel product) async {
+    // Validate product ID before proceeding
+    if (product.id.isEmpty) {
+      print("❌ Cannot edit product: Empty product ID");
+      Get.snackbar('Error', 'Cannot edit product: Invalid product ID');
+      return;
+    }
+
     nameCtrl.text = product.name;
     descriptionCtrl.text = product.description;
     priceCtrl.text = product.price;
@@ -308,6 +366,7 @@ class ProductsServicesController extends GetxController {
         }
       }
     } catch (e) {
+      print("⚠️ Error loading product images: $e");
       // fallback, no crash
       if (product.selectedImage != null && product.selectedImage!.isNotEmpty) {
         images.assignAll([product.selectedImage!]);
@@ -320,7 +379,16 @@ class ProductsServicesController extends GetxController {
         "✏️ Loaded product for edit: ${product.toMap()} | images: ${images.length}");
   }
 
-  void _clearForm() {
+  // Method to handle save/update based on editing state
+  Future<void> saveOrUpdateProduct() async {
+    if (isEditing.value) {
+      await updateProductService(editingProductId.value);
+    } else {
+      await saveAllProducts();
+    }
+  }
+
+  void clearForm() {
     nameCtrl.clear();
     descriptionCtrl.clear();
     priceCtrl.clear();
@@ -333,6 +401,12 @@ class ProductsServicesController extends GetxController {
     priceError.value = '';
 
     print("🧹 Form cleared");
+  }
+
+  // Method to manually refresh products list
+  Future<void> refreshProducts() async {
+    print("🔄 Manually refreshing products list...");
+    await loadProductsServices();
   }
 
   Future<void> saveAllProducts() async {
@@ -401,11 +475,20 @@ class ProductsServicesController extends GetxController {
         print("❌ Error verifying document: $e");
       }
 
-      // Clear the form after successful save
-      _clearForm();
+      // Add the new product to the local list immediately
+      final newProduct = product.copyWith(id: docRef.id);
+      productsServices.add(newProduct);
+      print("✅ Product added to local list: ${newProduct.name} (ID: ${newProduct.id})");
 
-      // Refresh the products list from Firestore
+      // Clear the form after successful save
+      clearForm();
+
+      // Refresh the products list from Firestore to ensure consistency
       await loadProductsServices();
+
+      // Force a UI update
+      productsServices.refresh();
+      print("🔄 Forced UI refresh after save");
 
       Get.snackbar('Success', 'Product saved successfully!');
       print("✅ Product saved to Firestore with ID: ${docRef.id}");

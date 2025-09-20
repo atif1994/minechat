@@ -38,9 +38,10 @@ class SignupTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
-    final isDark = themeController.isDarkMode;
-    final displayLabel = label ?? labelText ?? '';
+    try {
+      final themeController = Get.find<ThemeController>();
+      final isDark = themeController.isDarkMode;
+      final displayLabel = label ?? labelText ?? '';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -107,33 +108,55 @@ class SignupTextField extends StatelessWidget {
               : const SizedBox.shrink()),
       ],
     );
+    } catch (e) {
+      // Fallback UI if theme controller is not available
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if ((label ?? labelText ?? '').isNotEmpty)
+            Text(
+              label ?? labelText ?? '',
+              style: AppTextStyles.bodyText(context).copyWith(
+                fontSize: AppResponsive.scaleSize(context, 14),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          if ((label ?? labelText ?? '').isNotEmpty) 
+            AppSpacing.vertical(context, 0.005),
+          TextField(
+            controller: controller,
+            onChanged: onChanged,
+            obscureText: obscureText,
+            keyboardType: keyboardType,
+            decoration: InputDecoration(
+              hintText: hintText,
+              hintStyle: AppTextStyles.hintText(context),
+              filled: true,
+              fillColor: const Color(0xFFFAFBFD),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
+                borderSide: const BorderSide(color: Color(0XFFEBEDF0), width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
+                borderSide: const BorderSide(color: AppColors.primary, width: 2),
+              ),
+            ),
+            style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: AppResponsive.scaleSize(context, 14),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      );
+    }
   }
 
   Widget _buildPrefixIcon(String iconPath, BuildContext context, bool isDark) {
-    // Check if it's an emoji or text (not a file path)
-    if (iconPath.length == 1 || iconPath.startsWith('🌐') || iconPath.startsWith('📄') || iconPath.startsWith('🔑')) {
-      // Handle emoji or text icons
-      return Text(
-        iconPath,
-        style: TextStyle(
-          fontSize: AppResponsive.iconSize(context),
-          color: isDark ? Colors.white : Colors.black,
-        ),
-      );
-    } else {
-      // Handle SVG assets
-      try {
-        return SvgPicture.asset(
-          iconPath,
-          width: AppResponsive.iconSize(context),
-          height: AppResponsive.iconSize(context),
-          colorFilter: ColorFilter.mode(
-            isDark ? Colors.white : Colors.black,
-            BlendMode.srcIn,
-          ),
-        );
-      } catch (e) {
-        // Fallback to text if SVG fails to load
+    try {
+      // Check if it's an emoji or text (not a file path)
+      if (iconPath.length == 1 || iconPath.startsWith('🌐') || iconPath.startsWith('📄') || iconPath.startsWith('🔑')) {
+        // Handle emoji or text icons
         return Text(
           iconPath,
           style: TextStyle(
@@ -141,7 +164,32 @@ class SignupTextField extends StatelessWidget {
             color: isDark ? Colors.white : Colors.black,
           ),
         );
+      } else {
+        // Handle SVG assets
+        try {
+          return SvgPicture.asset(
+            iconPath,
+            width: AppResponsive.iconSize(context),
+            height: AppResponsive.iconSize(context),
+            colorFilter: ColorFilter.mode(
+              isDark ? Colors.white : Colors.black,
+              BlendMode.srcIn,
+            ),
+          );
+        } catch (e) {
+          // Fallback to text if SVG fails to load
+          return Text(
+            iconPath,
+            style: TextStyle(
+              fontSize: AppResponsive.iconSize(context),
+              color: isDark ? Colors.white : Colors.black,
+            ),
+          );
+        }
       }
+    } catch (e) {
+      // Ultimate fallback
+      return const Icon(Icons.error, color: Colors.red);
     }
   }
 }
