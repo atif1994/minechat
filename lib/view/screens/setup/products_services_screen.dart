@@ -113,7 +113,7 @@ class _ProductsServicesScreenState extends State<ProductsServicesScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Your Products',
+            'Your Products ',
             style: AppTextStyles.bodyText(context).copyWith(
               fontSize: 16,
               fontWeight: FontWeight.w600,
