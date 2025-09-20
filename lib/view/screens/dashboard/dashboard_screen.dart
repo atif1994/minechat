@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/accounts_controller/manage_user_controller.dart';
 import 'package:minechat/controller/dashboard_controller/dashboard_controlller.dart';
 import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
+import 'package:minechat/core/router/app_routes.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/dashboard/dashboard_appbar.dart';
@@ -40,9 +42,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Obx(
           () {
             final login = Get.find<LoginController>();
-            final url = login.currentUser.value?.photoURL ?? '';
-            final ImageProvider avatarProvider = url.isNotEmpty
-                ? NetworkImage(url)
+            
+            // Initialize ManageUserController the same way as accounts screen
+            final managed = Get.isRegistered<ManageUserController>()
+                ? Get.find<ManageUserController>()
+                : Get.put(ManageUserController(), permanent: true);
+            
+            // Use the same logic as accounts screen: active profile photo or fallback to user photo
+            final user = login.currentUser.value;
+            final active = managed.activeProfile.value;
+            final displayPhoto = active?.photoURL ?? user?.photoURL ?? '';
+            
+            final ImageProvider avatarProvider = displayPhoto.isNotEmpty
+                ? NetworkImage(displayPhoto)
                 : const AssetImage(
                     AppAssets.blankAdminProfile,
                   );
@@ -54,7 +66,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               hasUnreadNotifications: true,
               onTapNotifications: () {},
               onTapChatbot: () {},
-              onTapAvatar: () {},
+              onTapAvatar: () {
+                Get.toNamed(AppRoutes.manageUserProfiles);
+              },
             );
           },
         ),

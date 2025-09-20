@@ -1,7 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
@@ -161,11 +161,90 @@ class _AITestingScreenState extends State<AITestingScreen> {
     final isUser = message.type == MessageType.user;
     final isAI = message.type == MessageType.ai;
 
+
     return EnhancedMessageBubble(
       message: message.message,
       isUser: isUser,
       isAI: isAI,
       timestamp: _formatTime(message.timestamp),
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        mainAxisAlignment:
+            isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (!isUser) ...[
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.blue[100],
+              child: Icon(
+                Icons.smart_toy,
+                size: 16,
+                color: Colors.blue[700],
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isUser ? Colors.blue[600] : Colors.grey[100],
+                borderRadius: BorderRadius.circular(18).copyWith(
+                  bottomLeft: isUser
+                      ? const Radius.circular(18)
+                      : const Radius.circular(4),
+                  bottomRight: isUser
+                      ? const Radius.circular(4)
+                      : const Radius.circular(18),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Show attached file if present
+                  if (message.attachedFilePath != null) ...[
+                    _buildAttachmentPreview(message),
+                    if (message.message.isNotEmpty) const SizedBox(height: 8),
+                  ],
+                  // Show message text if present
+                  if (message.message.isNotEmpty)
+                    Text(
+                      message.message,
+                      style: TextStyle(
+                        color: isUser ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                      ),
+                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _formatTime(message.timestamp),
+                    style: TextStyle(
+                      color: isUser ? Colors.white70 : Colors.grey[600],
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (isUser) ...[
+            const SizedBox(width: 8),
+            CircleAvatar(
+              radius: 16,
+              backgroundColor: Colors.grey[300],
+              child: Icon(
+                Icons.person,
+                size: 16,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ],
+      ),
+
     );
   }
 
@@ -176,8 +255,6 @@ class _AITestingScreenState extends State<AITestingScreen> {
         TextEditingController(); // consider hoisting to State
 
     final fieldBg = isDark ? const Color(0xFF1D1D1D) : const Color(0xFFFFFFFF);
-    final iconColor =
-        isDark ? const Color(0xFFBDBDBD) : const Color(0xFF616161);
 
     return Container(
       padding: AppSpacing.all(Get.context!, factor: 2),
@@ -233,7 +310,7 @@ class _AITestingScreenState extends State<AITestingScreen> {
                         asset:
                             'assets/images/icons/icon_setup_message_attach_image.svg',
                         onTap: () {
-                          // open image/file picker
+                          _showAttachmentOptions(controller);
                         },
                       ),
                       _SvgIconButton(
@@ -291,6 +368,83 @@ class _AITestingScreenState extends State<AITestingScreen> {
     );
   }
 
+  Widget _buildAttachmentPreview(ChatMessageModel message) {
+    final isUser = message.type == MessageType.user;
+    
+    if (message.attachedFileType == 'image') {
+      return Container(
+        constraints: const BoxConstraints(maxWidth: 200, maxHeight: 200),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isUser ? Colors.white24 : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.file(
+            File(message.attachedFilePath!),
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return Container(
+                height: 100,
+                color: Colors.grey[200],
+                child: const Icon(Icons.broken_image, color: Colors.grey),
+              );
+            },
+          ),
+        ),
+      );
+    } else {
+      // Document or other file type
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isUser ? Colors.white.withOpacity(0.1) : Colors.grey[100],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isUser ? Colors.white24 : Colors.grey[300]!,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              _getFileIcon(message.attachedFileType!),
+              color: isUser ? Colors.white70 : Colors.grey[600],
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                message.attachedFileName ?? 'Unknown file',
+                style: TextStyle(
+                  color: isUser ? Colors.white70 : Colors.grey[700],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  IconData _getFileIcon(String fileType) {
+    switch (fileType) {
+      case 'document':
+        return Icons.description;
+      case 'image':
+        return Icons.image;
+      default:
+        return Icons.attach_file;
+    }
+  }
+
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final difference = now.difference(timestamp);
@@ -305,19 +459,120 @@ class _AITestingScreenState extends State<AITestingScreen> {
       return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
     }
   }
+
+  void _showAttachmentOptions(AIAssistantController controller) {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Attach File',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _AttachmentOption(
+                  icon: Icons.image,
+                  label: 'Image',
+                  onTap: () {
+                    Get.back();
+                    controller.pickAndSendImage();
+                  },
+                ),
+                _AttachmentOption(
+                  icon: Icons.description,
+                  label: 'Document',
+                  onTap: () {
+                    Get.back();
+                    controller.pickAndSendDocument();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AttachmentOption extends StatelessWidget {
+  const _AttachmentOption({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              size: 32,
+              color: Colors.blue[600],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _SvgIconButton extends StatelessWidget {
   const _SvgIconButton({
     required this.asset,
     required this.onTap,
-    this.size = 20,
     this.padding = const EdgeInsets.symmetric(horizontal: 6),
   });
 
   final String asset;
   final VoidCallback onTap;
-  final double size;
   final EdgeInsets padding;
 
   @override
@@ -329,8 +584,8 @@ class _SvgIconButton extends StatelessWidget {
         padding: padding,
         child: SvgPicture.asset(
           asset,
-          width: size,
-          height: size,
+          width: 20,
+          height: 20,
           colorFilter: ColorFilter.mode(Color(0XFFA8AEBF), BlendMode.srcIn),
         ),
       ),

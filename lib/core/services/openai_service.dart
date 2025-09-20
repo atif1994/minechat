@@ -217,6 +217,7 @@
 //   }
 // }
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../../model/data/ai_knowledge_model.dart';
@@ -226,8 +227,7 @@ import '../../model/data/faq_model.dart';
 class OpenAIService {
   static const String _proxyUrl = AppConfig.apiProxyUrl;
 
-  // Removed: client-side API key is insecure. Using server proxy instead.
-  static const String _apiKey_removed = "";
+  // Using server proxy for secure API calls
 
   static Future<String> generateResponse({
     required String userMessage,
@@ -245,6 +245,90 @@ class OpenAIService {
       aiGuidelines: aiGuidelines,
       responseLength: responseLength,
     );
+  }
+
+  /// Generate response with file attachment support
+  static Future<String> generateResponseWithFile({
+    required String userMessage,
+    required String assistantName,
+    required String introMessage,
+    required String shortDescription,
+    required String aiGuidelines,
+    required String responseLength,
+    required File attachedFile,
+    required String fileType,
+    AIKnowledgeModel? businessInfo,
+    List<ProductServiceModel>? productsServices,
+    List<FAQModel>? faqs,
+  }) async {
+    try {
+      String fileContent;
+      
+      if (fileType == 'image') {
+        // Convert image to base64 for OpenAI Vision API
+        fileContent = await _encodeImageToBase64(attachedFile);
+      } else {
+        // Extract text from document
+        fileContent = await _extractTextFromFile(attachedFile);
+      }
+
+      final response = await http
+          .post(
+            Uri.parse(_proxyUrl),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode({
+              'model': fileType == 'image' ? 'gpt-4o-mini' : 'gpt-4o-mini',
+              'messages': [
+                {
+                  'role': 'system',
+                  'content': _buildFileAnalysisSystemPrompt(
+                    assistantName: assistantName,
+                    introMessage: introMessage,
+                    shortDescription: shortDescription,
+                    aiGuidelines: aiGuidelines,
+                    responseLength: responseLength,
+                    fileType: fileType,
+                    businessInfo: businessInfo,
+                    productsServices: productsServices,
+                    faqs: faqs,
+                  ),
+                },
+                {
+                  'role': 'user',
+                  'content': fileType == 'image' 
+                    ? [
+                        {
+                          'type': 'text',
+                          'text': userMessage.isEmpty ? 'Please analyze this image and tell me what you see.' : userMessage,
+                        },
+                        {
+                          'type': 'image_url',
+                          'image_url': {
+                            'url': 'data:image/jpeg;base64,$fileContent',
+                          },
+                        },
+                      ]
+                    : 'File content:\n$fileContent\n\nUser question: ${userMessage.isEmpty ? "Please analyze this document and provide insights." : userMessage}',
+                },
+              ],
+              'max_tokens': _getMaxTokens(responseLength),
+              'temperature': 0.7,
+            }),
+          )
+          .timeout(const Duration(seconds: 60));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['choices'][0]['message']['content'] ?? 'No response generated.';
+      } else {
+        throw Exception('API request failed: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in generateResponseWithFile: $e');
+      throw Exception('Failed to process file: $e');
+    }
   }
 
   static Future<String> generateResponseWithKnowledge({
@@ -317,21 +401,6 @@ class OpenAIService {
     }
   }
 
-  static String _buildSystemPrompt({
-    required String assistantName,
-    required String introMessage,
-    required String shortDescription,
-    required String aiGuidelines,
-    required String responseLength,
-  }) {
-    return _buildEnhancedSystemPrompt(
-      assistantName: assistantName,
-      introMessage: introMessage,
-      shortDescription: shortDescription,
-      aiGuidelines: aiGuidelines,
-      responseLength: responseLength,
-    );
-  }
 
   static String _buildEnhancedSystemPrompt({
     required String assistantName,
@@ -448,5 +517,103 @@ INSTRUCTIONS:
       default:
         return 250;
     }
+  }
+
+  /// Encode image file to base64 string
+  static Future<String> _encodeImageToBase64(File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      return base64Encode(bytes);
+    } catch (e) {
+      throw Exception('Failed to encode image: $e');
+    }
+  }
+
+  /// Extract text content from various file types
+  static Future<String> _extractTextFromFile(File file) async {
+    try {
+      final extension = file.path.split('.').last.toLowerCase();
+      
+      switch (extension) {
+        case 'txt':
+        case 'csv':
+          return await file.readAsString();
+        case 'pdf':
+          // For PDF, we'll need a PDF parsing library
+          // For now, return a placeholder
+          return 'PDF content extraction not yet implemented. Please convert to text file for analysis.';
+        case 'doc':
+        case 'docx':
+          // For Word documents, we'll need a document parsing library
+          return 'Word document content extraction not yet implemented. Please convert to text file for analysis.';
+        default:
+          return 'File type not supported for text extraction. Please use .txt or .csv files.';
+      }
+    } catch (e) {
+      throw Exception('Failed to extract text from file: $e');
+    }
+  }
+
+  /// Build system prompt for file analysis
+  static String _buildFileAnalysisSystemPrompt({
+    required String assistantName,
+    required String introMessage,
+    required String shortDescription,
+    required String aiGuidelines,
+    required String responseLength,
+    required String fileType,
+    AIKnowledgeModel? businessInfo,
+    List<ProductServiceModel>? productsServices,
+    List<FAQModel>? faqs,
+  }) {
+    String prompt = '''You are $assistantName, an AI assistant.
+
+Your role: $introMessage
+Your background: $shortDescription
+
+Guidelines for your responses:
+$aiGuidelines
+
+Response length: ${responseLength.toLowerCase()}
+
+You are now analyzing a $fileType file. Please provide detailed, helpful analysis based on the file content. Be specific and actionable in your response.''';
+
+    // Add business context if available
+    if (businessInfo != null) {
+      prompt += '\n\nBusiness Context:\n';
+      if (businessInfo.businessName.isNotEmpty) {
+        prompt += 'Business Name: ${businessInfo.businessName}\n';
+      }
+      if (businessInfo.companyStory.isNotEmpty) {
+        prompt += 'Company Story: ${businessInfo.companyStory}\n';
+      }
+      if (businessInfo.address.isNotEmpty) {
+        prompt += 'Address: ${businessInfo.address}\n';
+      }
+      if (businessInfo.phone.isNotEmpty) {
+        prompt += 'Phone: ${businessInfo.phone}\n';
+      }
+      if (businessInfo.email.isNotEmpty) {
+        prompt += 'Email: ${businessInfo.email}\n';
+      }
+    }
+
+    // Add products/services context
+    if (productsServices != null && productsServices.isNotEmpty) {
+      prompt += '\n\nAvailable Products/Services:\n';
+      for (var product in productsServices) {
+        prompt += '- ${product.name}: ${product.description}\n';
+      }
+    }
+
+    // Add FAQ context
+    if (faqs != null && faqs.isNotEmpty) {
+      prompt += '\n\nFrequently Asked Questions:\n';
+      for (var faq in faqs) {
+        prompt += 'Q: ${faq.question}\nA: ${faq.answer}\n\n';
+      }
+    }
+
+    return prompt;
   }
 }
