@@ -1,30 +1,40 @@
-import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
-import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
-import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
-import 'package:minechat/core/widgets/signUp/signUp_textfield.dart';
+import 'package:minechat/core/widgets/action_buttons/action_buttons.dart';
+import 'package:minechat/core/widgets/form_section/form_section.dart' as CustomForm;
+import 'package:minechat/core/widgets/image_upload_section/image_upload_section.dart';
+import 'package:minechat/core/widgets/products_grid/products_grid.dart';
+import 'package:minechat/model/data/product_service_model.dart';
 import 'package:minechat/view/screens/setup/products_services_ai_testing_screen.dart';
 
-import '../../../core/constants/app_assets/app_assets.dart';
-import 'dart:io';
-
-class ProductsServicesScreen extends StatelessWidget {
+class ProductsServicesScreen extends StatefulWidget {
   final ProductsServicesController controller;
 
   const ProductsServicesScreen({super.key, required this.controller});
 
+  @override
+  State<ProductsServicesScreen> createState() => _ProductsServicesScreenState();
+}
+
+class _ProductsServicesScreenState extends State<ProductsServicesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.controller.loadProductsServices();
+    });
+  }
+
   Future<void> _pickMultipleFromGallery(void Function(String) onPicked) async {
     final picker = ImagePicker();
     try {
-      final files = await picker.pickMultiImage(); // multi-select
+      final files = await picker.pickMultiImage();
       if (files.isNotEmpty) {
         for (final f in files) {
           onPicked(f.path);
@@ -33,437 +43,186 @@ class ProductsServicesScreen extends StatelessWidget {
             backgroundColor: Colors.green, colorText: Colors.white);
         return;
       }
-    } catch (_) {
-      // silently fall back
-    }
-
-    // Fallback: single
+    } catch (_) {}
     final single = await picker.pickImage(source: ImageSource.gallery);
     if (single != null) onPicked(single.path);
   }
 
   @override
   Widget build(BuildContext context) {
-    final themeController = Get.find<ThemeController>();
+    // Always provide a themeController safely
+    ThemeController themeController;
+    try {
+      themeController = Get.find<ThemeController>();
+    } catch (_) {
+      themeController = Get.put(ThemeController(), permanent: true);
+    }
     final isDark = themeController.isDarkMode;
+
     return Scaffold(
-      backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
-      body: SingleChildScrollView(
+      backgroundColor: isDark ? const Color(0XFF0A0A0A) : const Color(0XFFF4F6FC),
+      body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Text(
-              'Products and Services',
-              style: AppTextStyles.bodyText(context).copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-
-            AppSpacing.vertical(context, 0.02),
-            // Name Field
-            SignupTextField(
-              label: 'Name',
-              hintText: 'Enter Name',
-              controller: controller.nameCtrl,
-              errorText: controller.nameError,
-              onChanged: (val) => controller.validateName(val),
-            ),
-            AppSpacing.vertical(context, 0.02),
-
-            // Description Field
-            SignupTextField(
-              label: 'Description',
-              hintText: 'Enter Description',
-              controller: controller.descriptionCtrl,
-              errorText: controller.descriptionError,
-              onChanged: (val) => controller.validateDescription(val),
-            ),
-            AppSpacing.vertical(context, 0.02),
-
-            // Price Field
-            SignupTextField(
-              label: 'Price',
-              hintText: 'Enter Price',
-              controller: controller.priceCtrl,
-              errorText: controller.priceError,
-              onChanged: (val) => controller.validatePrice(val),
-            ),
-            AppSpacing.vertical(context, 0.02),
-
-            // Image Upload Section
-            _buildImageUploadSection(context),
-            AppSpacing.vertical(context, 0.02),
-
-            AppSpacing.vertical(context, 0.02),
-
-            // Action Buttons Row
-            Row(
-              children: [
-                // Save Button
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: AppColors.primary),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: TextButton(
-                      onPressed: () => controller.saveAllProducts(),
-                      child: Text(
-                        'Save',
-                        style: TextStyle(
-                          color: isDark ? AppColors.white : AppColors.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-
-                // Test AI Button
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(12),
-                    ).withAppGradient,
-                    child: TextButton.icon(
-                      onPressed: () => Get.to(() =>
-                          ProductsServicesAITestingScreen(
-                              productsController: controller)),
-                      icon: SvgPicture.asset(
-                        "assets/images/icons/icon_setup_test_ai_button.svg",
-                        width: 20,
-                        height: 20,
-                        colorFilter: const ColorFilter.mode(
-                            Colors.white, BlendMode.srcIn),
-                      ),
-                      label: Text(
-                        'Test AI',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageUploadSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Title + Clear button
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Upload picture',
-              style: AppTextStyles.bodyText(context).copyWith(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-            Obx(() => controller.images.isNotEmpty
-                ? GestureDetector(
-                    onTap: controller.clearImages,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.blue[300]!),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child:
-                          Icon(Icons.close, color: Colors.blue[600], size: 16),
-                    ),
-                  )
-                : const SizedBox.shrink()),
-          ],
-        ),
-
-        const SizedBox(height: 8),
-
-        // If no images → big drop zone; else → grid + inline add tile
-        Obx(() => controller.images.isEmpty
-            ? _DropZone(
-                onChoose: () => _showImageUploadOptions(
-                  context,
-                  onPicked: controller.addImagePath,
-                ),
-              )
-            : _ImagesGrid(
-                images: controller.images,
-                onAddMore: () => _showImageUploadOptions(
-                  context,
-                  onPicked: controller.addImagePath,
-                ),
-                onRemove: controller.removeImageAt,
-              )),
-
-        const SizedBox(height: 12),
-
-        // ALWAYS show this button (matches your screenshot)
-        _AddMoreButton(
-          onTap: () => _showImageUploadOptions(
-            context,
-            onPicked: controller.addImagePath,
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _showImageUploadOptions(BuildContext context,
-      {required void Function(String path) onPicked}) {
-    showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.collections),
-                title: const Text('Choose multiple from Gallery'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  await _pickMultipleFromGallery(onPicked);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.photo_library),
-                title: const Text('Choose from Gallery'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final picker = ImagePicker();
-                  final img =
-                      await picker.pickImage(source: ImageSource.gallery);
-                  if (img != null) onPicked(img.path);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.camera_alt),
-                title: const Text('Take a Photo'),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final picker = ImagePicker();
-                  final img =
-                      await picker.pickImage(source: ImageSource.camera);
-                  if (img != null) onPicked(img.path);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<String?> _pickFromGallery() async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image == null) return null;
-    Get.snackbar('Success', 'Image selected',
-        backgroundColor: Colors.green, colorText: Colors.white);
-    return image.path;
-  }
-
-  Future<String?> _pickFromCamera() async {
-    final picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
-    if (image == null) return null;
-    Get.snackbar('Success', 'Image captured',
-        backgroundColor: Colors.green, colorText: Colors.white);
-    return image.path;
-  }
-}
-
-class _DropZone extends StatelessWidget {
-  const _DropZone({required this.onChoose});
-
-  final VoidCallback onChoose;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onChoose,
-      child: DottedBorder(
-        color: AppColors.primary,
-        strokeWidth: 2,
-        dashPattern: const [6, 3],
-        borderType: BorderType.RRect,
-        radius: const Radius.circular(12),
-        child: Container(
-          width: double.infinity,
-          height: 170,
-          color: AppColors.primary.withValues(alpha: 0.1),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SvgPicture.asset(
-                "assets/images/icons/icon_setup_picture_upload.svg",
-                // or your path
-                height: 80,
-                width: 80,
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: 180,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                ).withAppGradient,
-                child: TextButton(
-                  onPressed: onChoose,
-                  child: const Text(
-                    'Choose photo',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14),
-                  ),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'Products and Services',
+                style: AppTextStyles.bodyText(context).copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ImagesGrid extends StatelessWidget {
-  const _ImagesGrid({
-    required this.images,
-    required this.onAddMore,
-    required this.onRemove,
-  });
-
-  final List<String> images;
-  final VoidCallback onAddMore;
-  final void Function(int index) onRemove;
-
-  @override
-  Widget build(BuildContext context) {
-    // Grid of existing images + one "Add More" tile at the end
-    return GridView.builder(
-      itemCount: images.length + 1,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.5, // wide tiles to mimic screenshot
-      ),
-      itemBuilder: (context, index) {
-        final isAddTile = index == images.length;
-        if (isAddTile) {
-          return GestureDetector(
-            onTap: onAddMore,
-            child: DottedBorder(
-              color: AppColors.primary,
-              strokeWidth: 2,
-              dashPattern: const [6, 3],
-              borderType: BorderType.RRect,
-              radius: const Radius.circular(12),
-              child: Container(
-                alignment: Alignment.center,
-                color: AppColors.primary.withValues(alpha: 0.1),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+            ),
+            
+            // Scrollable content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(Icons.add, color: AppColors.primary),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Add More',
-                      style: AppTextStyles.bodyText(context).copyWith(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w400,
-                          fontSize: AppResponsive.scaleSize(context, 8)),
-                    ),
+                    const SizedBox(height: 4),
+
+                    // Your Products Section
+                    _buildYourProductsSection(context, isDark),
+                    const SizedBox(height: 30),
+
+                    // Add/Edit Product Section
+                    _buildAddNewProductSection(context, isDark),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
             ),
-          );
-        }
+          ],
+        ),
+      ),
+    );
+  }
 
-        // Image tile with remove X
-        final path = images[index];
-        return Stack(
-          children: [
-            DottedBorder(
-              color: AppColors.primary,
-              strokeWidth: 2,
-              dashPattern: const [6, 3],
-              borderType: BorderType.RRect,
-              radius: const Radius.circular(12),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  File(path),
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                ),
-              ),
+  Widget _buildYourProductsSection(BuildContext context, bool isDark) {
+    return Obx(() {
+      if (widget.controller.productsServices.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Your Products',
+            style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: isDark ? AppColors.white : AppColors.secondary,
             ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: InkWell(
-                onTap: () => onRemove(index),
-                child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.55),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.close, color: Colors.white, size: 18),
-                ),
-              ),
+          ),
+          AppSpacing.vertical(context, 0.015),
+          ProductsGrid(
+            products: widget.controller.productsServices,
+            isDark: isDark,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            onEdit: (product) => widget.controller.loadForEdit(product),
+            onDelete: (product) => _showDeleteConfirmation(context, product),
+          ),
+        ],
+      );
+    });
+  }
+
+  Widget _buildAddNewProductSection(BuildContext context, bool isDark) {
+    return Obx(() {
+      final isEditing = widget.controller.isEditing.value;
+      return CustomForm.FormSection(
+        title: isEditing ? 'Edit Product' : 'Add New Product',
+        isDark: isDark,
+        fields: [
+          CustomForm.CustomFormField.textField(
+            label: 'Name',
+            hintText: 'Enter Name',
+            controller: widget.controller.nameCtrl,
+            errorText: widget.controller.nameError.value.isNotEmpty
+                ? widget.controller.nameError.value
+                : null,
+            onChanged: widget.controller.validateName,
+          ),
+          CustomForm.CustomFormField.textField(
+            label: 'Description',
+            hintText: 'Enter Description',
+            controller: widget.controller.descriptionCtrl,
+            errorText: widget.controller.descriptionError.value.isNotEmpty
+                ? widget.controller.descriptionError.value
+                : null,
+            onChanged: widget.controller.validateDescription,
+          ),
+          CustomForm.CustomFormField.textField(
+            label: 'Price',
+            hintText: 'Enter Price',
+            controller: widget.controller.priceCtrl,
+            errorText: widget.controller.priceError.value.isNotEmpty
+                ? widget.controller.priceError.value
+                : null,
+            onChanged: widget.controller.validatePrice,
+          ),
+          CustomForm.CustomFormField(
+            widget: ImageUploadSection(
+              images: widget.controller.images,
+              isDark: isDark,
+              onAddImage: widget.controller.addImagePath,
+              onRemoveImage: widget.controller.removeImageAt,
+              onClearImages: widget.controller.clearImages,
+            ),
+          ),
+        ],
+        actionButtons: [
+          ActionButtons(
+            key: ValueKey('action_buttons_${isEditing ? 'edit' : 'add'}'),
+            primaryLabel: isEditing ? 'Update' : 'Save',
+            secondaryLabel: isEditing ? null : 'Test AI',
+            isDark: isDark,
+            isEditing: isEditing,
+            isLoading: widget.controller.isSaving.value,
+            onPrimary: widget.controller.saveOrUpdateProduct,
+            onSecondary: isEditing
+                ? () {
+              widget.controller.clearForm();
+              widget.controller.isEditing.value = false;
+              widget.controller.editingProductId.value = '';
+            }
+                : () => Get.to(() =>
+                ProductsServicesAITestingScreen(productsController: widget.controller)),
+          ),
+        ],
+      );
+    });
+  }
+
+  void _showDeleteConfirmation(BuildContext context, ProductServiceModel product) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Product'),
+          content: Text('Are you sure you want to delete "${product.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                widget.controller.deleteProductService(product.id);
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         );
       },
-    );
-  }
-}
-
-class _AddMoreButton extends StatelessWidget {
-  const _AddMoreButton({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        side: const BorderSide(color: AppColors.primary, width: 1.4),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      ),
-      icon: const Icon(Icons.add, color: AppColors.primary),
-      label: Text(
-        'Add More',
-        style: AppTextStyles.bodyText(context).copyWith(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
     );
   }
 }

@@ -53,7 +53,7 @@ class ProductServiceModel {
   // ---- Serialization ----
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
+      // Don't include 'id' in document data - it's stored separately in Firestore
       'name': name,
       'description': description,
       'price': price,
@@ -73,7 +73,7 @@ class ProductServiceModel {
     final parsedImages = _parseImages(map['images']);
 
     return ProductServiceModel(
-      id: map['id'] ?? '',
+      id: map['id'] ?? '', // This will be set by the controller when loading from Firestore
       name: map['name'] ?? '',
       description: map['description'] ?? '',
       price: map['price'] ?? '',

@@ -383,8 +383,19 @@ ${i + 1}. Name: ${product.name}
    Description: ${product.description}
    Price: ${product.price}
    Category: ${product.category}
-   Features: ${product.features}
-''';
+   Features: ${product.features}''';
+        
+        // Add image information
+        if (product.images.isNotEmpty) {
+          prompt += '\n   Images: ${product.images.length} image(s) available';
+          for (int j = 0; j < product.images.length; j++) {
+            prompt += '\n   - Image ${j + 1}: ${product.images[j]}';
+          }
+        } else if (product.selectedImage != null && product.selectedImage!.isNotEmpty) {
+          prompt += '\n   Primary Image: ${product.selectedImage}';
+        }
+        
+        prompt += '\n';
       }
     }
 
@@ -408,6 +419,8 @@ INSTRUCTIONS:
 - Use the products/services information to help customers with product inquiries
 - Use the FAQs to provide quick answers to common questions
 - If a question matches an FAQ, provide the exact answer from the FAQ
+- When customers ask about product images, provide the image paths in this format: ![Product Name](image_path)
+- For image requests, mention that images are available and provide the image information from the product data
 - Always be helpful, professional, and maintain the assistant's personality
 - If you don't have information about something, politely say so and offer to help with what you do know
 ''';
