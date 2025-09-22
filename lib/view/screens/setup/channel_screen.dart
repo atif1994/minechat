@@ -41,6 +41,9 @@ class ChannelsScreen extends StatelessWidget {
 
           // Action Buttons
           _buildActionButtons(context, channelController, isDark),
+          
+          // Debug Button (temporary)
+          _buildDebugButton(context, channelController),
         ],
       ),
     );
@@ -255,6 +258,25 @@ class ChannelsScreen extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDebugButton(BuildContext context, ChannelController channelController) {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ElevatedButton(
+        onPressed: () {
+          channelController.debugFacebookConnection();
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+        ),
+        child: Text(
+          'Debug Facebook Connection',
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
     );
   }
 }

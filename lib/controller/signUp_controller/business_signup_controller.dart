@@ -111,7 +111,7 @@ class BusinessSignupController extends GetxController {
       passwordError.value = "Password is required";
     } else if (!_isValidPassword(value.trim())) {
       passwordError.value =
-          "Min 8 chars, include upper, lower, number & symbol";
+      "Min 8 chars, include upper, lower, number & symbol";
     } else {
       passwordError.value = '';
     }

@@ -87,7 +87,7 @@ class AuthController extends GetxController {
       if (Get.isRegistered<ManageUserController>()) {
         Get.delete<ManageUserController>();
       }
-      
+
       await _authService.signOut();
       _storage.remove(_hasCompletedOnboardingKey);
       _storage.remove(_hasCompletedSetupKey);

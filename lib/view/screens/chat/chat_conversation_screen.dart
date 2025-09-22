@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
+import 'package:minechat/core/widgets/chat/enhanced_message_bubble.dart';
 
 class ChatConversationScreen extends StatelessWidget {
   final Map<String, dynamic> chat;
@@ -278,34 +279,11 @@ class ChatConversationScreen extends StatelessWidget {
           ],
           
           Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isFromUser 
-                    ? Colors.blue 
-                    : (isAI ? Colors.blue[50] : Colors.grey[100]),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message['text'] ?? '',
-                    style: TextStyle(
-                      color: isFromUser ? Colors.white : Colors.black87,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    message['timestamp'] ?? '',
-                    style: TextStyle(
-                      color: isFromUser ? Colors.white70 : Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
+            child: EnhancedMessageBubble(
+              message: message['text'] ?? '',
+              isUser: isFromUser,
+              isAI: isAI,
+              timestamp: message['timestamp'] ?? '',
             ),
           ),
           

@@ -516,9 +516,11 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // Trigger chat loading
       try {
         final chatController = Get.find<ChatController>();
+        print('🔄 Attempting to refresh Facebook chats...');
         await chatController.refreshFacebookChats();
         print('✅ Facebook chats loaded successfully');
       } catch (e) {
+        print('⚠️ Error loading Facebook chats: $e');
         print('⚠️ Chat controller not found, will load chats when chat screen is opened');
       }
 
@@ -565,6 +567,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       if (existingToken != null) {
         // We have a token, verify it still works
         print('✅ Found existing access token for page: $pageId');
+        print('🔑 Token preview: ${existingToken.substring(0, 10)}...');
         isFacebookConnected.value = true;
         await saveChannelSettings();
 
@@ -579,13 +582,22 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
         // Trigger chat loading
         try {
           final chatController = Get.find<ChatController>();
+          print('🔄 Attempting to refresh Facebook chats...');
           await chatController.refreshFacebookChats();
           print('✅ Facebook chats loaded successfully');
         } catch (e) {
+          print('⚠️ Error loading Facebook chats: $e');
           print('⚠️ Chat controller not found, will load chats when chat screen is opened');
         }
+
+        // Navigate to main app with bottom navigation
+        Future.delayed(Duration(seconds: 2), () {
+          Get.offAllNamed('/root-bottom-nav-bar');
+        });
       } else {
         // No token, show instructions
+        print('❌ No existing access token found for page: $pageId');
+        print('🔍 This means the page access token was not stored properly');
         Get.dialog(
           AlertDialog(
             title: Text('Facebook Access Token Required'),
@@ -868,11 +880,18 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // Trigger chat loading
       try {
         final chatController = Get.find<ChatController>();
+        print('🔄 Attempting to refresh Facebook chats...');
         await chatController.refreshFacebookChats();
         print('✅ Facebook chats loaded successfully');
       } catch (e) {
+        print('⚠️ Error loading Facebook chats: $e');
         print('⚠️ Chat controller not found, will load chats when chat screen is opened');
       }
+
+      // Navigate to main app with bottom navigation
+      Future.delayed(Duration(seconds: 2), () {
+        Get.offAllNamed('/root-bottom-nav-bar');
+      });
 
     } catch (e) {
       print('❌ Error connecting with token: $e');
@@ -1599,26 +1618,34 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
 
   /// Debug Facebook connection status
   Future<void> debugFacebookConnection() async {
+    print('🔍 === FACEBOOK CONNECTION DEBUG ===');
+    
     try {
-      print('🔍 === FACEBOOK CONNECTION DEBUG ===');
-
       final userId = getCurrentUserId();
-      print('👤 User ID: $userId');
-
-      // Check user document
-      final userDoc = await _firestore.collection('users').doc(userId).get();
+      print('👤 Current User ID: $userId');
+      
+      // Check channel settings
+      final userDoc = await _firestore
+          .collection('channel_settings')
+          .doc(userId)
+          .get();
+      
       if (!userDoc.exists) {
-        print('❌ User document not found');
+        print('❌ No channel_settings document found');
         return;
       }
-
+      
       final userData = userDoc.data()!;
-      print('📄 User data:');
+      print('📋 Channel Settings:');
       print('   - isFacebookConnected: ${userData['isFacebookConnected']}');
       print('   - facebookPageId: ${userData['facebookPageId']}');
-
+      
       // Check secure tokens
-      final tokenDoc = await _firestore.collection('secure_tokens').doc(userId).get();
+      final tokenDoc = await _firestore
+          .collection('secure_tokens')
+          .doc(userId)
+          .get();
+      
       if (!tokenDoc.exists) {
         print('❌ No secure tokens document found');
       } else {
@@ -1627,7 +1654,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
         print('   - facebookPageTokens: ${tokenData['facebookPageTokens']}');
         print('   - updatedAt: ${tokenData['updatedAt']}');
       }
-
+      
       // Check if we can get page access token
       final pageId = userData['facebookPageId'] as String?;
       if (pageId != null && pageId.isNotEmpty) {
@@ -1636,13 +1663,13 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
         if (pageToken != null) {
           print('✅ Found page access token');
           print('📝 Token preview: ${pageToken.substring(0, 10)}...');
-
+          
           // Test token validity
           print('🧪 Testing token validity...');
           final tokenTest = await FacebookGraphApiService.verifyAccessToken(pageToken);
           if (tokenTest['success']) {
             print('✅ Token is valid for user: ${tokenTest['data']['name']}');
-
+            
             // Test page access
             final pageTest = await FacebookGraphApiService.verifyPageAccess(pageId, pageToken);
             if (pageTest['success']) {
@@ -1659,9 +1686,9 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       } else {
         print('❌ No Facebook Page ID configured');
       }
-
+      
       print('🔍 === END DEBUG ===');
-
+      
       Get.snackbar(
         'Debug Complete',
         'Check console for detailed Facebook connection status',
@@ -1669,7 +1696,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
         colorText: Colors.white,
         duration: Duration(seconds: 3),
       );
-
+      
     } catch (e) {
       print('❌ Debug error: $e');
       Get.snackbar(
@@ -1677,6 +1704,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
         'Error during debug: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        duration: Duration(seconds: 3),
       );
     }
   }
@@ -1685,7 +1713,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   Future<void> connectWithProvidedToken() async {
     try {
       isConnectingFacebook.value = true;
-
+      
       final pageId = facebookPageIdCtrl.text.trim();
       if (pageId.isEmpty) {
         Get.snackbar(
@@ -1698,27 +1726,27 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       }
 
       // Use the provided page access token
-      const String providedToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
-
-      print('🔍 Testing provided Facebook page access token...');
-
-      // Test the token with the page
-      final pageVerification = await FacebookGraphApiService.verifyPageAccess(pageId, providedToken);
-      if (!pageVerification['success']) {
-        throw Exception('Cannot access page with provided token: ${pageVerification['error']}');
+      final pageToken = facebookAccessTokenCtrl.text.trim();
+      if (pageToken.isEmpty) {
+        Get.snackbar(
+          'Error',
+          'Please enter your Facebook Page Access Token first',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
       }
 
-      print('✅ Page access verified: ${pageVerification['data']['name']}');
-
       // Save the page access token securely
-      await _savePageAccessToken(pageId, providedToken);
+      await _savePageAccessToken(pageId, pageToken);
 
+      // Set connection status
       isFacebookConnected.value = true;
       await saveChannelSettings();
 
       Get.snackbar(
         'Success',
-        'Facebook Messenger connected successfully!\nPage: ${pageVerification['data']['name']}\nFull integration enabled - chats will now sync!',
+        'Facebook Messenger connected successfully!\nPage: $pageId\nFull integration enabled!',
         backgroundColor: Colors.green,
         colorText: Colors.white,
         duration: Duration(seconds: 4),
@@ -1727,11 +1755,18 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
       // Trigger chat loading
       try {
         final chatController = Get.find<ChatController>();
+        print('🔄 Attempting to refresh Facebook chats...');
         await chatController.refreshFacebookChats();
         print('✅ Facebook chats loaded successfully');
       } catch (e) {
+        print('⚠️ Error loading Facebook chats: $e');
         print('⚠️ Chat controller not found, will load chats when chat screen is opened');
       }
+
+      // Navigate to main app with bottom navigation
+      Future.delayed(Duration(seconds: 2), () {
+        Get.offAllNamed('/root-bottom-nav-bar');
+      });
 
     } catch (e) {
       print('❌ Error connecting with provided token: $e');
@@ -1747,76 +1782,83 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
-  /// Connect to a specific Facebook page after OAuth
+  /// Connect to a specific Facebook page
   Future<void> connectToFacebookPage(String pageId) async {
     try {
       isConnectingFacebook.value = true;
-      print('🔗 Connecting to Facebook page: $pageId');
-
-      // Find the selected page data
-      final selectedPage = availablePages.firstWhere(
-        (page) => page['id'] == pageId,
-        orElse: () => throw Exception('Selected page not found'),
-      );
-
-      final pageName = selectedPage['name'] ?? 'Unknown Page';
-      print('📱 Connecting to page: $pageName');
-
-      // Save the page ID
+      
+      // Set the page ID
       facebookPageIdCtrl.text = pageId;
       
-      // Set connection status
-      isFacebookConnected.value = true;
-      showPageSelector.value = false;
+      // Check if we have an access token for this page
+      final pageToken = await getPageAccessToken(pageId);
       
-      // Save settings
-      await saveChannelSettings();
+      if (pageToken != null) {
+        // We have a token, verify it still works
+        print('✅ Found existing access token for page: $pageId');
+        print('🔑 Token preview: ${pageToken.substring(0, 10)}...');
+        isFacebookConnected.value = true;
+        await saveChannelSettings();
 
-      Get.snackbar(
-        'Success',
-        'Connected to Facebook page: $pageName',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-        duration: Duration(seconds: 3),
-      );
+        Get.snackbar(
+          'Success',
+          'Facebook Messenger connected successfully!\nPage ID: $pageId\nFull integration enabled!',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 4),
+        );
 
-      print('✅ Facebook page connected successfully');
+        // Trigger chat loading
+        try {
+          final chatController = Get.find<ChatController>();
+          print('🔄 Attempting to refresh Facebook chats...');
+          await chatController.refreshFacebookChats();
+          print('✅ Facebook chats loaded successfully');
+        } catch (e) {
+          print('⚠️ Error loading Facebook chats: $e');
+          print('⚠️ Chat controller not found, will load chats when chat screen is opened');
+        }
 
+        // Navigate to main app with bottom navigation
+        Future.delayed(Duration(seconds: 2), () {
+          Get.offAllNamed('/root-bottom-nav-bar');
+        });
+      } else {
+        // No token, show instructions
+        print('❌ No existing access token found for page: $pageId');
+        print('🔍 This means the page access token was not stored properly');
+        Get.dialog(
+          AlertDialog(
+            title: Text('Facebook Access Token Required'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('To connect to Facebook Page $pageId, you need a Page Access Token.'),
+                SizedBox(height: 16),
+                Text('How to get it:'),
+                Text('1. Go to Facebook Developers Console'),
+                Text('2. Select your app'),
+                Text('3. Go to Tools > Graph API Explorer'),
+                Text('4. Generate Access Token'),
+                Text('5. Add permissions: pages_show_list, pages_messaging'),
+                Text('6. Copy the token and paste it in the Access Token field'),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } catch (e) {
       print('❌ Error connecting to Facebook page: $e');
       Get.snackbar(
-        'Connection Error',
-        'Failed to connect to Facebook page: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-      rethrow;
-    } finally {
-      isConnectingFacebook.value = false;
-    }
-  }
-
-  /// Connect directly with the new access token
-  Future<void> connectDirectlyWithNewToken() async {
-    try {
-      isConnectingFacebook.value = true;
-      
-      // Use the new access token directly
-      const String newAccessToken = 'EAAU0kNg5hEMBPTfyfu1IyQTlMkfTrsF36p3Ipy0oRAo3MfeZAxVVDZA9ZC4ZB874XWxtQxBoPRNA8aJveBJWZBn7YqeQbAvsoHer25WGT0eKqQKTWaW82NvhRCZAZA29fPKw8pU8bUKW9VGlnQBGpGIFkrYIZCtlvweUXS2yGFvlDmFsgDUPfs79r8Cklc2wBLNMtVfk7rEZAq28JgEidZCEIcpTS4iaRZB6JrqiKZAu3N0ZBuA0KII59FykB3Op2JwZDZD';
-      
-      print('🔑 Using new access token for direct connection...');
-      
-      // Update the token field
-      facebookAccessTokenCtrl.text = newAccessToken;
-      
-      // Connect using the new token
-      await connectWithToken(newAccessToken);
-      
-    } catch (e) {
-      print('❌ Error in direct connection: $e');
-      Get.snackbar(
         'Error',
-        'Direct connection failed: $e',
+        'Failed to connect to Facebook page: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: Duration(seconds: 5),
@@ -1826,7 +1868,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
-  /// Exchange short-lived Facebook token for long-lived token
+  /// Exchange Facebook token for long-lived token
   Future<void> exchangeFacebookToken() async {
     try {
       isConnectingFacebook.value = true;
@@ -1857,46 +1899,57 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
           facebookPageIdCtrl.text = pageId;
           facebookAccessTokenCtrl.text = pageToken;
           
-          // Save to Firestore
+          // Save the page access token securely
           await _savePageAccessToken(pageId, pageToken);
-          
-          // Initialize tokens for automatic refresh
-          FacebookGraphApiService.initializeTokens(
-            pageToken: pageToken,
-            pageId: pageId,
-            expiryTime: null, // Never-expiring page tokens don't have expiry
-          );
-          
+
+          // Set connection status
           isFacebookConnected.value = true;
           await saveChannelSettings();
-          
+
           Get.snackbar(
-            'Success! 🎉',
-            'Facebook token exchanged successfully!\nPage: $pageName\n✅ Never-expiring token obtained!',
+            'Success',
+            'Facebook Messenger connected successfully!\nPage: $pageName\nNever-expiring token obtained!',
             backgroundColor: Colors.green,
             colorText: Colors.white,
-            duration: Duration(seconds: 5),
+            duration: Duration(seconds: 4),
           );
-          
+
           // Trigger chat loading
           try {
             final chatController = Get.find<ChatController>();
+            print('🔄 Attempting to refresh Facebook chats...');
             await chatController.refreshFacebookChats();
             print('✅ Facebook chats loaded successfully');
           } catch (e) {
+            print('⚠️ Error loading Facebook chats: $e');
             print('⚠️ Chat controller not found, will load chats when chat screen is opened');
           }
+
+          // Navigate to main app with bottom navigation
+          Future.delayed(Duration(seconds: 2), () {
+            Get.offAllNamed('/root-bottom-nav-bar');
+          });
         } else {
-          throw Exception('No pages found in token exchange result');
+          Get.snackbar(
+            'Error',
+            'No pages found for this token',
+            backgroundColor: Colors.red,
+            colorText: Colors.white,
+          );
         }
       } else {
-        throw Exception(result['error'] ?? 'Token exchange failed');
+        Get.snackbar(
+          'Error',
+          'Token exchange failed: ${result['error']}',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } catch (e) {
-      print('❌ Error exchanging Facebook token: $e');
+      print('❌ Error in token exchange: $e');
       Get.snackbar(
-        'Token Exchange Failed',
-        'Failed to exchange Facebook token: $e',
+        'Error',
+        'Token exchange failed: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: Duration(seconds: 5),
@@ -1906,31 +1959,9 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
-  /// Check if current token is expired and needs refresh
-  Future<void> checkAndRefreshFacebookToken() async {
-    try {
-      const String currentToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
-      
-      print('🔍 Checking Facebook token validity...');
-      
-      final verification = await FacebookTokenExchangeService.verifyToken(
-        token: currentToken,
-      );
-      
-      if (verification['success'] && verification['valid']) {
-        print('✅ Current token is still valid');
-        return;
-      }
-      
-      print('⚠️ Token is expired or invalid, attempting refresh...');
-      await exchangeFacebookToken();
-    } catch (e) {
-      print('❌ Error checking token: $e');
-    }
-  }
-
   @override
   void onClose() {
+    // Dispose controllers
     websiteUrlCtrl.dispose();
     facebookPageIdCtrl.dispose();
     facebookAccessTokenCtrl.dispose();
