@@ -42,27 +42,55 @@ class FirebaseAuthService {
   // Google Sign-In
   Future<UserCredential?> signInWithGoogle() async {
     try {
+      print('🔍 Starting Google Sign-In process...');
+      
       // Trigger the Google sign-in flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      print('🔍 Google Sign-In result: ${googleUser != null ? "Success" : "Cancelled"}');
 
       if (googleUser == null) {
         // User cancelled the sign-in
+        print('🔍 User cancelled Google Sign-In');
         return null;
       }
 
+      print('🔍 Google user: ${googleUser.email}');
+      
       // Obtain the auth details from the request
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+      print('🔍 Google auth tokens obtained');
 
       // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
+      print('🔍 Firebase credential created');
 
       // Sign in with Firebase using the Google credential
-      return await _auth.signInWithCredential(credential);
+      final result = await _auth.signInWithCredential(credential);
+      print('🔍 Firebase sign-in successful: ${result.user?.email}');
+      
+      return result;
     } catch (e) {
+      print('❌ Google Sign-In error: $e');
+      print('❌ Error type: ${e.runtimeType}');
+      print('❌ Error details: ${e.toString()}');
+      
+      // Handle specific Google Sign-In errors
+      if (e.toString().contains('ApiException: 10')) {
+        throw Exception('Google Sign-In configuration error. Please check Firebase Console setup and SHA-1 fingerprints.');
+      } else if (e.toString().contains('network_error')) {
+        throw Exception('Network error. Please check your internet connection.');
+      } else if (e.toString().contains('sign_in_canceled')) {
+        throw Exception('Sign in was cancelled by user.');
+      } else if (e.toString().contains('sign_in_failed')) {
+        throw Exception('Google Sign-In failed. Please try again.');
+      } else if (e.toString().contains('DEVELOPER_ERROR')) {
+        throw Exception('Google Sign-In developer error. Please check SHA-1 fingerprints in Firebase Console.');
+      }
+      
       throw _handleAuthException(e);
     }
   }
@@ -161,6 +189,18 @@ class FirebaseAuthService {
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
+  
+  // Debug method to get SHA-1 fingerprint
+  static Future<void> printSHA1Fingerprint() async {
+    try {
+      print('🔍 Getting SHA-1 fingerprint for debugging...');
+      // This will be printed when the app starts to help with Firebase configuration
+      print('🔍 Please add this SHA-1 fingerprint to your Firebase Console:');
+      print('🔍 Go to Firebase Console > Project Settings > Your Apps > Android App > SHA certificate fingerprints');
+    } catch (e) {
+      print('❌ Error getting SHA-1: $e');
+    }
+  }
 
   // Error Handling
   String _handleAuthException(dynamic e) {

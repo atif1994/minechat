@@ -19,8 +19,16 @@ class EnhancedMessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('🖼️ EnhancedMessageBubble: Processing message: ${message.length} chars');
+    print('🖼️ Message preview: ${message.length > 100 ? message.substring(0, 100) + '...' : message}');
+    
     final imageUrls = ImageParser.extractImageUrls(message);
     final cleanText = ImageParser.removeImageUrls(message);
+    
+    print('🖼️ EnhancedMessageBubble: Found ${imageUrls.length} images');
+    print('🖼️ Image URLs: $imageUrls');
+    print('🖼️ Clean text length: ${cleanText.length}');
+    print('🖼️ Clean text preview: ${cleanText.length > 50 ? cleanText.substring(0, 50) + '...' : cleanText}');
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -101,11 +109,32 @@ class EnhancedMessageBubble extends StatelessWidget {
   }
 
   Widget _buildImageGrid(List<String> imageUrls) {
-    if (imageUrls.isEmpty) return const SizedBox.shrink();
+    print('🖼️ _buildImageGrid called with ${imageUrls.length} images');
+    if (imageUrls.isEmpty) {
+      print('🖼️ No images to display in grid');
+      return Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: Colors.yellow[100],
+          border: Border.all(color: Colors.orange),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          'DEBUG: No images detected in message',
+          style: TextStyle(
+            color: Colors.orange[800],
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
     
     if (imageUrls.length == 1) {
+      print('🖼️ Building single image: ${imageUrls.first}');
       return _buildSingleImage(imageUrls.first);
     } else {
+      print('🖼️ Building multiple images: $imageUrls');
       return _buildMultipleImages(imageUrls);
     }
   }
@@ -150,8 +179,11 @@ class EnhancedMessageBubble extends StatelessWidget {
   }
 
   Widget _buildImageWidget(String imageUrl) {
+    print('🖼️ Building image widget for: $imageUrl');
+    
     if (imageUrl.startsWith('http')) {
       // Network image
+      print('🖼️ Loading network image: $imageUrl');
       return CachedNetworkImage(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
@@ -161,40 +193,135 @@ class EnhancedMessageBubble extends StatelessWidget {
             child: CircularProgressIndicator(),
           ),
         ),
-        errorWidget: (context, url, error) => Container(
-          color: Colors.grey[300],
-          child: const Icon(
-            Icons.error,
-            color: Colors.red,
-          ),
-        ),
+        errorWidget: (context, url, error) {
+          print('🖼️ Network image error: $error');
+          return Container(
+            color: Colors.grey[300],
+            child: const Icon(
+              Icons.error,
+              color: Colors.red,
+            ),
+          );
+        },
       );
     } else if (imageUrl.startsWith('file://')) {
       // Local file from file:// URL
       final filePath = imageUrl.replaceFirst('file://', '');
-      return Image.file(
-        File(filePath),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey[300],
-          child: const Icon(
-            Icons.error,
-            color: Colors.red,
+      print('🖼️ Loading local file: $filePath');
+      
+      // Check if file exists
+      final file = File(filePath);
+      if (!file.existsSync()) {
+        print('🖼️ File does not exist: $filePath');
+        return Container(
+          color: Colors.grey[200],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.image_outlined,
+                color: Colors.grey,
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Image not available',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 10,
+                ),
+              ),
+            ],
           ),
-        ),
+        );
+      }
+      
+      return Image.file(
+        file,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('🖼️ File image error: $error');
+          return Container(
+            color: Colors.grey[200],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.image_outlined,
+                  color: Colors.grey,
+                  size: 24,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Cannot load image',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       );
     } else {
       // Local asset or file path
-      return Image.file(
-        File(imageUrl),
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) => Container(
-          color: Colors.grey[300],
-          child: const Icon(
-            Icons.error,
-            color: Colors.red,
+      print('🖼️ Loading direct file path: $imageUrl');
+      
+      // Check if file exists first
+      final file = File(imageUrl);
+      if (!file.existsSync()) {
+        print('🖼️ Direct file does not exist: $imageUrl');
+        return Container(
+          color: Colors.grey[200],
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.image_outlined,
+                color: Colors.grey,
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Image not available',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 10,
+                ),
+              ),
+            ],
           ),
-        ),
+        );
+      }
+      
+      return Image.file(
+        file,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('🖼️ Direct file error: $error');
+          return Container(
+            color: Colors.grey[200],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.image_outlined,
+                  color: Colors.grey,
+                  size: 24,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Cannot load image',
+                  style: TextStyle(
+                    color: Colors.grey[600],
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       );
     }
   }

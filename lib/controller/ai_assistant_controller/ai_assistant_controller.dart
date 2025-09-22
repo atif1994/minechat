@@ -12,6 +12,7 @@ import '../../model/data/ai_knowledge_model.dart';
 import '../../model/data/product_service_model.dart';
 import '../../model/data/faq_model.dart';
 import '../../model/repositories/ai_knowledge_repository.dart';
+import '../../core/utils/image_parser.dart';
 
 class AIAssistantController extends GetxController {
   final AIAssistantRepository _repository = AIAssistantRepository();
@@ -153,6 +154,8 @@ class AIAssistantController extends GetxController {
         print('DEBUG: Products:');
         for (var product in productsServices) {
           print('DEBUG:   - ${product.name}: ${product.description}');
+          print('DEBUG:     selectedImage: ${product.selectedImage}');
+          print('DEBUG:     images: ${product.images}');
         }
       }
 
@@ -168,6 +171,11 @@ class AIAssistantController extends GetxController {
         productsServices: productsServices,
         faqs: faqs,
       );
+      
+      // Debug: Print the AI response to see what it contains
+      print('🤖 AI Response received: ${aiResponse.length} characters');
+      print('🤖 AI Response preview: ${aiResponse.length > 200 ? aiResponse.substring(0, 200) + '...' : aiResponse}');
+      print('🤖 AI Response FULL: $aiResponse');
       
       addMessage(aiResponse, MessageType.ai);
     } catch (e) {

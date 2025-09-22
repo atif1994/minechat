@@ -382,7 +382,19 @@ class OpenAIService {
         final choices = data['choices'];
         if (choices is List && choices.isNotEmpty) {
           final content = choices[0]?['message']?['content'];
-          if (content is String && content.isNotEmpty) return content;
+          if (content is String && content.isNotEmpty) {
+            // Debug: Check if response is complete
+            print('🤖 OpenAI Response Length: ${content.length} characters');
+            print('🤖 OpenAI Response Complete: ${content.endsWith('.') || content.endsWith('!') || content.endsWith('?')}');
+            
+            // Check if response contains incomplete image paths
+            if (content.contains('![') && content.contains('(/data/user/0') && !content.contains('.jpg)') && !content.contains('.png)') && !content.contains('.jpeg)')) {
+              print('⚠️ WARNING: AI response appears to be truncated - incomplete image paths detected');
+              print('⚠️ Truncated content: ${content.substring(content.length - 100)}');
+            }
+            
+            return content;
+          }
         }
         return 'Sorry, I could not generate a response.';
       } else {
@@ -460,8 +472,15 @@ ${i + 1}. Name: ${product.name}
           for (int j = 0; j < product.images.length; j++) {
             prompt += '\n   - Image ${j + 1}: ${product.images[j]}';
           }
+          prompt += '\n   USE THESE IMAGE PATHS: When showing this product, use: ![${product.name}](${product.images[0]})';
+          if (product.images.length > 1) {
+            for (int j = 1; j < product.images.length; j++) {
+              prompt += '\n   AND: ![${product.name} ${j + 1}](${product.images[j]})';
+            }
+          }
         } else if (product.selectedImage != null && product.selectedImage!.isNotEmpty) {
           prompt += '\n   Primary Image: ${product.selectedImage}';
+          prompt += '\n   USE THIS IMAGE PATH: When showing this product, use: ![${product.name}](${product.selectedImage})';
         }
         
         prompt += '\n';
@@ -488,8 +507,15 @@ INSTRUCTIONS:
 - Use the products/services information to help customers with product inquiries
 - Use the FAQs to provide quick answers to common questions
 - If a question matches an FAQ, provide the exact answer from the FAQ
-- When customers ask about product images, provide the image paths in this format: ![Product Name](image_path)
+- When customers ask about product images, provide the image paths in this exact format: ![Product Name](image_path) (NO SPACE after the opening parenthesis)
 - For image requests, mention that images are available and provide the image information from the product data
+- IMPORTANT: Use the exact format ![Product Name](image_path) with NO SPACE between the opening parenthesis and the path
+- CRITICAL: Always provide COMPLETE image paths - do not truncate or cut off image URLs
+- When showing multiple products with images, include ALL image paths completely
+- PRIORITY: If you have multiple products with images, show ALL of them - do not skip any
+- FORMAT: For each product with an image, use: ![ProductName](complete_file_path)
+- MANDATORY: When showing products, ALWAYS include the image paths provided in the product data above
+- MANDATORY: If a product has multiple images, show ALL of them using the exact paths provided
 - Always be helpful, professional, and maintain the assistant's personality
 - If you don't have information about something, politely say so and offer to help with what you do know
 ''';
@@ -511,11 +537,11 @@ INSTRUCTIONS:
   static int _getMaxTokens(String responseLength) {
     switch (responseLength) {
       case 'Short':
-        return 100;
+        return 300;
       case 'Long':
-        return 500;
+        return 1500;
       default:
-        return 250;
+        return 800;
     }
   }
 

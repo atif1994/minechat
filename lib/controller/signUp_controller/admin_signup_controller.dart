@@ -295,7 +295,7 @@ class AdminSignupController extends GetxController {
 
     if (e.toString().contains('email-already-in-use')) {
       errorMessage =
-          'An account with this email already exists. Please use a different email or try signing in.';
+      'An account with this email already exists. Please use a different email or try signing in.';
     } else if (e.toString().contains('weak-password')) {
       errorMessage = 'Password is too weak. Please use a stronger password';
     } else if (e.toString().contains('invalid-email')) {

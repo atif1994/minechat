@@ -7,7 +7,7 @@ import '../../model/data/user_model.dart';
 class GoogleSignInController extends GetxController {
   final FirebaseAuthService _authService = FirebaseAuthService();
   final UserRepository _userRepository = UserRepository();
-  
+
   final RxBool isLoading = false.obs;
   final Rx<UserModel?> currentUser = Rx<UserModel?>(null);
 
@@ -15,21 +15,21 @@ class GoogleSignInController extends GetxController {
   Future<void> signInWithGoogle() async {
     try {
       isLoading.value = true;
-      
+
       final userCredential = await _authService.signInWithGoogle();
-      
+
       if (userCredential != null) {
         final user = userCredential.user;
         if (user != null) {
           // Create user model
           final userModel = _userRepository.createUserFromFirebaseUser(user);
-          
+
           // Save to Firestore
           await _userRepository.saveUser(userModel);
-          
+
           // Update current user
           currentUser.value = userModel;
-          
+
           Get.snackbar(
             'Success',
             'Welcome ${userModel.name}!',
@@ -37,7 +37,7 @@ class GoogleSignInController extends GetxController {
             backgroundColor: const Color(0xFF4CAF50),
             colorText: Colors.white,
           );
-          
+
 
         }
       } else {

@@ -4,6 +4,7 @@ import 'package:minechat/controller/ai_assistant_controller/ai_assistant_control
 import 'package:minechat/controller/products_services_controller/products_services_controller.dart';
 import '../../../core/constants/app_colors/app_colors.dart';
 import '../../../core/widgets/appbar/appbar.dart';
+import '../../../core/widgets/chat/enhanced_message_bubble.dart';
 import '../../../model/data/chat_mesage_model.dart';
 
 class ProductsServicesAITestingScreen extends StatefulWidget {
@@ -163,71 +164,13 @@ class _ProductsServicesAITestingScreenState extends State<ProductsServicesAITest
 
   Widget _buildMessageBubble(ChatMessageModel message, int index) {
     final isUser = message.type == MessageType.user;
+    final isAI = message.type == MessageType.ai;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        mainAxisAlignment: isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!isUser) ...[
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.blue[100],
-              child: Icon(
-                Icons.smart_toy,
-                size: 16,
-                color: Colors.blue[700],
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Flexible(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: isUser ? Colors.blue[600] : Colors.grey[100],
-                borderRadius: BorderRadius.circular(18).copyWith(
-                  bottomLeft: isUser ? const Radius.circular(18) : const Radius.circular(4),
-                  bottomRight: isUser ? const Radius.circular(4) : const Radius.circular(18),
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.message,
-                    style: TextStyle(
-                      color: isUser ? Colors.white : Colors.black87,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(message.timestamp),
-                    style: TextStyle(
-                      color: isUser ? Colors.white70 : Colors.grey[600],
-                      fontSize: 11,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (isUser) ...[
-            const SizedBox(width: 8),
-            CircleAvatar(
-              radius: 16,
-              backgroundColor: Colors.grey[300],
-              child: Icon(
-                Icons.person,
-                size: 16,
-                color: Colors.grey[700],
-              ),
-            ),
-          ],
-        ],
-      ),
+    return EnhancedMessageBubble(
+      message: message.message,
+      isUser: isUser,
+      isAI: isAI,
+      timestamp: _formatTime(message.timestamp),
     );
   }
 
