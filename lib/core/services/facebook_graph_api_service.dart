@@ -358,14 +358,14 @@ class FacebookGraphApiService {
 
               for (final conv in conversationsData) {
                 print('📋 Processing conversation: $conv');
-                // Keep the original data structure from Facebook
+                // Keep the original data structure from Facebook INCLUDING participants
                 enhancedConversations.add({
                   'id': conv['id'],
                   'link': conv['link'],
                   'updated_time': conv['updated_time'],
                   'unread_count': conv['unread_count'] ?? 0,
                   'message_count': conv['message_count'] ?? 1,
-                  // Don't artificially create participants - let the chat controller handle this
+                  'participants': conv['participants'], // Keep participants data!
                 });
               }
 
@@ -660,14 +660,13 @@ class FacebookGraphApiService {
 
   /// Send message to a Facebook conversation
   static Future<Map<String, dynamic>> sendMessageToConversation(
-      String conversationId, String pageAccessToken, String message) async {
+      String conversationId, String pageAccessToken, String message, {String? userId}) async {
     try {
       print('📤 Sending message to conversation: $conversationId');
       print('📝 Message: $message');
       print('🔑 Token length: ${pageAccessToken.length}');
       
-      // Facebook requires the conversation ID to be in a specific format
-      // For thread conversations, we need to use the thread_id
+      // Use the Facebook Messenger API endpoint
       final url = Uri.https(
         "graph.facebook.com",
         "/v23.0/me/messages",
@@ -676,8 +675,12 @@ class FacebookGraphApiService {
         },
       );
 
+      // Use the user ID if available, otherwise use conversation ID
+      final recipientId = userId ?? conversationId;
+      print('🔍 Using recipient ID: $recipientId');
+      
       final requestBody = {
-        "recipient": {"thread_id": conversationId},
+        "recipient": {"id": recipientId},
         "message": {"text": message},
       };
 
@@ -690,10 +693,12 @@ class FacebookGraphApiService {
           'Content-Type': 'application/json',
         },
         body: jsonEncode(requestBody),
-      );
+      ).timeout(Duration(seconds: 10)); // Add timeout for faster failure
 
       print('📊 Send message response status: ${response.statusCode}');
-      print('📊 Response body: ${response.body}');
+      if (response.statusCode != 200) {
+        print('📊 Response body: ${response.body}');
+      }
 
       if (response.statusCode == 200) {
         try {
