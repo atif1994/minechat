@@ -7,7 +7,7 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
 
 class ChatScreen extends StatelessWidget {
-  final chatController = Get.put(ChatController());
+  final chatController = Get.find<ChatController>();
 
   @override
   Widget build(BuildContext context) {
@@ -403,22 +403,6 @@ class ChatScreen extends StatelessWidget {
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: _getPlatformColor(chat['platform']).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          chat['platform'] ?? 'Unknown',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _getPlatformColor(chat['platform']),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           chat['lastMessage'] ?? '',
@@ -430,14 +414,7 @@ class ChatScreen extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (chat['messageCount'] != null)
-                        Text(
-                          '${chat['messageCount']} msgs',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[500],
-                        ),
-                      ),
+                      // Message count is now included in lastMessage field
                     ],
                   ),
                 ],

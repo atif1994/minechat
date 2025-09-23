@@ -1274,3 +1274,148 @@ export const fbConnectWithStoredToken = onRequest(
     }
   }
 );
+
+/**
+ * Facebook Webhook for real-time message updates
+ * GET /facebookWebhook - Webhook verification
+ * POST /facebookWebhook - Handle incoming messages
+ */
+export const facebookWebhook = onRequest(
+  { region: "us-central1", cors: true },
+  async (req, res) => {
+    try {
+      if (req.method === "GET") {
+        // Webhook verification
+        const mode = req.query['hub.mode'];
+        const token = req.query['hub.verify_token'];
+        const challenge = req.query['hub.challenge'];
+
+        const VERIFY_TOKEN = 'your_verify_token_here'; // Change this to your actual verify token
+
+        if (mode === 'subscribe' && token === VERIFY_TOKEN) {
+          console.log('✅ Facebook webhook verified');
+          res.status(200).send(challenge);
+        } else {
+          console.log('❌ Facebook webhook verification failed');
+          res.sendStatus(403);
+        }
+        return;
+      }
+
+      if (req.method === "POST") {
+        // Handle incoming messages
+        const body = req.body;
+
+        if (body.object === 'page') {
+          // Process each entry
+          for (const entry of body.entry) {
+            const pageId = entry.id;
+            const timeOfEvent = entry.time;
+
+            // Process each messaging event
+            if (entry.messaging) {
+              for (const event of entry.messaging) {
+                if (event.message && !event.message.is_echo) {
+                  // This is a message from a user
+                  await handleIncomingMessage(event, pageId);
+                } else if (event.delivery) {
+                  // Message delivery confirmation
+                  console.log('📬 Message delivered:', event.delivery);
+                } else if (event.read) {
+                  // Message read confirmation
+                  console.log('👁️ Message read:', event.read);
+                }
+              }
+            }
+          }
+
+          res.status(200).send('EVENT_RECEIVED');
+        } else {
+          res.sendStatus(404);
+        }
+        return;
+      }
+
+      res.status(405).json({ error: "Method Not Allowed" });
+    } catch (err) {
+      console.error("[facebookWebhook] exception", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+// Helper function to handle incoming messages
+async function handleIncomingMessage(event: any, pageId: string) {
+  try {
+    const senderId = event.sender.id;
+    const recipientId = event.recipient.id;
+    const message = event.message;
+    const timestamp = event.timestamp;
+
+    console.log('📨 New message received:', {
+      senderId,
+      recipientId,
+      message: message.text,
+      timestamp
+    });
+
+    // Get the conversation ID (thread ID)
+    const conversationId = event.message?.thread_id || `t_${senderId}_${pageId}`;
+
+    // Find the user who owns this page
+    const userQuery = await db
+      .collection('channel_settings')
+      .where('facebookPageId', '==', pageId)
+      .limit(1)
+      .get();
+
+    if (userQuery.empty) {
+      console.log('❌ No user found for page:', pageId);
+      return;
+    }
+
+    const userDoc = userQuery.docs[0];
+    const userId = userDoc.id;
+
+    // Store the message in Firebase for real-time updates
+    await db
+      .collection('user_messages')
+      .doc(userId)
+      .collection('messages')
+      .add({
+        conversationId: conversationId,
+        text: message.text || '',
+        isFromUser: true,
+        platform: 'Facebook',
+        senderId: senderId,
+        senderName: `Facebook User ${senderId}`,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: new Date().toISOString(),
+        facebookMessageId: message.mid,
+        pageId: pageId,
+      });
+
+    // Update conversation info
+    await db
+      .collection('user_conversations')
+      .doc(userId)
+      .collection('conversations')
+      .doc(conversationId)
+      .set({
+        conversationId: conversationId,
+        contactName: `Facebook User ${senderId}`,
+        lastMessage: message.text || '',
+        platform: 'Facebook',
+        unreadCount: admin.firestore.FieldValue.increment(1),
+        lastUpdate: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: new Date().toISOString(),
+        pageId: pageId,
+        senderId: senderId,
+      }, { merge: true });
+
+    console.log('✅ Message stored for real-time updates');
+
+  } catch (error) {
+    console.error('❌ Error handling incoming message:', error);
+  }
+}

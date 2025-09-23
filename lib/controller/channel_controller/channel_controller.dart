@@ -940,27 +940,57 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
 
       print('🔍 Looking for access token for page: $pageId, user: $userId');
 
-      final doc = await _firestore
+      // Check Firebase Functions collection first (where tokens are actually stored)
+      print('🔍 Checking Firebase Functions collection...');
+      final functionsDoc = await _firestore
+          .collection('integrations')
+          .doc('facebook')
+          .collection('pages')
+          .doc(pageId)
+          .get();
+
+      if (functionsDoc.exists) {
+        final data = functionsDoc.data()!;
+        final token = data['pageAccessToken'] as String?;
+        
+        if (token != null && token.isNotEmpty) {
+          print('✅ Found access token in Firebase Functions collection');
+          print('🔑 Token preview: ${token.substring(0, 10)}...');
+          return token;
+        } else {
+          print('❌ No access token in Firebase Functions collection');
+        }
+      } else {
+        print('⚠️ No document found in Firebase Functions collection');
+      }
+
+      // Fallback to secure_tokens collection (Flutter app storage)
+      print('🔍 Checking secure_tokens collection...');
+      final secureDoc = await _firestore
           .collection('secure_tokens')
           .doc(userId)
           .get();
 
-      if (doc.exists) {
-        final data = doc.data()!;
+      if (secureDoc.exists) {
+        final data = secureDoc.data()!;
         final pageTokens = data['facebookPageTokens'] as Map<String, dynamic>?;
         final token = pageTokens?[pageId] as String?;
 
-        if (token != null) {
-          print('✅ Found access token for page: $pageId');
+        if (token != null && token.isNotEmpty) {
+          print('✅ Found access token in secure_tokens collection');
+          print('🔑 Token preview: ${token.substring(0, 10)}...');
           return token;
         } else {
-          print('⚠️ No access token found for page: $pageId');
+          print('❌ No access token found for page: $pageId');
           print('📋 Available page tokens: ${pageTokens?.keys.toList()}');
         }
       } else {
         print('⚠️ No secure_tokens document found for user: $userId');
+        print('💡 This means Facebook page was not properly connected');
+        print('💡 User needs to reconnect Facebook page with access token');
       }
 
+      print('❌ No access token found in any collection');
       return null;
     } catch (e) {
       print('❌ Error getting page access token: $e');
