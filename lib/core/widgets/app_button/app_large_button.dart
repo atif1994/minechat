@@ -6,7 +6,7 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 class AppLargeButton extends StatelessWidget {
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool isEnabled;
   final bool isLoading;
   final bool useGradient;
@@ -23,7 +23,7 @@ class AppLargeButton extends StatelessWidget {
     this.useGradient = true,
     this.solidColor,
     this.borderColor,
-    this.textColor,
+    this.textColor = AppColors.white,
   });
 
   @override
@@ -76,7 +76,7 @@ class AppLargeButton extends StatelessWidget {
                   style: AppTextStyles.buttonText(context).copyWith(
                       fontSize: font,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.white),
+                      color: textColor),
                 ),
               ],
             ),

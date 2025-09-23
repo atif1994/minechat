@@ -1,5 +1,3 @@
-
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
@@ -8,6 +6,7 @@ import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/widgets/app_button/app_large_button.dart';
 
 // Import channel widgets
 import 'package:minechat/core/widgets/channels/index.dart';
@@ -41,9 +40,9 @@ class ChannelsScreen extends StatelessWidget {
 
           // Action Buttons
           _buildActionButtons(context, channelController, isDark),
-          
+
           // Debug Button (temporary)
-          _buildDebugButton(context, channelController),
+          // _buildDebugButton(context, channelController),
         ],
       ),
     );
@@ -76,74 +75,71 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChannelSelector(BuildContext context, ChannelController controller) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Select Channel Type',
-            style: AppTextStyles.bodyText(context).copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+  Widget _buildChannelSelector(
+      BuildContext context, ChannelController controller) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Select Channel Type',
+          style: AppTextStyles.bodyText(context).copyWith(
+            fontWeight: FontWeight.w600,
           ),
-          AppSpacing.vertical(context, 0.01),
+        ),
+        AppSpacing.vertical(context, 0.01),
 
-          // Channel Dropdown
-          Obx(() => DropdownButtonFormField<String>(
-            value: controller.selectedChannel.value,
-            decoration: InputDecoration(
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+        // Channel Dropdown
+        Obx(() => DropdownButtonFormField<String>(
+              value: controller.selectedChannel.value,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            ),
-            items: controller.availableChannels.map((channel) {
-              return DropdownMenuItem<String>(
-                value: channel['name'],
-                child: Row(
-                  children: [
-                    Text(channel['icon']),
-                    SizedBox(width: 8),
-                    Text(channel['name']),
-                    if (channel['isConnected'] == true)
-                      Container(
-                        margin: EdgeInsets.only(left: 8),
-                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.green,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'Connected',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
+              items: controller.availableChannels.map((channel) {
+                return DropdownMenuItem<String>(
+                  value: channel['name'],
+                  child: Row(
+                    children: [
+                      Text(channel['icon']),
+                      SizedBox(width: 8),
+                      Text(channel['name']),
+                      if (channel['isConnected'] == true)
+                        Container(
+                          margin: EdgeInsets.only(left: 8),
+                          padding:
+                              EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Connected',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                controller.selectedChannel.value = value;
-              }
-            },
-          )),
-        ],
-      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  controller.selectedChannel.value = value;
+                }
+              },
+            )),
+      ],
     );
   }
 
-  Widget _buildChannelContent(BuildContext context, ChannelController controller) {
+  Widget _buildChannelContent(
+      BuildContext context, ChannelController controller) {
     return Obx(() {
       final selectedChannel = controller.selectedChannel.value;
 
@@ -151,7 +147,8 @@ class ChannelsScreen extends StatelessWidget {
         case 'Website':
           return WebsiteChannelWidget(controller: controller);
         case 'Messenger':
-          return MessengerChannelWidget(controller: controller);
+          return _buildMessengerSection(context, controller);
+        // return MessengerChannelWidget(controller: controller);
         case 'Instagram':
           return InstagramChannelWidget();
         case 'WhatsApp':
@@ -188,93 +185,208 @@ class ChannelsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ChannelController controller, bool isDark) {
+  Widget _buildActionButtons(
+      BuildContext context, ChannelController controller, bool isDark) {
     return Row(
       children: [
         // Cancel Button
         Expanded(
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              border: Border.all(
-                  color: isDark
-                      ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
-                      : Color(0XFFEBEDF0)),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: TextButton(
-              onPressed: () {
-                controller.loadChannelSettings();
-                Get.snackbar(
-                  'Cancelled',
-                  'Changes have been cancelled',
-                  backgroundColor: Colors.orange,
-                  colorText: Colors.white,
-                );
-              },
-              style: TextButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: Text(
-                'Cancel',
-                style: TextStyle(
-                  color: isDark ? AppColors.white : AppColors.black,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
+          child: AppLargeButton(
+            borderColor: isDark
+                ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                : Color(0XFFEBEDF0),
+            useGradient: false,
+            solidColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+            textColor: isDark ? Color(0XFFFFFFFF) : Color(0XFF1D1D1D),
+            label: 'Cancel',
+            onTap: () {
+              controller.loadChannelSettings();
+              Get.snackbar(
+                'Cancelled',
+                'Changes have been cancelled',
+                backgroundColor: Colors.orange,
+                colorText: Colors.white,
+              );
+            },
           ),
         ),
         const SizedBox(width: 12),
 
         // Save Changes Button
         Expanded(
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Obx(() => TextButton(
-              onPressed: controller.isLoading.value
+          child: Obx(
+            () => AppLargeButton(
+              label: 'Save Changes',
+              onTap: controller.isLoading.value
                   ? null
                   : controller.saveChannelSettings,
-              style: TextButton.styleFrom(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: controller.isLoading.value
-                  ? const CircularProgressIndicator()
-                  : Text(
-                'Save Changes',
-                style: TextStyle(
-                  color: AppColors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            )),
+              isLoading: controller.isLoading.value,
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildDebugButton(BuildContext context, ChannelController channelController) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: ElevatedButton(
-        onPressed: () {
-          channelController.debugFacebookConnection();
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+  Widget _buildMessengerSection(BuildContext context, ChannelController c) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Heading
+        Text(
+          'Connect Your Facebook Business Chat',
+          style: AppTextStyles.bodyText(context)
+              .copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+
+        // Info panel
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F1115) : const Color(0xFFF5F7FF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+                color: isDark ? Colors.white12 : const Color(0xFFE6EBFF)),
+          ),
+          child: const Text(
+            'Please make sure you are logged in on the Facebook page you wish to connect with.',
+            style: TextStyle(fontSize: 13),
+          ),
+        ),
+        const SizedBox(height: 16),
+
+        // Row 1: Disconnect + Connect Facebook
+        Row(
+          children: [
+            Expanded(
+                child: AppLargeButton(
+                    borderColor: isDark
+                        ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                        : Color(0XFFEBEDF0),
+                    useGradient: false,
+                    solidColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+                    textColor: isDark ? Color(0XFFFFFFFF) : Color(0XFF1D1D1D),
+                    label: 'Disconnect',
+                    onTap: () => c.disconnectFacebook())),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => AppLargeButton(
+                    label: c.isConnectingFacebook.value
+                        ? 'Connecting...'
+                        : (c.isFacebookConnected.value
+                            ? 'Connected'
+                            : 'Connect Facebook'),
+                    onTap: (c.isConnectingFacebook.value ||
+                            c.isFacebookConnected.value)
+                        ? null
+                        : () async {
+                            await c.connectFacebook(); // backend stays the same
+                          },
+                  )),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+
+        // Row 2: Disconnect + Pause Facebook AI
+        Row(
+          children: [
+            Expanded(
+                child: AppLargeButton(
+                    borderColor: isDark
+                        ? Color(0XFFFFFFFF).withValues(alpha: 0.12)
+                        : Color(0XFFEBEDF0),
+                    useGradient: false,
+                    solidColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+                    textColor: isDark ? Color(0XFFFFFFFF) : Color(0XFF1D1D1D),
+                    label: 'Disconnect',
+                    onTap: () => c.disconnectFacebook())),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Obx(() => AppLargeButton(
+                    label: c.isFacebookAIPaused.value
+                        ? 'Resume Facebook AI'
+                        : 'Pause Facebook AI',
+                    onTap: c.toggleFacebookAI,
+                  )),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _gradientButton({
+    required BuildContext context,
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return Opacity(
+      opacity: onPressed == null ? 0.7 : 1,
+      child: GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+              colors: [
+                Color(0xFFB01E5A),
+                Color(0xFFC93E8C)
+              ], // matches your pill style
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                  color: Color(0x1A000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 3)),
+            ],
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              fontSize: 14,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _outlineButton({
+    required BuildContext context,
+    required String label,
+    required VoidCallback onPressed,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        height: 44,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1D1D1D) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: isDark ? Colors.white12 : const Color(0xFFEBEDF0)),
         ),
         child: Text(
-          'Debug Facebook Connection',
-          style: TextStyle(color: Colors.white),
+          label,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white : Colors.black,
+            fontSize: 14,
+          ),
         ),
       ),
     );

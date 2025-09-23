@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
@@ -11,181 +16,74 @@ class ChatScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            _buildHeader(context),
-            
-            // Search Bar
-            _buildSearchBar(context),
-            
-            // Filter Tabs
-            _buildFilterTabs(context),
-            
-            // Chat List
-            Expanded(
-              child: _buildChatList(context),
+    final themeController = Get.find<ThemeController>();
+    return Obx(
+      () {
+        final isDark = themeController.isDarkMode;
+        return Scaffold(
+          backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
+          appBar: AppBar(
+            title: Text(
+              "Chat",
+              style: AppTextStyles.bodyText(context).copyWith(
+                  fontSize: AppResponsive.scaleSize(context, 20),
+                  fontWeight: FontWeight.w600),
             ),
-          ],
-        ),
-      ),
-      
-      // Floating Action Button for quick refresh
-
-      
-      // Floating Action Button Location
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Text(
-            'Chat',
-            style: AppTextStyles.heading(context),
+            backgroundColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+            elevation: 0,
+            actionsPadding: AppSpacing.symmetric(context, v: 0, h: 0.03),
+            actions: [
+              CreateNewChatButton(chatController: chatController),
+            ],
           ),
-          const Spacer(),
-          
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Search Bar
+                ChatSearchBar(isDark: isDark, chatController: chatController),
 
+                // Filter Tabs
+                _buildFilterTabs(context),
 
-          // // Last refresh time
-          // Obx(() => Text(
-          //   chatController.timeSinceLastRefresh,
-          //   style: TextStyle(
-          //     fontSize: 12,
-          //     color: Colors.grey[600],
-          //   ),
-          // )),
-          //
-          // const SizedBox(width: 8),
-          //
-          // // Refresh Button
-          // IconButton(
-          //   onPressed: () => chatController.refreshChats(),
-          //   icon: Obx(() => Icon(
-          //     chatController.isRefreshing ? Icons.hourglass_empty : Icons.refresh,
-          //     color: chatController.isRefreshing ? Colors.orange : Colors.blue,
-          //   )),
-          //   tooltip: 'Refresh Chats',
-          // ),
-          
-          const SizedBox(width: 8),
-          
-          GestureDetector(
-            onTap: () => chatController.toggleCreateNewDropdown(),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.red,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.add,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Create New',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
+                // Chat List
+                Expanded(
+                  child: _buildChatList(context),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.grey[100],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.search,
-                    color: Colors.grey[600],
-                    size: 20,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: TextField(
-                      onChanged: (value) => chatController.searchChats(value),
-                      decoration: InputDecoration(
-                        hintText: 'Search',
-                        hintStyle: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.purple,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.message,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildFilterTabs(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Container(
+      margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration:
+          BoxDecoration(color: isDark
+              ? Color(0XFF1D1D1D)
+              : Color(0XFFFFFFFF)),
       child: Row(
         children: [
-          _buildFilterTab('Inbox'),
+          _buildFilterTab('Inbox', context),
           const SizedBox(width: 16),
-          _buildFilterTab('Unread'),
+          _buildFilterTab('Unread', context),
           const SizedBox(width: 16),
-          _buildFilterTab('Groups'),
+          _buildFilterTab('Groups', context),
           const SizedBox(width: 16),
-          _buildFilterTab('Filter'),
+          _buildFilterTab('Filter', context),
         ],
       ),
     );
   }
 
-  Widget _buildFilterTab(String title) {
+  Widget _buildFilterTab(String title, BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Obx(() {
       final isSelected = chatController.selectedFilter.value == title;
       return GestureDetector(
@@ -199,13 +97,14 @@ class ChatScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            color: isSelected
+                ? isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
           ),
           child: Text(
             title,
             style: TextStyle(
-              color: isSelected ? Colors.white : Colors.grey[600],
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
             ),
@@ -216,117 +115,105 @@ class ChatScreen extends StatelessWidget {
   }
 
   Widget _buildChatList(BuildContext context) {
-    return Stack(
-      children: [
-        // Chat List
-        Obx(() {
-          if (chatController.isLoading.value) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+    return Container(
+      decoration:
+          BoxDecoration(color: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF)),
+      child: Stack(
+        children: [
+          // Chat List
+          Obx(() {
+            if (chatController.isLoading.value) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
 
-          if (chatController.filteredChatList.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.chat_bubble_outline,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No chats found',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[600],
+            if (chatController.filteredChatList.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 64,
+                      color: Colors.grey[400],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Connect your Facebook page to see real conversations',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
+                    const SizedBox(height: 16),
+                    Text(
+                      'No chats found',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  // ElevatedButton.icon(
-                  //   onPressed: () => Get.toNamed('/setup'),
-                  //   icon: const Icon(Icons.settings),
-                  //   label: const Text('Setup Channels'),
-                  //   style: ElevatedButton.styleFrom(
-                  //     backgroundColor: Colors.blue,
-                  //     foregroundColor: Colors.white,
-                  //   ),
-                  // ),
-                ],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Connect your Facebook page to see real conversations',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () => chatController.refreshChats(),
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: chatController.filteredChatList.length,
+                itemBuilder: (context, index) {
+                  final chat = chatController.filteredChatList[index];
+                  final String contactName =
+                      chat['contactName'] ?? 'Unknown User';
+                  final String profileImageUrl = chat['profileImageUrl'] ?? '';
+                  print(contactName);
+                  print(profileImageUrl);
+                  return _buildChatItem(chat, context);
+                },
               ),
             );
-          }
+          }),
 
-          return RefreshIndicator(
-            onRefresh: () => chatController.refreshChats(),
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: chatController.filteredChatList.length,
-              itemBuilder: (context, index) {
-                final chat = chatController.filteredChatList[index];
-                final String contactName = chat['contactName'] ?? 'Unknown User';
-                final String profileImageUrl = chat['profileImageUrl'] ?? '';
-                print(contactName);
-                print(profileImageUrl);
-                return _buildChatItem(chat);
-              },
-            ),
-          );
-        }),
+          // Create New Dropdown
+          Positioned(
+            top: 0,
+            right: 16,
+            child: Obx(() => chatController.isCreateNewDropdownOpen.value
+                ? _buildCreateNewDropdown()
+                : const SizedBox.shrink()),
+          ),
 
-        // Create New Dropdown
-        Positioned(
-          top: 0,
-          right: 16,
-          child: Obx(() => chatController.isCreateNewDropdownOpen.value
-              ? _buildCreateNewDropdown()
-              : const SizedBox.shrink()),
-        ),
-
-        // Filter Dropdown
-        Positioned(
-          top: 0,
-          right: 16,
-          child: Obx(() => chatController.isFilterDropdownOpen.value
-              ? _buildFilterDropdown()
-              : const SizedBox.shrink()),
-        ),
-      ],
+          // Filter Dropdown
+          Positioned(
+            top: 0,
+            right: 16,
+            child: Obx(() => chatController.isFilterDropdownOpen.value
+                ? _buildFilterDropdown()
+                : const SizedBox.shrink()),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildChatItem(Map<String, dynamic> chat) {
+  Widget _buildChatItem(Map<String, dynamic> chat, BuildContext context) {
     return GestureDetector(
       onTap: () {
         chatController.markAsRead(chat['id']);
         Get.to(() => ChatConversationScreen(chat: chat));
       },
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.only(top: 16, bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
         ),
         child: Row(
           children: [
@@ -350,23 +237,6 @@ class ChatScreen extends StatelessWidget {
                         )
                       : null,
                 ),
-                // Platform indicator
-                  Positioned(
-                  right: -2,
-                  bottom: -2,
-                    child: Container(
-                    padding: const EdgeInsets.all(2),
-                      decoration: BoxDecoration(
-                      color: Colors.white,
-                        shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey[300]!, width: 1),
-                    ),
-                    child: Text(
-                      chat['platformIcon'] ?? '💬',
-                      style: const TextStyle(fontSize: 10),
-                      ),
-                    ),
-                  ),
               ],
             ),
             const SizedBox(width: 12),
@@ -381,35 +251,22 @@ class ChatScreen extends StatelessWidget {
                       Expanded(
                         child: Text(
                           chat['contactName'],
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
+                          style: AppTextStyles.bodyText(context),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        chatController.getTimeDisplay(chat['timestamp']),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
-                        ),
-                      ),
+                      Text(chatController.getTimeDisplay(chat['timestamp']),
+                          style: AppTextStyles.hintText(context)),
                     ],
                   ),
-                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
                           chat['lastMessage'] ?? '',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[600],
-                          ),
+                          style: AppTextStyles.hintText(context),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -445,43 +302,32 @@ class ChatScreen extends StatelessWidget {
   }
 
   Widget _buildCreateNewDropdown() {
+    final opts = chatController.createNewOptions;
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: chatController.availableChannels.map((channel) {
+        children: opts.map((o) {
+          final disabled = !(o['enabled'] as bool);
           return GestureDetector(
-            onTap: () => chatController.createNewChat(channel['name']),
+            onTap: disabled
+                ? null
+                : () => chatController.onCreateNewOptionTap(o['key']),
             child: Container(
-              width: 200,
+              width: 220,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  Text(
-                    channel['icon'],
-                    style: const TextStyle(fontSize: 18),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    channel['name'],
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
+              child: Text(
+                o['label'],
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           );
@@ -491,19 +337,13 @@ class ChatScreen extends StatelessWidget {
   }
 
   Widget _buildFilterDropdown() {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Container(
       margin: const EdgeInsets.only(top: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -548,5 +388,108 @@ class ChatScreen extends StatelessWidget {
       default:
         return Colors.grey[600] ?? Colors.grey;
     }
+  }
+}
+
+class CreateNewChatButton extends StatelessWidget {
+  const CreateNewChatButton({
+    super.key,
+    required this.chatController,
+  });
+
+  final ChatController chatController;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => chatController.toggleCreateNewDropdown(),
+      child: Container(
+        padding: AppSpacing.symmetric(context, h: 0.03, v: 0.007),
+        decoration: BoxDecoration(
+          borderRadius:
+              BorderRadius.circular(AppResponsive.radius(context)), // full pill
+        ).withAppGradient,
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add, color: Colors.white, size: 18),
+            SizedBox(width: 8),
+            Text(
+              'Create New',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                letterSpacing: .2,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ChatSearchBar extends StatelessWidget {
+  const ChatSearchBar({
+    super.key,
+    required this.isDark,
+    required this.chatController,
+  });
+
+  final bool isDark;
+  final ChatController chatController;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.search,
+                    color: Colors.grey[600],
+                    size: 25,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      onChanged: (value) => chatController.searchChats(value),
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        hintStyle: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SvgPicture.asset(AppAssets.socialMessengerLight)),
+        ],
+      ),
+    );
   }
 }
