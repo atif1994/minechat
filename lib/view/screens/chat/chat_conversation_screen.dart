@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
@@ -10,6 +11,7 @@ import 'package:minechat/core/services/realtime_message_service.dart';
 // AI imports removed
 
 class ChatConversationScreen extends StatelessWidget {
+  final themeController = Get.find<ThemeController>();
   final Map<String, dynamic> chat;
   final conversationController = Get.put(ChatConversationController());
 
@@ -19,30 +21,38 @@ class ChatConversationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     // Pass chat data to controller
     conversationController.setChatData(chat);
-    
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: _buildAppBar(context),
-      body: Column(
-        children: [
-          // AI Enabled indicator
-          _buildAIEnabledIndicator(),
-          
-          // Messages
-          Expanded(
-            child: _buildMessagesList(),
+
+    return Obx(
+      () {
+        final isDark = themeController.isDarkMode;
+        return Scaffold(
+          backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
+          appBar: _buildAppBar(context),
+          body: Column(
+            children: [
+              // AI Enabled indicator
+              _buildAIEnabledIndicator(),
+
+              // Messages
+              Expanded(
+                child: _buildMessagesList(),
+              ),
+
+              // Message Input
+              _buildMessageInput(),
+            ],
           ),
-          
-          // Message Input
-          _buildMessageInput(),
-        ],
-      ),
+        );
+      },
     );
   }
 
   PreferredSizeWidget _buildAppBar(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return AppBar(
-      backgroundColor: const Color(0xFF075E54), // WhatsApp green
+      backgroundColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+      // WhatsApp green
       elevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -96,49 +106,49 @@ class ChatConversationScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                  Text(
-                    chat['contactName'] ?? 'Unknown',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                Text(
+                  chat['contactName'] ?? 'Unknown',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    // TODO: Navigate to profile
+                    Get.snackbar('Info', 'Viewing profile...');
+                  },
+                  child: const Text(
+                    'View profile',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      // TODO: Navigate to profile
-                      Get.snackbar('Info', 'Viewing profile...');
-                    },
-                    child: const Text(
-                      'View profile',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
+                ),
               ],
             ),
           ),
         ],
       ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.smart_toy, color: Colors.white),
-            onPressed: () {
-              // AI assistant toggle
-              Get.snackbar('Info', 'AI Assistant toggled...');
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person, color: Colors.white),
-            onPressed: () {
-              // View profile
-              Get.snackbar('Info', 'Viewing profile...');
-            },
-          ),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.smart_toy, color: Colors.white),
+          onPressed: () {
+            // AI assistant toggle
+            Get.snackbar('Info', 'AI Assistant toggled...');
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.person, color: Colors.white),
+          onPressed: () {
+            // View profile
+            Get.snackbar('Info', 'Viewing profile...');
+          },
+        ),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
           onSelected: (value) {
             switch (value) {
               case 'add_to_group':
@@ -235,7 +245,7 @@ class ChatConversationScreen extends StatelessWidget {
           ),
         );
       }
-      
+
       // Show no messages message only after loading is complete
       if (conversationController.messages.isEmpty) {
         return const Center(
@@ -273,18 +283,20 @@ class ChatConversationScreen extends StatelessWidget {
   Widget _buildMessageItem(Map<String, dynamic> message) {
     final isFromUser = message['isFromUser'] ?? false;
     final isAI = message['isAI'] ?? false;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment: isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Avatar only for incoming messages (left side)
           if (!isFromUser) ...[
             CircleAvatar(
               radius: 16,
-              backgroundColor: isAI ? const Color(0xFF25D366) : const Color(0xFF25D366),
+              backgroundColor:
+                  isAI ? const Color(0xFF25D366) : const Color(0xFF25D366),
               child: Icon(
                 isAI ? Icons.smart_toy : Icons.person,
                 color: Colors.white,
@@ -293,17 +305,20 @@ class ChatConversationScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
-          
+
           // Message bubble
           Flexible(
             child: Column(
-              crossAxisAlignment: isFromUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isFromUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 Container(
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(Get.context!).size.width * 0.7,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: isFromUser ? const Color(0xFFDCF8C6) : Colors.white,
                     borderRadius: BorderRadius.only(
@@ -346,7 +361,7 @@ class ChatConversationScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           // Avatar only for outgoing messages (right side)
           if (isFromUser) ...[
             const SizedBox(width: 8),
@@ -388,7 +403,7 @@ class ChatConversationScreen extends StatelessWidget {
             },
             icon: const Icon(Icons.emoji_emotions, color: Colors.grey),
           ),
-          
+
           // Text input field
           Expanded(
             child: Container(
@@ -415,7 +430,7 @@ class ChatConversationScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Attachment buttons
           IconButton(
             onPressed: () {
@@ -438,7 +453,7 @@ class ChatConversationScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           IconButton(
             onPressed: () {
               // TODO: Show image picker
@@ -446,7 +461,7 @@ class ChatConversationScreen extends StatelessWidget {
             },
             icon: const Icon(Icons.add_photo_alternate, color: Colors.grey),
           ),
-          
+
           IconButton(
             onPressed: () {
               // TODO: Start voice recording
@@ -454,38 +469,39 @@ class ChatConversationScreen extends StatelessWidget {
             },
             icon: const Icon(Icons.mic, color: Colors.grey),
           ),
-          
-            // Send button
-            Obx(() => Container(
-              margin: const EdgeInsets.only(left: 8),
-              child: IconButton(
-                onPressed: conversationController.isSending.value 
-                    ? null 
-                    : conversationController.sendMessage,
-                icon: conversationController.isSending.value
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF25D366)),
+
+          // Send button
+          Obx(() => Container(
+                margin: const EdgeInsets.only(left: 8),
+                child: IconButton(
+                  onPressed: conversationController.isSending.value
+                      ? null
+                      : conversationController.sendMessage,
+                  icon: conversationController.isSending.value
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF25D366)),
+                          ),
+                        )
+                      : Container(
+                          width: 36,
+                          height: 36,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF25D366),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.send,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
-                      )
-                    : Container(
-                        width: 36,
-                        height: 36,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF25D366),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.send,
-                          color: Colors.white,
-                          size: 18,
-                        ),
-                      ),
-              ),
-            )),
+                ),
+              )),
         ],
       ),
     );
@@ -533,33 +549,34 @@ class ChatConversationScreen extends StatelessWidget {
 class ChatConversationController extends GetxController {
   final messageController = TextEditingController();
   var messages = <Map<String, dynamic>>[].obs;
+
   // AI mode removed
   var isLoading = true.obs; // Add loading state
   var isSending = false.obs; // Add sending state
-  
+
   // Facebook conversation data
   String? conversationId;
   String? userId; // Store the user ID for sending messages
   String? pageAccessToken;
   String? facebookPageId;
-  
+
   // Real-time service
   final RealtimeMessageService _realtimeService = RealtimeMessageService();
-  
+
   // Message polling timer
   Timer? _messagePollingTimer;
-  
+
   // Scroll controller for auto-scrolling to bottom
   final ScrollController _scrollController = ScrollController();
-  
+
   // AI Assistant controller removed
-  
+
   @override
   void onInit() {
     super.onInit();
     print('🔍 ChatConversationController initialized');
   }
-  
+
   /// Set chat data and initialize conversation
   void setChatData(Map<String, dynamic> chat) {
     conversationId = chat['conversationId'] ?? chat['id'];
@@ -567,7 +584,7 @@ class ChatConversationController extends GetxController {
     print('🔍 Setting chat data for conversation: $conversationId');
     print('🔍 User ID: $userId');
     print('📋 Chat data: $chat');
-    
+
     // Load real messages
     loadMessages();
   }
@@ -577,23 +594,22 @@ class ChatConversationController extends GetxController {
     try {
       isLoading.value = true; // Start loading
       print('📥 Loading messages for conversation: $conversationId');
-      
+
       // Get Facebook credentials
       await _getFacebookCredentials();
-      
+
       if (pageAccessToken == null || facebookPageId == null) {
         print('⚠️ No Facebook credentials available, trying to get them...');
         // Don't load mock messages, try to get real credentials
         isLoading.value = false; // Stop loading
         return;
       }
-      
+
       // Load real messages from Facebook API
       await _loadFacebookMessages();
-      
+
       // Start polling for new messages in this conversation
       _startMessagePolling();
-      
     } catch (e) {
       print('❌ Error loading messages: $e');
       // Don't load mock messages, show error instead
@@ -607,73 +623,83 @@ class ChatConversationController extends GetxController {
       isLoading.value = false; // Always stop loading
     }
   }
-  
+
   /// Get Facebook credentials from ChannelController
   Future<void> _getFacebookCredentials() async {
     try {
       final channelController = Get.find<ChannelController>();
       facebookPageId = channelController.facebookPageIdCtrl.text.trim();
-      
+
       if (facebookPageId!.isNotEmpty) {
-        pageAccessToken = await channelController.getPageAccessToken(facebookPageId!);
-        print('✅ Got Facebook credentials - Page: $facebookPageId, Token: ${pageAccessToken?.substring(0, 10)}...');
+        pageAccessToken =
+            await channelController.getPageAccessToken(facebookPageId!);
+        print(
+            '✅ Got Facebook credentials - Page: $facebookPageId, Token: ${pageAccessToken?.substring(0, 10)}...');
       } else {
         // Use the updated token from config if no page ID is set
         print('⚠️ No page ID found, using config token');
-        pageAccessToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
+        pageAccessToken =
+            'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
         facebookPageId = '313808701826338'; // Use the page ID from your token
         print('✅ Using config token for page: $facebookPageId');
       }
-      
+
       // Get valid token with automatic refresh if needed
       final validToken = await FacebookGraphApiService.getValidToken();
       if (validToken != null) {
         pageAccessToken = validToken;
-        print('🔄 Using automatically refreshed token: ${validToken.substring(0, 10)}...');
+        print(
+            '🔄 Using automatically refreshed token: ${validToken.substring(0, 10)}...');
       }
     } catch (e) {
       print('❌ Error getting Facebook credentials: $e');
       // Fallback to config token
-      pageAccessToken = 'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
+      pageAccessToken =
+          'EAAU0kNg5hEMBPYZA62EkNSGUM0V3syrYypZCBzxj9gyCGwozFsIk7dGfNZCCKopy97elvldckz9uwDWHiiohawQ9nVsYVTRXbMeIm0BY1ZBgX9LfWEa3F3EcyjeXtfbgusQR7PbtuZCzIAzkfg64Iqswu07l0YxWqQLTZBxAYx6wDvMDFBNvpzDbIJ4bYOfWcZCqJ4PStlXzw0xveZCKtO49CGMaiaJo9H10EvLAq6Mjy9sybUmm';
       facebookPageId = '313808701826338';
     }
   }
-  
+
   /// Load real messages from Facebook Graph API
   Future<void> _loadFacebookMessages() async {
     try {
       print('🔍 Loading Facebook messages for conversation: $conversationId');
-      
+
       // First check token permissions
-      final permissionsResult = await FacebookGraphApiService.checkTokenPermissions(pageAccessToken!);
+      final permissionsResult =
+          await FacebookGraphApiService.checkTokenPermissions(pageAccessToken!);
       if (permissionsResult['success']) {
         print('✅ Token permissions: ${permissionsResult['data']}');
       } else {
         print('⚠️ Could not check permissions: ${permissionsResult['error']}');
       }
-      
+
       // Get messages from Facebook API
-      final messagesResult = await FacebookGraphApiService.getConversationMessagesWithToken(
+      final messagesResult =
+          await FacebookGraphApiService.getConversationMessagesWithToken(
         conversationId!,
         pageAccessToken!,
       );
-      
+
       if (messagesResult['success'] && messagesResult['data'] != null) {
         final facebookData = messagesResult['data'] as List;
         final dataType = messagesResult['type'] ?? 'unknown';
-        print('📊 Found ${facebookData.length} Facebook data items (type: $dataType)');
-        
+        print(
+            '📊 Found ${facebookData.length} Facebook data items (type: $dataType)');
+
         // Convert Facebook messages to our format
         final convertedMessages = <Map<String, dynamic>>[];
-        
+
         for (final message in facebookData) {
           final isFromUser = message['from']?['id'] != facebookPageId;
           final messageText = message['message'] ?? '';
-          final timestamp = message['created_time'] ?? DateTime.now().toIso8601String();
-          
+          final timestamp =
+              message['created_time'] ?? DateTime.now().toIso8601String();
+
           if (messageText.isNotEmpty) {
             convertedMessages.add({
-              'id': message['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+              'id': message['id'] ??
+                  DateTime.now().millisecondsSinceEpoch.toString(),
               'text': messageText,
               'timestamp': _formatTimestamp(timestamp),
               'isFromUser': isFromUser,
@@ -682,18 +708,19 @@ class ChatConversationController extends GetxController {
             });
           }
         }
-        
+
         // Sort messages by timestamp (oldest first)
-        convertedMessages.sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
-        
+        convertedMessages
+            .sort((a, b) => a['timestamp'].compareTo(b['timestamp']));
+
         messages.value = convertedMessages;
         print('✅ Loaded ${convertedMessages.length} real Facebook messages');
-        
+
         // Auto-scroll to bottom after loading messages
         _scrollToBottom();
-        
       } else {
-        print('⚠️ Failed to load Facebook messages: ${messagesResult['error']}');
+        print(
+            '⚠️ Failed to load Facebook messages: ${messagesResult['error']}');
         Get.snackbar(
           'Error',
           'Failed to load Facebook messages: ${messagesResult['error']}',
@@ -701,7 +728,6 @@ class ChatConversationController extends GetxController {
           colorText: Colors.white,
         );
       }
-      
     } catch (e) {
       print('❌ Error loading Facebook messages: $e');
       Get.snackbar(
@@ -712,7 +738,7 @@ class ChatConversationController extends GetxController {
       );
     }
   }
-  
+
   /// Load mock messages as fallback
   void _loadMockMessages() {
     print('📝 Loading mock messages as fallback');
@@ -737,16 +763,16 @@ class ChatConversationController extends GetxController {
   /// Send message to Facebook Messenger
   Future<void> sendMessage() async {
     if (messageController.text.trim().isEmpty || isSending.value) return;
-    
+
     try {
       isSending.value = true; // Start sending
-      
+
       // Ensure we have credentials
       if (pageAccessToken == null || conversationId == null) {
         print('⚠️ No credentials, getting them...');
         await _getFacebookCredentials();
       }
-      
+
       if (pageAccessToken == null || conversationId == null) {
         print('❌ Cannot send message - no Facebook credentials available');
         Get.snackbar(
@@ -759,11 +785,11 @@ class ChatConversationController extends GetxController {
       }
 
       final messageText = messageController.text.trim();
-      
+
       print('📤 Sending message to Facebook: $messageText');
       print('📤 Using token: ${pageAccessToken!.substring(0, 20)}...');
       print('📤 To conversation: $conversationId');
-      
+
       // Add message to local list immediately
       final newMessage = {
         'id': DateTime.now().millisecondsSinceEpoch.toString(),
@@ -772,50 +798,52 @@ class ChatConversationController extends GetxController {
         'isFromUser': true,
         'isAI': false,
       };
-      
+
       messages.add(newMessage);
       print('📝 Added message to local list: $newMessage');
       print('📝 Total messages now: ${messages.length}');
       messageController.clear();
-      
+
       // Auto-scroll to bottom after adding new message
       _scrollToBottom();
-      
+
       // Store message in Firebase for real-time updates (non-blocking)
-      _realtimeService.storeMessage(
+      _realtimeService
+          .storeMessage(
         conversationId: conversationId!,
         messageText: messageText,
         isFromUser: true,
         platform: 'Facebook',
         senderId: 'current_user',
         senderName: 'You',
-      ).catchError((e) {
+      )
+          .catchError((e) {
         print('⚠️ Could not store message in Firebase: $e');
       });
-      
+
       // Send to Facebook API
-      final sendResult = await FacebookGraphApiService.sendMessageToConversation(
+      final sendResult =
+          await FacebookGraphApiService.sendMessageToConversation(
         conversationId!,
         pageAccessToken!,
         messageText,
         userId: userId, // Pass the user ID for proper messaging
       );
-      
+
       if (sendResult['success']) {
         print('✅ Message sent successfully to Facebook');
-        
+
         // Chat list update disabled to prevent alert dialogs
         // _updateChatListInBackground();
-        
+
         // AI response removed - no automatic AI responses
-        
       } else {
         print('❌ Failed to send message to Facebook: ${sendResult['error']}');
-        
+
         // Remove the message from local list since it failed
         messages.removeLast();
         messageController.text = messageText; // Restore the message text
-        
+
         // Show detailed error to user
         final errorMessage = sendResult['error']?.toString() ?? 'Unknown error';
         Get.snackbar(
@@ -826,7 +854,6 @@ class ChatConversationController extends GetxController {
           duration: Duration(seconds: 5),
         );
       }
-      
     } catch (e) {
       print('❌ Error sending message: $e');
       Get.snackbar(
@@ -839,9 +866,9 @@ class ChatConversationController extends GetxController {
       isSending.value = false; // Always stop sending
     }
   }
-  
+
   // AI response methods removed
-  
+
   /// Format timestamp from Facebook API
   String _formatTimestamp(String timestamp) {
     try {
@@ -862,28 +889,30 @@ class ChatConversationController extends GetxController {
   /// Handle real-time message updates
   void handleRealtimeMessage(Map<String, dynamic> messageData) {
     try {
-      print('📨 Conversation received real-time message: ${messageData['text']}');
-      
+      print(
+          '📨 Conversation received real-time message: ${messageData['text']}');
+
       final messageConversationId = messageData['conversationId'];
-      
+
       // Only handle messages for this conversation
       if (messageConversationId == conversationId) {
         final messageText = messageData['text'];
         final isFromUser = messageData['isFromUser'] ?? false;
         final timestamp = messageData['timestamp'] ?? _getCurrentTime();
-        
+
         // Add the message to the conversation
         final newMessage = {
-          'id': messageData['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          'id': messageData['id'] ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
           'text': messageText,
           'timestamp': timestamp,
           'isFromUser': isFromUser,
           'isAI': false, // Real messages are not AI
           'facebookMessageId': messageData['facebookMessageId'],
         };
-        
+
         messages.add(newMessage);
-        
+
         // Store the message in Firebase for real-time updates
         _realtimeService.storeMessage(
           conversationId: conversationId!,
@@ -893,10 +922,9 @@ class ChatConversationController extends GetxController {
           senderId: messageData['senderId'],
           senderName: messageData['senderName'],
         );
-        
+
         print('✅ Added real-time message to conversation');
       }
-      
     } catch (e) {
       print('❌ Error handling real-time message in conversation: $e');
     }
@@ -948,33 +976,35 @@ class ChatConversationController extends GetxController {
   Future<void> _pollForNewMessages() async {
     try {
       if (pageAccessToken == null || conversationId == null) return;
-      
+
       print('🔍 Polling for new messages in conversation: $conversationId');
-      
+
       // Get latest messages from Facebook API
-      final messagesResult = await FacebookGraphApiService.getConversationMessagesWithToken(
+      final messagesResult =
+          await FacebookGraphApiService.getConversationMessagesWithToken(
         conversationId!,
         pageAccessToken!,
       );
-      
+
       if (messagesResult['success'] && messagesResult['data'] != null) {
         final newMessages = messagesResult['data'] as List;
         print('📊 Polling found ${newMessages.length} messages');
-        
+
         // Check if we have new messages
         if (newMessages.isNotEmpty) {
           final latestMessage = newMessages.first;
           final latestMessageId = latestMessage['id'] as String?;
-          
+
           // Check if this is a new message we haven't seen
-          final existingMessageIds = messages.value.map((msg) => msg['id']).toList();
-          if (latestMessageId != null && !existingMessageIds.contains(latestMessageId)) {
+          final existingMessageIds =
+              messages.value.map((msg) => msg['id']).toList();
+          if (latestMessageId != null &&
+              !existingMessageIds.contains(latestMessageId)) {
             print('🆕 New message detected, refreshing conversation...');
             await loadMessages(); // Reload all messages
           }
         }
       }
-      
     } catch (e) {
       print('❌ Error polling for new messages: $e');
     }
@@ -987,4 +1017,3 @@ class ChatConversationController extends GetxController {
     super.onClose();
   }
 }
-
