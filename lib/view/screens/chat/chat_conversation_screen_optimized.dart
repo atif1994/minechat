@@ -12,11 +12,11 @@ import 'package:minechat/core/widgets/chat/ai_enabled_indicator_widget.dart';
 import 'package:minechat/core/widgets/common/loading_widgets.dart';
 
 /// Optimized Chat Conversation Screen - Reduced from 991 to ~200 lines
-class ChatConversationScreen extends StatelessWidget {
+class ChatConversationScreenOptimized extends StatelessWidget {
   final Map<String, dynamic> chat;
   final conversationController = Get.put(ChatConversationController());
 
-  ChatConversationScreen({required this.chat});
+  ChatConversationScreenOptimized({required this.chat});
 
   @override
   Widget build(BuildContext context) {

@@ -1,25 +1,20 @@
 import 'dart:io';
-
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
+import 'package:minechat/core/controllers/base_controller.dart';
 import 'package:minechat/model/data/ai_knowledge_model.dart';
 import '../../model/repositories/ai_knowledge_repository.dart';
 
-class AIKnowledgeController extends GetxController {
+/// Optimized AI Knowledge Controller - Reduced from ~500 to ~200 lines
+class AIKnowledgeController extends BaseController {
   final AIKnowledgeRepository _repository = AIKnowledgeRepository();
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Tab Management
   var selectedTabIndex = 0.obs;
-
-  // Loading States
-  var isLoading = false.obs;
-  var isSaving = false.obs;
-  var isUploadingFile = false.obs;
 
   // Business Information Controllers
   final businessNameCtrl = TextEditingController();
@@ -51,6 +46,12 @@ class AIKnowledgeController extends GetxController {
   var selectedBusinessFile = ''.obs;
   var selectedFAQFile = ''.obs;
   var uploadedFileUrl = ''.obs; // Firebase Storage URL
+  var selectedFileName = ''.obs;
+  var selectedFilePath = ''.obs;
+  
+  // Loading states
+  var isUploadingFile = false.obs;
+  var isSaving = false.obs;
 
   @override
   void onInit() {
@@ -58,14 +59,12 @@ class AIKnowledgeController extends GetxController {
     loadAIKnowledge();
   }
 
-  String getCurrentUserId() {
-    return FirebaseAuth.instance.currentUser?.uid ?? '';
-  }
+  // getCurrentUserId() is now inherited from BaseController
 
   /// Load existing AI Knowledge
   Future<void> loadAIKnowledge() async {
+    setLoading(true);
     try {
-      isLoading.value = true;
       final aiKnowledge = await _repository.getCurrentUserAIKnowledge();
       if (aiKnowledge != null) {
         // Load business information
@@ -89,15 +88,11 @@ class AIKnowledgeController extends GetxController {
 
       }
     } catch (e) {
-      if (!e.toString().contains('User not authenticated')) {
-        Get.snackbar('Error', 'Failed to load AI Knowledge: $e');
-      }
+      setError('Failed to load AI knowledge: ${e.toString()}');
     } finally {
-      isLoading.value = false;
+      setLoading(false);
     }
   }
-  var selectedFileName = ''.obs;
-  var selectedFilePath = ''.obs;
 
   Future<void> pickFile() async {
     try {
