@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
-import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/core/services/realtime_message_service.dart';
@@ -78,9 +76,12 @@ class ChatConversationScreen extends StatelessWidget {
         );
       }
 
+      final themeController = Get.find<ThemeController>();
+      final isDark = themeController.isDarkMode;
+
       return Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFFECE5DD), // WhatsApp-like background
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0XFF0A0A0A) : Colors.white,
         ),
         child: ListView.builder(
           controller: conversationController.scrollController,
@@ -149,9 +150,18 @@ class ChatConversationController extends GetxController {
     setLoading(true);
     try {
       final channelController = Get.find<ChannelController>();
-      facebookPageId = chatData?['pageId'];
-      pageAccessToken =
-          await channelController.getPageAccessToken(facebookPageId);
+      // Safely read pageId as String?
+      facebookPageId = chatData?['pageId'] as String?;
+
+      // Guard against null/empty pageId
+      final pageId = facebookPageId;
+      if (pageId == null || pageId.isEmpty) {
+        setLoading(false);
+        return;
+      }
+
+      // Now pass a non-null String
+      pageAccessToken = await channelController.getPageAccessToken(pageId);
 
       if (pageAccessToken == null || pageAccessToken!.isEmpty) {
         setLoading(false);
@@ -287,13 +297,14 @@ class ChatConversationController extends GetxController {
   }
 
   void setLoading(bool loading) => isLoading.value = loading;
+
   void setSending(bool sending) => isSending.value = sending;
 
   /// Polling
   void _startMessagePolling() {
     _messagePollingTimer?.cancel();
-    _messagePollingTimer =
-        Timer.periodic(const Duration(seconds: 10), (_) => _pollForNewMessages());
+    _messagePollingTimer = Timer.periodic(
+        const Duration(seconds: 10), (_) => _pollForNewMessages());
   }
 
   void _stopMessagePolling() {

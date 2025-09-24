@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 
 /// Reusable message input widget for chat conversations
 class MessageInputWidget extends StatelessWidget {
@@ -24,120 +26,141 @@ class MessageInputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
+
+    // Colors that match the screenshots
+    final pillBg = isDark ? const Color(0xFF1A1C20) : const Color(0xFFFFFFFF);
+    final pillBorder =
+        isDark ? const Color(0xFF2B3038) : const Color(0xFFE9EDF5);
+    final iconColor =
+        isDark ? const Color(0xFF8B93A6) : const Color(0xFF8B93A6);
+    final hintColor =
+        isDark ? const Color(0xFF939AA9) : const Color(0xFF939AA9);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 4,
-            offset: Offset(0, -1),
-          ),
-        ],
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0XFF0A0A0A) : Colors.white,
       ),
       child: Row(
         children: [
-          // Emoji button
-          IconButton(
-            onPressed: onEmojiTap ?? () {
-              Get.snackbar('Info', 'Emoji picker...');
-            },
-            icon: const Icon(Icons.emoji_emotions, color: Colors.grey),
-          ),
-          
-          // Text input field
+          // The pill input
           Expanded(
             child: Container(
+              height: 48,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(color: Colors.grey[300]!, width: 1),
+                color: pillBg,
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: pillBorder),
               ),
-              child: TextField(
-                controller: messageController,
-                decoration: const InputDecoration(
-                  hintText: 'Message',
-                  hintStyle: TextStyle(color: Colors.grey),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
+              child: Row(
+                children: [
+                  // Emoji
+                  _IconBtn(
+                    icon: Icons.emoji_emotions_outlined,
+                    color: iconColor,
+                    onTap: onEmojiTap ??
+                        () => Get.snackbar('Info', 'Emoji picker...'),
                   ),
-                ),
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => onSendMessage?.call(),
-                style: const TextStyle(fontSize: 16),
-              ),
-            ),
-          ),
-          
-          // Attachment buttons
-          IconButton(
-            onPressed: onGifTap ?? () {
-              Get.snackbar('Info', 'GIF picker...');
-            },
-            icon: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Text(
-                'GIF',
-                style: TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          ),
-          
-          IconButton(
-            onPressed: onImageTap ?? () {
-              _showImagePicker(context);
-            },
-            icon: const Icon(Icons.add_photo_alternate, color: Colors.grey),
-          ),
-          
-          IconButton(
-            onPressed: onVoiceTap ?? () {
-              Get.snackbar('Info', 'Voice recording...');
-            },
-            icon: const Icon(Icons.mic, color: Colors.grey),
-          ),
-          
-          // Send button
-          Obx(() => Container(
-            margin: const EdgeInsets.only(left: 8),
-            child: IconButton(
-              onPressed: isSending.value ? null : onSendMessage,
-              icon: isSending.value
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF25D366)),
+                  const SizedBox(width: 8),
+
+                  // TextField
+                  Expanded(
+                    child: TextField(
+                      controller: messageController,
+                      maxLines: 1,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => onSendMessage?.call(),
+                      decoration: InputDecoration(
+                        isCollapsed: true,
+                        hintText: 'Send a message',
+                        hintStyle: TextStyle(color: hintColor),
+                        border: InputBorder.none,
                       ),
-                    )
-                  : Container(
-                      width: 36,
-                      height: 36,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF25D366),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.send,
-                        color: Colors.white,
-                        size: 18,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1D1D1D),
+                        fontSize: 16,
                       ),
                     ),
+                  ),
+
+                  // Gif add
+                  _IconBtn(
+                    icon: Icons.gif_box_outlined,
+                    color: iconColor,
+                    onTap:
+                        onGifTap ?? () => Get.snackbar('Info', 'GIF picker...'),
+                  ),
+                  const SizedBox(width: 10),
+
+                  // Image add
+                  _IconBtn(
+                    icon: Icons.add_photo_alternate_outlined,
+                    color: iconColor,
+                    onTap: onImageTap ?? () => _showImagePicker(context),
+                  ),
+                  const SizedBox(width: 10),
+
+                  // Mic
+                  _IconBtn(
+                    icon: Icons.mic_none_rounded,
+                    color: iconColor,
+                    onTap: onVoiceTap ??
+                        () => Get.snackbar('Info', 'Voice recording...'),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
+
+          // Gradient send button
+          Obx(
+            () => Padding(
+              padding: const EdgeInsets.only(left: 10),
+              child: SizedBox(
+                width: 44,
+                height: 44,
+                child: ElevatedButton(
+                  onPressed: isSending.value ? null : onSendMessage,
+                  style: ButtonStyle(
+                    padding: const WidgetStatePropertyAll(EdgeInsets.zero),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999)),
+                    ),
+                    elevation: const WidgetStatePropertyAll(0),
+                    backgroundColor: WidgetStateProperty.resolveWith((states) {
+                      // We’ll paint gradient manually in foreground below
+                      return Colors.transparent;
+                    }),
+                    overlayColor:
+                        const WidgetStatePropertyAll(Colors.transparent),
+                  ),
+                  child: Ink(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                    ).withAppGradient,
+                    child: Center(
+                      child: isSending.value
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor:
+                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Icon(Icons.send_rounded,
+                              color: Colors.white, size: 20),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -177,6 +200,26 @@ class MessageInputWidget extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _IconBtn extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback? onTap;
+
+  const _IconBtn({required this.icon, required this.color, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.all(6),
+        child: Icon(icon, size: 26, color: color),
       ),
     );
   }
