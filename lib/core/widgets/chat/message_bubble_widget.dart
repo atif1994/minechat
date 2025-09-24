@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
+import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 /// Reusable message bubble widget for chat conversations
 class MessageBubbleWidget extends StatelessWidget {
@@ -20,10 +24,13 @@ class MessageBubbleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       child: Row(
-        mainAxisAlignment: isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+        mainAxisAlignment:
+            isFromUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Avatar only for incoming messages (left side)
@@ -31,60 +38,63 @@ class MessageBubbleWidget extends StatelessWidget {
             avatar ?? _buildDefaultAvatar(),
             const SizedBox(width: 8),
           ],
-          
+
           // Message bubble
           Flexible(
             child: Column(
-              crossAxisAlignment: isFromUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              crossAxisAlignment: isFromUser
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
               children: [
                 Container(
                   constraints: BoxConstraints(
                     maxWidth: MediaQuery.of(context).size.width * 0.7,
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isFromUser ? const Color(0xFFDCF8C6) : Colors.white,
+                    color: isFromUser
+                        ? isDark
+                            ? const Color(0XFF1D1D1D)
+                            : const Color(0xFFE1E1EB)
+                        : isDark
+                            ? const Color(0XFF454545)
+                            : const Color(0xFFFFFFFF),
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(18),
-                      topRight: const Radius.circular(18),
-                      bottomLeft: Radius.circular(isFromUser ? 18 : 4),
-                      bottomRight: Radius.circular(isFromUser ? 4 : 18),
+                      topLeft: Radius.circular(
+                          isFromUser ? AppResponsive.radius(context) : 0),
+                      topRight: Radius.circular(
+                          isFromUser ? 0 : AppResponsive.radius(context)),
+                      bottomLeft:
+                          Radius.circular(AppResponsive.radius(context)),
+                      bottomRight:
+                          Radius.circular(AppResponsive.radius(context)),
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 1,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
                   ),
                   child: Text(
                     message,
-                    style: TextStyle(
-                      color: Colors.black87,
-                      fontSize: 16,
-                      height: 1.3,
-                    ),
+                    style: AppTextStyles.bodyText(context).copyWith(
+                        fontSize: AppResponsive.scaleSize(context, 14),
+                        fontWeight: FontWeight.w400,
+                        height: 1.3),
                   ),
                 ),
                 const SizedBox(height: 2),
                 Padding(
                   padding: EdgeInsets.only(
-                    right: isFromUser ? 8 : 0,
-                    left: isFromUser ? 0 : 8,
+                    left: isFromUser ? 8 : 0,
+                    right: isFromUser ? 0 : 8,
                   ),
-                  child: Text(
-                    timestamp,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 11,
-                    ),
-                  ),
+                  child: Text(timestamp,
+                      style: AppTextStyles.hintText(context).copyWith(
+                          fontSize: AppResponsive.scaleSize(context, 12),
+                          fontWeight: FontWeight.w400,
+                          color: Color(0XFFA8AEBF))),
                 ),
               ],
             ),
           ),
-          
+
           // Avatar only for outgoing messages (right side)
           if (isFromUser) ...[
             const SizedBox(width: 8),
@@ -98,7 +108,7 @@ class MessageBubbleWidget extends StatelessWidget {
   Widget _buildDefaultAvatar() {
     return CircleAvatar(
       radius: 16,
-      backgroundColor: isAI ? const Color(0xFF25D366) : const Color(0xFF25D366),
+      backgroundColor: AppColors.primary,
       child: Icon(
         isAI ? Icons.smart_toy : Icons.person,
         color: Colors.white,

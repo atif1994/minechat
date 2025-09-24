@@ -64,9 +64,7 @@ class ChatScreen extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration:
-          BoxDecoration(color: isDark
-              ? Color(0XFF1D1D1D)
-              : Color(0XFFFFFFFF)),
+          BoxDecoration(color: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF)),
       child: Row(
         children: [
           _buildFilterTab('Inbox', context),
@@ -98,7 +96,9 @@ class ChatScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
             color: isSelected
-                ? isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC)
+                ? isDark
+                    ? Color(0XFF0A0A0A)
+                    : Color(0XFFF4F6FC)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
           ),
@@ -126,7 +126,9 @@ class ChatScreen extends StatelessWidget {
           Obx(() {
             if (chatController.isLoading.value) {
               return const Center(
-                child: CircularProgressIndicator(),
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
               );
             }
 

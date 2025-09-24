@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
 
 /// Reusable loading widgets for different states
 class LoadingWidgets {
@@ -16,7 +17,8 @@ class LoadingWidgets {
             width: size ?? 40,
             height: size ?? 40,
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(color ?? Colors.blue),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(color ?? AppColors.primary),
             ),
           ),
           if (message != null) ...[
@@ -48,7 +50,8 @@ class LoadingWidgets {
             width: size ?? 40,
             height: size ?? 40,
             child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(color ?? Colors.blue),
+              valueColor:
+                  AlwaysStoppedAnimation<Color>(color ?? AppColors.primary),
             ),
           ),
           const SizedBox(height: 16),
@@ -94,7 +97,8 @@ class LoadingWidgets {
               width: 40,
               height: 40,
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(color ?? Colors.blue),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(color ?? AppColors.primary),
               ),
             ),
             if (message != null) ...[

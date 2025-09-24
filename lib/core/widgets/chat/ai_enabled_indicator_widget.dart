@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:minechat/controller/theme_controller/theme_controller.dart';
+import 'package:minechat/core/constants/app_colors/app_colors.dart';
+import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
+import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 
 /// AI Enabled indicator widget for chat conversations
 class AIEnabledIndicatorWidget extends StatelessWidget {
@@ -14,38 +19,28 @@ class AIEnabledIndicatorWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!isEnabled) return const SizedBox.shrink();
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDarkMode;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 8),
       child: Center(
         child: GestureDetector(
           onTap: onTap,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFEBEE), // Light red background
+              color: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFFFCDD2), width: 1),
+              border: Border.all(color: AppColors.primary, width: 1),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.smart_toy,
-                  color: Color(0xFFD32F2F), // Dark red
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'AI Enabled',
-                  style: TextStyle(
-                    color: Color(0xFFD32F2F), // Dark red
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+            child: Text(
+              'AI Enabled',
+              style: AppTextStyles.hintText(context).copyWith(
+                  fontSize: AppResponsive.scaleSize(context, 12),
+                  fontWeight: FontWeight.w200,
+                  color: isDark ? AppColors.white : AppColors.primary),
             ),
           ),
         ),

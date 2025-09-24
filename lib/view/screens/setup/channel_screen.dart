@@ -3,12 +3,9 @@ import 'package:get/get.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
-import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
-
-// Import channel widgets
 import 'package:minechat/core/widgets/channels/index.dart';
 
 class ChannelsScreen extends StatelessWidget {
@@ -318,77 +315,6 @@ class ChannelsScreen extends StatelessWidget {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _gradientButton({
-    required BuildContext context,
-    required String label,
-    required VoidCallback? onPressed,
-  }) {
-    return Opacity(
-      opacity: onPressed == null ? 0.7 : 1,
-      child: GestureDetector(
-        onTap: onPressed,
-        child: Container(
-          height: 44,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Color(0xFFB01E5A),
-                Color(0xFFC93E8C)
-              ], // matches your pill style
-            ),
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: const [
-              BoxShadow(
-                  color: Color(0x1A000000),
-                  blurRadius: 8,
-                  offset: Offset(0, 3)),
-            ],
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              fontSize: 14,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _outlineButton({
-    required BuildContext context,
-    required String label,
-    required VoidCallback onPressed,
-    required bool isDark,
-  }) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        height: 44,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1D1D1D) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-              color: isDark ? Colors.white12 : const Color(0xFFEBEDF0)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: isDark ? Colors.white : Colors.black,
-            fontSize: 14,
-          ),
-        ),
-      ),
     );
   }
 }
