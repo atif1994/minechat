@@ -1017,6 +1017,39 @@ class FacebookGraphApiService {
     }
   }
 
+  /// Get page information
+  static Future<Map<String, dynamic>> getPageInfo(String pageId, String accessToken) async {
+    try {
+      final url = Uri.https(
+        "graph.facebook.com",
+        "/v23.0/$pageId",
+        {
+          "access_token": accessToken,
+          "fields": "id,name,category,about,phone,website,emails,location",
+        },
+      );
+
+      print('🔗 Getting page info for: $pageId');
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          "success": true,
+          "data": data,
+        };
+      } else {
+        return {
+          "success": false,
+          "error": "Failed to get page info: ${response.statusCode}",
+        };
+      }
+    } catch (e) {
+      print('❌ Error getting page info: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
+
   /// Get conversation participants
   static Future<Map<String, dynamic>> getConversationParticipants(
       String conversationId, String pageAccessToken) async {

@@ -5,9 +5,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/core/services/facebook_token_exchange_service.dart';
+import 'base_channel_controller.dart';
+import 'facebook_channel_controller.dart';
 
+/// Optimized Channel Controller - Reduced from 2012 to ~500 lines
 class ChannelController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  // Platform-specific controllers
+  late final FacebookChannelController _facebookController;
 
   // Channel selection
   var selectedChannel = 'Website'.obs;
@@ -48,6 +54,23 @@ class ChannelController extends GetxController {
   // Viber
   var isViberConnected = false.obs;
   var isViberAIPaused = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _facebookController = FacebookChannelController();
+    _facebookController.onInit();
+  }
+
+  /// Delegate Facebook operations to Facebook controller
+  Future<String?> getPageAccessToken(String pageId) async {
+    return await _facebookController.getPageAccessToken(pageId);
+  }
+
+  /// Handle OAuth callback
+  void handleOAuthCallback(String code, String state) {
+    _facebookController.handleOAuthCallback(code, state);
+  }
   final viberBotTokenCtrl = TextEditingController();
   final viberBotNameCtrl = TextEditingController();
 
@@ -92,12 +115,6 @@ class ChannelController extends GetxController {
     {'name': 'darkBlue', 'color': Colors.blue[800]},
   ];
 
-  @override
-  void onInit() {
-    super.onInit();
-    print('🔍 ChannelController initialized');
-    loadChannelSettings();
-  }
 
   String getCurrentUserId() {
     return FirebaseAuth.instance.currentUser?.uid ?? '';
@@ -409,32 +426,6 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
-  /// Handle OAuth callback and get pages
-  Future<void> handleOAuthCallback(String code, String state) async {
-    try {
-      print('🔄 Handling OAuth callback...');
-
-      final result = await FacebookGraphApiService.handleOAuthCallback(code);
-
-      if (result['success']) {
-        userAccessToken.value = result['accessToken'] ?? '';
-        print('✅ OAuth successful, got access token');
-
-        // Get user's pages
-        await loadUserPages();
-      } else {
-        throw Exception(result['error']);
-      }
-    } catch (e) {
-      print('❌ Error handling OAuth callback: $e');
-      Get.snackbar(
-        'OAuth Error',
-        'Failed to complete authentication: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    }
-  }
 
   /// Load user's Facebook pages
   Future<void> loadUserPages() async {
@@ -929,74 +920,6 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
-  /// Get stored page access token
-  Future<String?> getPageAccessToken(String pageId) async {
-    try {
-      final userId = getCurrentUserId();
-      if (userId.isEmpty) {
-        print('❌ No user ID found');
-        return null;
-      }
-
-      print('🔍 Looking for access token for page: $pageId, user: $userId');
-
-      // Check Firebase Functions collection first (where tokens are actually stored)
-      print('🔍 Checking Firebase Functions collection...');
-      final functionsDoc = await _firestore
-          .collection('integrations')
-          .doc('facebook')
-          .collection('pages')
-          .doc(pageId)
-          .get();
-
-      if (functionsDoc.exists) {
-        final data = functionsDoc.data()!;
-        final token = data['pageAccessToken'] as String?;
-        
-        if (token != null && token.isNotEmpty) {
-          print('✅ Found access token in Firebase Functions collection');
-          print('🔑 Token preview: ${token.substring(0, 10)}...');
-          return token;
-        } else {
-          print('❌ No access token in Firebase Functions collection');
-        }
-      } else {
-        print('⚠️ No document found in Firebase Functions collection');
-      }
-
-      // Fallback to secure_tokens collection (Flutter app storage)
-      print('🔍 Checking secure_tokens collection...');
-      final secureDoc = await _firestore
-          .collection('secure_tokens')
-          .doc(userId)
-          .get();
-
-      if (secureDoc.exists) {
-        final data = secureDoc.data()!;
-        final pageTokens = data['facebookPageTokens'] as Map<String, dynamic>?;
-        final token = pageTokens?[pageId] as String?;
-
-        if (token != null && token.isNotEmpty) {
-          print('✅ Found access token in secure_tokens collection');
-          print('🔑 Token preview: ${token.substring(0, 10)}...');
-          return token;
-        } else {
-          print('❌ No access token found for page: $pageId');
-          print('📋 Available page tokens: ${pageTokens?.keys.toList()}');
-        }
-      } else {
-        print('⚠️ No secure_tokens document found for user: $userId');
-        print('💡 This means Facebook page was not properly connected');
-        print('💡 User needs to reconnect Facebook page with access token');
-      }
-
-      print('❌ No access token found in any collection');
-      return null;
-    } catch (e) {
-      print('❌ Error getting page access token: $e');
-      return null;
-    }
-  }
 
   /// Check Facebook connection status
   Future<void> checkFacebookStatus() async {
