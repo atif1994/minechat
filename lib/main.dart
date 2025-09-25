@@ -35,13 +35,21 @@ void main() async {
   Get.put(AuthController(), permanent: true);
   Get.put(ThemeController(), permanent: true);
   
+  // Initialize ChatController immediately since it's needed by ChatScreen
+  print('🔄 Initializing ChatController...');
+  try {
+    Get.put(ChatController(), permanent: true);
+    print('✅ ChatController initialized successfully');
+  } catch (e) {
+    print('❌ Error initializing ChatController: $e');
+  }
+  
   // Initialize other controllers after UI is ready
   WidgetsBinding.instance.addPostFrameCallback((_) {
     Get.put(DashboardController(), permanent: true);
     Get.put(SubscriptionController(), permanent: true);
     Get.put(CrmController(), permanent: true);
     Get.put(ChannelController(), permanent: true);
-    Get.put(ChatController(), permanent: true);
     
     print('✅ All controllers initialized successfully');
   });

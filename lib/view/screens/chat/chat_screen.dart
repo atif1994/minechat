@@ -12,11 +12,26 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
 
 class ChatScreen extends StatelessWidget {
-  final chatController = Get.find<ChatController>();
+  ChatScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    
+    // Safety check for ChatController
+    if (!Get.isRegistered<ChatController>()) {
+      print('⚠️ ChatController not registered yet, showing loading...');
+      return Scaffold(
+        backgroundColor: Color(0XFFF4F6FC),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.primary,
+          ),
+        ),
+      );
+    }
+    
+    final chatController = Get.find<ChatController>();
     return Obx(
       () {
         final isDark = themeController.isDarkMode;
@@ -59,6 +74,7 @@ class ChatScreen extends StatelessWidget {
 
   Widget _buildFilterTabs(BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    final chatController = Get.find<ChatController>();
     final isDark = themeController.isDarkMode;
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -81,6 +97,7 @@ class ChatScreen extends StatelessWidget {
 
   Widget _buildFilterTab(String title, BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    final chatController = Get.find<ChatController>();
     final isDark = themeController.isDarkMode;
     return Obx(() {
       final isSelected = chatController.selectedFilter.value == title;
@@ -116,6 +133,7 @@ class ChatScreen extends StatelessWidget {
 
   Widget _buildChatList(BuildContext context) {
     final themeController = Get.find<ThemeController>();
+    final chatController = Get.find<ChatController>();
     final isDark = themeController.isDarkMode;
     return Container(
       decoration:
@@ -176,8 +194,12 @@ class ChatScreen extends StatelessWidget {
                   final String contactName =
                       chat['contactName'] ?? 'Unknown User';
                   final String profileImageUrl = chat['profileImageUrl'] ?? '';
-                  print(contactName);
-                  print(profileImageUrl);
+                  final String lastMessage = chat['lastMessage'] ?? '';
+                  print('🔍 Chat Item Debug:');
+                  print('  Contact: $contactName');
+                  print('  Profile Image: $profileImageUrl');
+                  print('  Last Message: $lastMessage');
+                  print('  Platform: ${chat['platform']}');
                   return _buildChatItem(chat, context);
                 },
               ),
@@ -207,6 +229,7 @@ class ChatScreen extends StatelessWidget {
   }
 
   Widget _buildChatItem(Map<String, dynamic> chat, BuildContext context) {
+    final chatController = Get.find<ChatController>();
     return GestureDetector(
       onTap: () {
         chatController.markAsRead(chat['id']);
@@ -224,11 +247,11 @@ class ChatScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundImage: chat['profileImageUrl']?.isNotEmpty == true
+                  backgroundImage: (chat['profileImageUrl']?.isNotEmpty == true)
                       ? NetworkImage(chat['profileImageUrl'])
                       : null,
                   backgroundColor: _getPlatformColor(chat['platform']),
-                  child: chat['profileImageUrl']?.isEmpty != false
+                  child: (chat['profileImageUrl']?.isEmpty == true || chat['profileImageUrl'] == null)
                       ? Text(
                           chat['contactName']?[0]?.toUpperCase() ?? '?',
                           style: const TextStyle(
@@ -304,6 +327,7 @@ class ChatScreen extends StatelessWidget {
   }
 
   Widget _buildCreateNewDropdown() {
+    final chatController = Get.find<ChatController>();
     final opts = chatController.createNewOptions;
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
@@ -339,6 +363,7 @@ class ChatScreen extends StatelessWidget {
   }
 
   Widget _buildFilterDropdown() {
+    final chatController = Get.find<ChatController>();
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
     return Container(
