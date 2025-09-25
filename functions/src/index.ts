@@ -971,6 +971,144 @@ export const fbExchangeForLongLivedToken = onRequest(
 );
 
 /**
+ * POST /fbDeleteConversation
+ * Body: { pageId, conversationId, deleteType? }
+ * Deletes Facebook conversation and messages
+ */
+export const fbDeleteConversation = onRequest(
+  { region: "us-central1", cors: true },
+  async (req, res) => {
+    try {
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method Not Allowed" });
+        return;
+      }
+      const pageId = String(req.body?.pageId || "").trim();
+      const conversationId = String(req.body?.conversationId || "").trim();
+      const deleteType = String(req.body?.deleteType || "archive").trim(); // "delete" or "archive"
+      
+      if (!pageId || !conversationId) {
+        res.status(400).json({ error: "Missing pageId/conversationId" });
+        return;
+      }
+
+      const docRef = db
+        .collection("integrations")
+        .doc("facebook")
+        .collection("pages")
+        .doc(pageId);
+      const snap = await docRef.get();
+      if (!snap.exists) {
+        res.status(400).json({ error: "No stored page access token; derive first." });
+        return;
+      }
+      const cfg = (snap.data() ?? {}) as any;
+      const pageAccessToken = String(cfg.pageAccessToken || "");
+      if (!pageAccessToken) {
+        res.status(400).json({ error: "Missing page access token" });
+        return;
+      }
+
+      if (deleteType === "archive") {
+        // Archive the conversation (soft delete)
+        const archiveUrl = new URL(`https://graph.facebook.com/v23.0/${conversationId}`);
+        archiveUrl.searchParams.set("access_token", pageAccessToken);
+
+        const r = await fetch(archiveUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            is_archived: true,
+          }),
+        });
+
+        const data = (await r.json()) as any;
+        if (!r.ok) {
+          console.error("[fbDeleteConversation] archive error", r.status, data);
+          res.status(r.status).json({ error: data });
+          return;
+        }
+        res.json({ ok: true, type: "archived", response: data });
+      } else {
+        // Hard delete - get all messages and delete them
+        const messagesUrl = new URL(`https://graph.facebook.com/v23.0/${conversationId}/messages`);
+        messagesUrl.searchParams.set("access_token", pageAccessToken);
+        messagesUrl.searchParams.set("fields", "id");
+        messagesUrl.searchParams.set("limit", "100");
+
+        const messagesResponse = await fetch(messagesUrl);
+        const messagesData = (await messagesResponse.json()) as any;
+        
+        if (!messagesResponse.ok) {
+          console.error("[fbDeleteConversation] get messages error", messagesResponse.status, messagesData);
+          res.status(messagesResponse.status).json({ error: messagesData });
+          return;
+        }
+
+        const messages = messagesData.data || [];
+        let deletedCount = 0;
+        const errors: string[] = [];
+
+        // Check if we have permission to delete messages
+        if (messages.length > 0) {
+          // Try to delete the first message to check permissions
+          const testMessage = messages[0];
+          const testDeleteUrl = new URL(`https://graph.facebook.com/v23.0/${testMessage.id}`);
+          testDeleteUrl.searchParams.set("access_token", pageAccessToken);
+
+          const testDeleteResponse = await fetch(testDeleteUrl, {
+            method: "DELETE",
+          });
+
+          if (!testDeleteResponse.ok) {
+            const testErrorData = (await testDeleteResponse.json()) as any;
+            if (testErrorData.error?.code === 10) {
+              // Permission denied - Facebook doesn't allow message deletion
+              res.json({ 
+                ok: false, 
+                type: "permission_denied", 
+                message: "Facebook does not allow deleting messages from conversations. This is a Facebook platform limitation.",
+                totalMessages: messages.length,
+                suggestion: "Consider archiving the conversation instead."
+              });
+              return;
+            }
+          }
+        }
+
+        // Delete each message
+        for (const message of messages) {
+          const deleteUrl = new URL(`https://graph.facebook.com/v23.0/${message.id}`);
+          deleteUrl.searchParams.set("access_token", pageAccessToken);
+
+          const deleteResponse = await fetch(deleteUrl, {
+            method: "DELETE",
+          });
+
+          if (deleteResponse.ok) {
+            deletedCount++;
+          } else {
+            const errorData = (await deleteResponse.json()) as any;
+            errors.push(`Message ${message.id}: ${errorData.error?.message || "Unknown error"}`);
+          }
+        }
+
+        res.json({ 
+          ok: true, 
+          type: "deleted", 
+          deletedCount, 
+          totalMessages: messages.length,
+          errors: errors.length > 0 ? errors : undefined
+        });
+      }
+    } catch (err) {
+      console.error("[fbDeleteConversation] exception", err);
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+);
+
+/**
  * POST /fbStorePageToken
  * Body: { pageAccessToken, pageId?, source? }
  * Stores a Facebook page access token in Firestore with validation
@@ -1310,7 +1448,7 @@ export const facebookWebhook = onRequest(
           // Process each entry
           for (const entry of body.entry) {
             const pageId = entry.id;
-            const timeOfEvent = entry.time;
+            // const timeOfEvent = entry.time;
 
             // Process each messaging event
             if (entry.messaging) {

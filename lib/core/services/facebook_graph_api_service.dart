@@ -1122,4 +1122,137 @@ class FacebookGraphApiService {
       return {"success": false, "error": e.toString()};
     }
   }
+
+  /// Delete a Facebook message using Graph API
+  static Future<Map<String, dynamic>> deleteFacebookMessage(
+      String messageId, String pageAccessToken) async {
+    try {
+      print('🗑️ Deleting Facebook message: $messageId');
+      
+      // Get valid token (with automatic refresh if needed)
+      final validToken = await getValidToken() ?? pageAccessToken;
+      
+      final response = await http.delete(
+        Uri.https(
+          "graph.facebook.com",
+          "/v23.0/$messageId",
+          {
+            "access_token": validToken,
+          },
+        ),
+      );
+
+      print('📊 Facebook Delete Message Response: ${response.statusCode}');
+      print('📊 Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        return {"success": true, "data": decodedData};
+      } else {
+        final error = jsonDecode(response.body);
+        print('❌ Facebook Delete Message Error: ${error}');
+        return {
+          "success": false,
+          "error": error['error']?['message'] ?? "Facebook Delete Message error",
+          "code": response.statusCode,
+        };
+      }
+    } catch (e) {
+      print('❌ Error deleting Facebook message: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// Delete all messages in a Facebook conversation
+  static Future<Map<String, dynamic>> deleteFacebookConversation(
+      String conversationId, String pageAccessToken) async {
+    try {
+      print('🗑️ Deleting Facebook conversation: $conversationId');
+      
+      // First, get all messages in the conversation
+      final messagesResult = await getConversationMessagesWithToken(
+          conversationId, pageAccessToken);
+      
+      if (!messagesResult['success']) {
+        return {
+          "success": false,
+          "error": "Failed to get conversation messages: ${messagesResult['error']}"
+        };
+      }
+      
+      final messages = messagesResult['data'] as List? ?? [];
+      print('📊 Found ${messages.length} messages to delete');
+      
+      // Delete each message
+      int deletedCount = 0;
+      List<String> errors = [];
+      
+      for (var message in messages) {
+        final messageId = message['id'] as String?;
+        if (messageId != null) {
+          final deleteResult = await deleteFacebookMessage(messageId, pageAccessToken);
+          if (deleteResult['success']) {
+            deletedCount++;
+          } else {
+            errors.add("Message $messageId: ${deleteResult['error']}");
+          }
+        }
+      }
+      
+      return {
+        "success": true,
+        "deletedCount": deletedCount,
+        "totalMessages": messages.length,
+        "errors": errors,
+      };
+    } catch (e) {
+      print('❌ Error deleting Facebook conversation: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// Archive a Facebook conversation (soft delete)
+  static Future<Map<String, dynamic>> archiveFacebookConversation(
+      String conversationId, String pageAccessToken) async {
+    try {
+      print('📦 Archiving Facebook conversation: $conversationId');
+      
+      // Get valid token (with automatic refresh if needed)
+      final validToken = await getValidToken() ?? pageAccessToken;
+      
+      // Archive the conversation by updating its status
+      final response = await http.post(
+        Uri.https(
+          "graph.facebook.com",
+          "/v23.0/$conversationId",
+          {
+            "access_token": validToken,
+          },
+        ),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "is_archived": true,
+        }),
+      );
+
+      print('📊 Facebook Archive Conversation Response: ${response.statusCode}');
+      print('📊 Response body: ${response.body}');
+      
+      if (response.statusCode == 200) {
+        final decodedData = jsonDecode(response.body);
+        return {"success": true, "data": decodedData};
+      } else {
+        final error = jsonDecode(response.body);
+        print('❌ Facebook Archive Conversation Error: ${error}');
+        return {
+          "success": false,
+          "error": error['error']?['message'] ?? "Facebook Archive Conversation error",
+          "code": response.statusCode,
+        };
+      }
+    } catch (e) {
+      print('❌ Error archiving Facebook conversation: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
 }

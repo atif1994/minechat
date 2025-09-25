@@ -292,6 +292,83 @@ class LoginController extends GetxController {
     }
   }
 
+  // New method specifically for login screen - checks if user exists first
+  Future<void> loginWithGoogleForLogin() async {
+    try {
+      isLoading.value = true;
+
+      final userCredential = await _authService.signInWithGoogle();
+
+      if (userCredential != null) {
+        final user = userCredential.user;
+        if (user != null) {
+          // Check if user exists in our database
+          final userData = await _userRepository.getUser(user.uid);
+
+          if (userData == null) {
+            // User doesn't exist - redirect to signup
+            Get.snackbar(
+              'Account Not Found',
+              'No account found with this Google account. Please sign up first.',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: const Color(0xFFFF9800),
+              colorText: Colors.white,
+            );
+
+            // Navigate to signup screen
+            Get.to(() => SignupBusinessAccount(email: user.email ?? ''));
+          } else {
+            // User exists - proceed with login
+            await _userRepository.updateLastLogin(user.uid);
+            currentUser.value = userData;
+
+            Get.snackbar(
+              'Success',
+              'Welcome back, ${userData.name}!',
+              snackPosition: SnackPosition.BOTTOM,
+              backgroundColor: Colors.green,
+              colorText: Colors.white,
+            );
+
+            _navigateBasedOnAccountType(userData);
+          }
+        }
+      } else {
+        Get.snackbar(
+          'Cancelled',
+          'Sign in was cancelled',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: const Color(0xFFFF9800),
+          colorText: Colors.white,
+        );
+      }
+    } catch (e) {
+      String errorMessage = 'Failed to sign in with Google';
+
+      if (e.toString().contains('ApiException: 10')) {
+        errorMessage =
+            'Google Sign-In configuration error. Please check Firebase setup.';
+      } else if (e.toString().contains('network_error')) {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (e.toString().contains('sign_in_canceled')) {
+        errorMessage = 'Sign in was cancelled by user.';
+      } else if (e.toString().contains('sign_in_failed')) {
+        errorMessage = 'Google Sign-In failed. Please try again.';
+      }
+
+      Get.snackbar(
+        'Error',
+        errorMessage,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 5),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   Future<void> forgotPassword() async {
     if (emailCtrl.text.trim().isEmpty) {
       Get.snackbar(
