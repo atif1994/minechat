@@ -5,11 +5,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/core/services/realtime_message_service.dart';
+import 'package:minechat/core/services/facebook_webhook_service.dart';
+import 'package:minechat/core/services/simple_webhook_service.dart';
 import 'dart:async'; // Added for Timer
 
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final RealtimeMessageService _realtimeService = RealtimeMessageService();
+  final FacebookWebhookService _webhookService = FacebookWebhookService();
+  final SimpleWebhookService _simpleWebhookService = SimpleWebhookService();
 
   // Chat list state
   var chatList = <Map<String, dynamic>>[].obs;
@@ -81,6 +85,11 @@ class ChatController extends GetxController {
 
     // Start real-time message listening
     _realtimeService.startListeningForMessages();
+    
+    // Start simple webhook listening (no controller dependencies)
+    Future.delayed(Duration(seconds: 2), () {
+      _simpleWebhookService.startSimpleWebhookListening();
+    });
   }
 
   @override
@@ -91,6 +100,10 @@ class ChatController extends GetxController {
 
     // Stop real-time listening
     _realtimeService.stopListening();
+    
+    // Stop webhook listening
+    _webhookService.stopWebhookListening();
+    _simpleWebhookService.stopSimpleWebhookListening();
 
     super.onClose();
   }
@@ -596,13 +609,45 @@ class ChatController extends GetxController {
             print('⚠️ Using fallback avatar for $contactName');
           }
 
+          // Get the actual last message from Facebook
+          String lastMessage = 'Tap to view messages';
+          try {
+            print('🔍 Fetching last message for conversation: ${conversation['id']}');
+            final messagesResult = await FacebookGraphApiService.getConversationMessagesWithToken(
+              conversation['id'],
+              pageAccessToken,
+            );
+            
+            if (messagesResult['success'] == true && messagesResult['data'] != null) {
+              final messages = messagesResult['data'] as List<dynamic>;
+              if (messages.isNotEmpty) {
+                final lastMsg = messages.first; // Facebook returns messages in reverse chronological order
+                final messageText = lastMsg['message']?.toString() ?? '';
+                final messageFromId = lastMsg['from']['id']?.toString() ?? '';
+                final isFromUser = messageFromId != facebookPageId;
+                
+                if (messageText.isNotEmpty) {
+                  lastMessage = isFromUser ? messageText : 'You: $messageText';
+                  print('✅ Got last message: "$lastMessage" (from ${isFromUser ? 'USER' : 'PAGE'})');
+                } else {
+                  print('⚠️ Last message is empty');
+                }
+              } else {
+                print('⚠️ No messages found in conversation');
+              }
+            } else {
+              print('⚠️ Failed to fetch messages: ${messagesResult['error']}');
+            }
+          } catch (e) {
+            print('⚠️ Error fetching last message: $e');
+          }
+
           // Convert Facebook conversation to app format
           final appChat = {
             'id': conversation['id'],
             // Use the actual conversation ID directly
             'contactName': contactName,
-            'lastMessage': 'Tap to view messages',
-            // Simple placeholder to avoid API calls
+            'lastMessage': lastMessage,
             'timestamp': _parseTimestamp(conversation['updated_time']),
             'unreadCount': conversation['unread_count'] ?? 0,
             'profileImageUrl': profileImageUrl.isNotEmpty
@@ -621,8 +666,9 @@ class ChatController extends GetxController {
           facebookChats.add(appChat);
 
           print('✅ Added chat: $contactName with avatar: $profileImageUrl');
-          print(
-              '📱 Chat details: ID=${conversation['id']}, Messages=${conversation['message_count']}, Last active=${_formatLastActive(conversation['updated_time'])}');
+          print('📱 Chat details: ID=${conversation['id']}, Messages=${conversation['message_count']}, Last active=${_formatLastActive(conversation['updated_time'])}');
+          print('📱 Last message: "$lastMessage"');
+          print('📱 Profile image: $profileImageUrl');
 
           // Conversation processed
         } catch (e) {
@@ -1266,6 +1312,49 @@ class ChatController extends GetxController {
         return '🌐';
       default:
         return '💬';
+    }
+  }
+
+  /// Handle webhook message from webhook service
+  void handleWebhookMessage(Map<String, dynamic> messageData) {
+    try {
+      print('📨 ChatController received webhook message: ${messageData['text']}');
+      
+      // Update chat list with new message
+      final conversationId = messageData['conversationId'];
+      final messageText = messageData['text'];
+      final senderName = messageData['senderName'] ?? 'Facebook User';
+      final isFromUser = messageData['isFromUser'] ?? true;
+      
+      // Find the conversation in chat list
+      final chatIndex = chatList.indexWhere((chat) => 
+          chat['conversationId'] == conversationId || chat['id'] == conversationId);
+      
+      if (chatIndex != -1) {
+        // Update existing conversation
+        chatList[chatIndex]['lastMessage'] = messageText;
+        chatList[chatIndex]['timestamp'] = DateTime.now();
+        
+        if (isFromUser) {
+          chatList[chatIndex]['unreadCount'] = (chatList[chatIndex]['unreadCount'] ?? 0) + 1;
+        }
+        
+        // Move conversation to top if it has unread messages
+        if (chatList[chatIndex]['unreadCount'] > 0) {
+          final updatedChat = chatList[chatIndex];
+          chatList.removeAt(chatIndex);
+          chatList.insert(0, updatedChat);
+        }
+        
+        // Apply filter to update filtered list
+        applyFilter();
+        
+        print('✅ Updated chat list with webhook message');
+      } else {
+        print('⚠️ Conversation not found in chat list: $conversationId');
+      }
+    } catch (e) {
+      print('❌ Error handling webhook message in ChatController: $e');
     }
   }
 }
