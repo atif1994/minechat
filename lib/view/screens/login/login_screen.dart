@@ -6,6 +6,7 @@ import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/constants/app_texts/app_texts.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
+import 'package:minechat/core/widgets/app_button/app_google_button.dart';
 import 'package:minechat/core/widgets/app_button/app_action_button.dart';
 import 'package:minechat/core/widgets/login/login_footer.dart';
 import 'package:minechat/core/widgets/login/login_header.dart';
@@ -103,6 +104,15 @@ class LoginScreen extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Google Sign-In Button
+                            Obx(() => AppGoogleButton(
+                                  label: 'Login with Google',
+                                  isLoading: controller.isLoading.value,
+                                  onTap: controller.loginWithGoogleForLogin,
+                                )),
+                            AppSpacing.vertical(context, 0.015),
+                            
+                            // Regular Login Button
                             Obx(() => AppLargeButton(
                                   label: controller.isLoading.value
                                       ? 'Logging in...'

@@ -10,6 +10,8 @@ import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
+import 'package:minechat/core/widgets/chat/chat_selection_app_bar.dart';
+import 'package:minechat/core/widgets/chat/chat_more_options_dropdown.dart';
 
 class ChatScreen extends StatelessWidget {
   ChatScreen({Key? key}) : super(key: key);
@@ -37,14 +39,20 @@ class ChatScreen extends StatelessWidget {
         final isDark = themeController.isDarkMode;
         return Scaffold(
           backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
-          appBar: AppBar(
+          appBar: chatController.isSelectionMode.value
+              ? ChatSelectionAppBar(
+                  chatController: chatController,
+                  themeController: themeController,
+                )
+              : AppBar(
             title: Text(
               "Chat",
               style: AppTextStyles.bodyText(context).copyWith(
                   fontSize: AppResponsive.scaleSize(context, 20),
                   fontWeight: FontWeight.w600),
             ),
-            backgroundColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+                  backgroundColor:
+                      isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
             elevation: 0,
             actionsPadding: AppSpacing.symmetric(context, v: 0, h: 0.03),
             actions: [
@@ -52,10 +60,16 @@ class ChatScreen extends StatelessWidget {
             ],
           ),
           body: SafeArea(
-            child: Column(
+            child: Stack(
               children: [
-                // Search Bar
-                ChatSearchBar(isDark: isDark, chatController: chatController),
+                Column(
+              children: [
+                    // Search Bar or Select All UI
+                    if (chatController.isSelectionMode.value)
+                      _buildSelectionModeUI(context, isDark)
+                    else
+                      ChatSearchBar(
+                          isDark: isDark, chatController: chatController),
 
                 // Filter Tabs
                 _buildFilterTabs(context),
@@ -63,6 +77,15 @@ class ChatScreen extends StatelessWidget {
                 // Chat List
                 Expanded(
                   child: _buildChatList(context),
+                    ),
+                  ],
+                ),
+
+                // More Options Dropdown
+                if (chatController.isSelectionMode.value)
+                  ChatMoreOptionsDropdown(
+                    chatController: chatController,
+                    themeController: themeController,
                 ),
               ],
             ),
@@ -74,7 +97,6 @@ class ChatScreen extends StatelessWidget {
 
   Widget _buildFilterTabs(BuildContext context) {
     final themeController = Get.find<ThemeController>();
-    final chatController = Get.find<ChatController>();
     final isDark = themeController.isDarkMode;
     return Container(
       margin: const EdgeInsets.only(top: 8),
@@ -228,42 +250,125 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChatItem(Map<String, dynamic> chat, BuildContext context) {
+  Widget _buildSelectionModeUI(BuildContext context, bool isDark) {
     final chatController = Get.find<ChatController>();
-    return GestureDetector(
-      onTap: () {
-        chatController.markAsRead(chat['id']);
-        Get.to(() => ChatConversationScreen(chat: chat));
-      },
-      child: Container(
-        padding: const EdgeInsets.only(top: 16, bottom: 16),
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
+        color: isDark ? const Color(0xFF1D1D1D) : Colors.white,
+        borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
-            // Profile Image with Platform Badge
-            Stack(
+          Obx(() => Checkbox(
+                value: chatController.selectedChatsCount ==
+                        chatController.filteredChatList.length &&
+                    chatController.filteredChatList.isNotEmpty,
+                onChanged: (value) {
+                  if (value == true) {
+                    chatController.selectAllChats();
+                  } else {
+                    chatController.selectedChats.clear();
+                  }
+                },
+                activeColor: AppColors.primary,
+              )),
+          const SizedBox(width: 8),
+          Text(
+            'Select all',
+            style: AppTextStyles.bodyText(context).copyWith(
+              fontSize: AppResponsive.scaleSize(context, 14),
+              color: isDark ? Colors.white : Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatItem(Map<String, dynamic> chat, BuildContext context) {
+    final chatController = Get.find<ChatController>();
+    final themeController = Get.find<ThemeController>();
+    final String chatId =
+        (chat['id'] ?? chat['conversationId'] ?? '') as String;
+
+    final String profileImageUrl = (chat['profileImageUrl'] as String?) ?? '';
+    final String contactName = (chat['contactName'] as String?) ?? '';
+    final String initial =
+        contactName.isNotEmpty ? contactName[0].toUpperCase() : '?';
+
+    Widget _profileAvatar() => Stack(
               children: [
                 CircleAvatar(
                   radius: 24,
-                  backgroundImage: (chat['profileImageUrl']?.isNotEmpty == true)
-                      ? NetworkImage(chat['profileImageUrl'])
+              backgroundImage: profileImageUrl.isNotEmpty
+                  ? NetworkImage(profileImageUrl)
                       : null,
                   backgroundColor: _getPlatformColor(chat['platform']),
-                  child: (chat['profileImageUrl']?.isEmpty == true || chat['profileImageUrl'] == null)
+              child: profileImageUrl.isEmpty
                       ? Text(
-                          chat['contactName']?[0]?.toUpperCase() ?? '?',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
+                      initial,
+                      style: AppTextStyles.heading(context).copyWith(
                             color: Colors.white,
                           ),
                         )
                       : null,
                 ),
               ],
-            ),
+        );
+
+    return GestureDetector(
+      onTap: () {
+        if (chatController.isSelectionMode.value) {
+          chatController.toggleChatSelection(chatId);
+        } else {
+          chatController.markAsRead(chat['id']);
+          Get.to(() => ChatConversationScreen(chat: chat));
+        }
+      },
+      onLongPress: () {
+        if (!chatController.isSelectionMode.value) {
+          chatController.enterSelectionMode();
+          chatController.toggleChatSelection(chatId);
+        }
+      },
+      child: Obx(
+        () => Container(
+          padding: const EdgeInsets.all(16).copyWith(left: 0, right: 0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppResponsive.radius(context)),
+            color: chatController.isSelectionMode.value &&
+                    chatController.isChatSelected(chatId)
+                ? (themeController.isDarkMode
+                    ? const Color(0xFF2D2D2D)
+                    : const Color(0xFFF0F0F0))
+                : Colors.transparent,
+          ),
+          child: Row(
+            children: [
+              // Selection Checkbox or Profile Image
+              if (chatController.isSelectionMode.value) ...[
+                chatController.isChatSelected(chatId)
+                    ? Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Color(0xFFD9D9D9),
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 24,
+                          color: Colors.black,
+                        ),
+                      )
+                    : _profileAvatar(),
+              ] else ...[
+                // Profile Image with Platform Badge (same avatar for non-selection mode)
+                _profileAvatar(),
+              ],
+
             const SizedBox(width: 12),
 
             // Chat Info
@@ -275,28 +380,30 @@ class ChatScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          chat['contactName'],
+                            contactName,
                           style: AppTextStyles.bodyText(context),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(chatController.getTimeDisplay(chat['timestamp']),
-                          style: AppTextStyles.hintText(context)),
+                        Text(
+                          chatController.getTimeDisplay(chat['timestamp']),
+                          style: AppTextStyles.hintText(context),
+                        ),
                     ],
                   ),
                   Row(
                     children: [
                       Expanded(
                         child: Text(
-                          chat['lastMessage'] ?? '',
+                            (chat['lastMessage'] as String?) ?? '',
                           style: AppTextStyles.hintText(context),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      // Message count is now included in lastMessage field
+                        // Unused trailing space reserved for future message count if needed
                     ],
                   ),
                 ],
@@ -304,15 +411,16 @@ class ChatScreen extends StatelessWidget {
             ),
 
             // Unread Badge
-            if (chat['unreadCount'] > 0)
+              if (((chat['unreadCount'] ?? 0) as int) > 0)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  chat['unreadCount'].toString(),
+                    (chat['unreadCount'] as int).toString(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -321,6 +429,7 @@ class ChatScreen extends StatelessWidget {
                 ),
               ),
           ],
+          ),
         ),
       ),
     );

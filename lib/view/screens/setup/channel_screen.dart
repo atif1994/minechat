@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
@@ -7,6 +8,7 @@ import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/widgets/app_button/app_large_button.dart';
 import 'package:minechat/core/widgets/channels/index.dart';
+import 'package:minechat/core/constants/app_assets/app_assets.dart';
 
 class ChannelsScreen extends StatelessWidget {
   const ChannelsScreen({super.key});
@@ -96,11 +98,18 @@ class ChannelsScreen extends StatelessWidget {
                     EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
               items: controller.availableChannels.map((channel) {
+                final isDark = Get.find<ThemeController>().isDarkMode;
+                final iconPath = AppAssets.getSocialIcon(channel['icon'], isDark);
+                
                 return DropdownMenuItem<String>(
                   value: channel['name'],
                   child: Row(
                     children: [
-                      Text(channel['icon']),
+                      SvgPicture.asset(
+                        iconPath,
+                        height: 20,
+                        width: 20,
+                      ),
                       SizedBox(width: 8),
                       Text(channel['name']),
                       if (channel['isConnected'] == true)
@@ -141,8 +150,6 @@ class ChannelsScreen extends StatelessWidget {
       final selectedChannel = controller.selectedChannel.value;
 
       switch (selectedChannel) {
-        case 'Website':
-          return WebsiteChannelWidget(controller: controller);
         case 'Messenger':
           return _buildMessengerSection(context, controller);
         // return MessengerChannelWidget(controller: controller);

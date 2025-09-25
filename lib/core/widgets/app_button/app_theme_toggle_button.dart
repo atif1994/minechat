@@ -24,10 +24,10 @@ class AppThemeToggleButton extends StatelessWidget {
           duration: duration,
           padding: AppSpacing.symmetric(context, v: 0.002, h: 0.01),
           decoration: BoxDecoration(
-              color: isDark ? Color(0XFF1D1D1D) : null,
+              color: isDark ? Color(0XFFFFFFFF).withValues(alpha: .08) : null,
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                  color: isDark ? Color(0XFF1D1D1D) : Color(0XFFEBEDF0))),
+                  color: isDark ? Color(0XFFFFFFFF).withValues(alpha: .08) : Color(0XFFEBEDF0))),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

@@ -8,6 +8,8 @@ import 'package:minechat/core/services/realtime_message_service.dart';
 import 'package:minechat/core/services/facebook_webhook_service.dart';
 import 'package:minechat/core/services/simple_webhook_service.dart';
 import 'dart:async'; // Added for Timer
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class ChatController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -25,6 +27,11 @@ class ChatController extends GetxController {
   // Create new dropdown
   var isCreateNewDropdownOpen = false.obs;
   var isFilterDropdownOpen = false.obs;
+
+  // Selection mode state
+  var isSelectionMode = false.obs;
+  var selectedChats = <String>[].obs; // List of chat IDs that are selected
+  var isMoreOptionsDropdownOpen = false.obs;
 
   // Chat channels
   final List<Map<String, dynamic>> availableChannels = [
@@ -1356,5 +1363,265 @@ class ChatController extends GetxController {
     } catch (e) {
       print('❌ Error handling webhook message in ChatController: $e');
     }
+  }
+
+  // ====== SELECTION MODE METHODS ======
+
+  /// Enter selection mode
+  void enterSelectionMode() {
+    isSelectionMode.value = true;
+    selectedChats.clear();
+    isCreateNewDropdownOpen.value = false;
+    isFilterDropdownOpen.value = false;
+  }
+
+  /// Exit selection mode
+  void exitSelectionMode() {
+    isSelectionMode.value = false;
+    selectedChats.clear();
+    isMoreOptionsDropdownOpen.value = false;
+  }
+
+  /// Toggle selection of a chat
+  void toggleChatSelection(String chatId) {
+    if (selectedChats.contains(chatId)) {
+      selectedChats.remove(chatId);
+    } else {
+      selectedChats.add(chatId);
+    }
+    
+    // Exit selection mode if no chats are selected
+    if (selectedChats.isEmpty) {
+      exitSelectionMode();
+    }
+  }
+
+  /// Select all chats
+  void selectAllChats() {
+    selectedChats.clear();
+    for (var chat in filteredChatList) {
+      selectedChats.add(chat['id'] ?? chat['conversationId'] ?? '');
+    }
+  }
+
+  /// Check if a chat is selected
+  bool isChatSelected(String chatId) {
+    return selectedChats.contains(chatId);
+  }
+
+  /// Get selected chats count
+  int get selectedChatsCount => selectedChats.length;
+
+  /// Delete selected chats (both from Facebook and Firestore)
+  Future<void> deleteSelectedChats() async {
+    if (selectedChats.isEmpty) return;
+
+    print('🗑️ Starting deletion of ${selectedChats.length} chats');
+    print('🗑️ Selected chat IDs: $selectedChats');
+
+    try {
+      isLoading.value = true;
+      
+      int facebookDeletedCount = 0;
+      int firestoreDeletedCount = 0;
+      List<String> errors = [];
+      
+      // Delete from Facebook and Firestore
+      for (String chatId in selectedChats) {
+        print('🗑️ Processing chat ID: $chatId');
+        try {
+          // Find the chat data to get platform info
+          final chat = chatList.firstWhere(
+            (chat) => (chat['id'] ?? chat['conversationId']) == chatId,
+            orElse: () => {},
+          );
+          
+          print('🗑️ Found chat data: $chat');
+          final platform = chat['platform'] as String?;
+          final conversationId = chat['conversationId'] as String?;
+          print('🗑️ Platform: $platform, Conversation ID: $conversationId');
+          print('🗑️ Platform check: ${platform?.toLowerCase() == 'facebook'}');
+          print('🗑️ Platform type: ${platform.runtimeType}');
+          
+          // Attempt Facebook operations - try to mark conversation as read and hide it
+          if (platform?.toLowerCase() == 'facebook') {
+            final fbConversationId = conversationId ?? chatId;
+            print('🗑️ Attempting Facebook conversation management for: $fbConversationId');
+            try {
+              // Get page access token from Firestore
+              final pageTokenDoc = await _firestore
+                  .collection('integrations')
+                  .doc('facebook')
+                  .collection('pages')
+                  .limit(1)
+                  .get();
+              
+              print('🗑️ Found ${pageTokenDoc.docs.length} Facebook page configurations');
+              if (pageTokenDoc.docs.isNotEmpty) {
+                final pageData = pageTokenDoc.docs.first.data();
+                final pageId = pageTokenDoc.docs.first.id;
+                final pageAccessToken = pageData['pageAccessToken'] as String?;
+                print('🗑️ Page ID: $pageId, Has token: ${pageAccessToken != null}');
+                
+                if (pageAccessToken != null) {
+                  // Try to mark conversation as read (this might help "hide" it)
+                  print('🗑️ Attempting to mark conversation as read...');
+                  final readResponse = await http.post(
+                    Uri.parse('https://graph.facebook.com/v23.0/$fbConversationId'),
+                    headers: {'Content-Type': 'application/json'},
+                    body: jsonEncode({
+                      'access_token': pageAccessToken,
+                      'is_read': true,
+                    }),
+                  );
+                  
+                  print('🗑️ Facebook read status response: ${readResponse.statusCode}');
+                  print('🗑️ Facebook read status body: ${readResponse.body}');
+                  
+                  if (readResponse.statusCode == 200) {
+                    facebookDeletedCount++;
+                    print('✅ Facebook conversation marked as read: $fbConversationId');
+                  } else {
+                    print('⚠️ Could not mark conversation as read: ${readResponse.body}');
+                    errors.add('Facebook: Could not manage conversation - ${readResponse.body}');
+                  }
+                } else {
+                  errors.add('No Facebook access token found for $fbConversationId');
+                }
+              } else {
+                errors.add('No Facebook page configuration found for $fbConversationId');
+              }
+            } catch (e) {
+              print('🗑️ Facebook management error: $e');
+              errors.add('Facebook management error for $fbConversationId: ${e.toString()}');
+            }
+          } else {
+            print('🗑️ Skipping Facebook deletion - Platform: $platform, Conversation ID: $conversationId');
+          }
+          
+          // Delete from Firestore (using user_chats collection where data is actually stored)
+          final userId = FirebaseAuth.instance.currentUser?.uid;
+          print('🗑️ Current user ID: $userId');
+          if (userId != null) {
+            // Update the user_chats document to remove this chat
+            final userChatsDoc = await _firestore.collection('user_chats').doc(userId).get();
+            print('🗑️ User chats document exists: ${userChatsDoc.exists}');
+            if (userChatsDoc.exists) {
+              final chatData = userChatsDoc.data();
+              final facebookChats = chatData?['facebookChats'] as List<dynamic>? ?? [];
+              print('🗑️ Current Facebook chats count: ${facebookChats.length}');
+              
+              // Remove the chat from the list
+              final originalCount = facebookChats.length;
+              print('🗑️ Looking for chat with ID: $chatId');
+              print('🗑️ Available chat IDs in array: ${facebookChats.map((c) => c['id'] ?? c['conversationId']).toList()}');
+              
+              facebookChats.removeWhere((chat) {
+                final chatIdInArray = chat['id'] ?? chat['conversationId'];
+                // Try both with and without fb_ prefix
+                final matches = chatIdInArray == chatId || 
+                               chatIdInArray == 'fb_$chatId' || 
+                               chatId == chatIdInArray.replaceFirst('fb_', '') ||
+                               chatIdInArray == chatId.replaceFirst('t_', 'fb_t_');
+                if (matches) {
+                  print('🗑️ Found matching chat to remove: $chatIdInArray');
+                }
+                return matches;
+              });
+              print('🗑️ After removal: ${facebookChats.length} (removed ${originalCount - facebookChats.length})');
+              
+              // Update the document
+              await _firestore.collection('user_chats').doc(userId).update({
+                'facebookChats': facebookChats,
+                'updatedAt': FieldValue.serverTimestamp(),
+              });
+              print('🗑️ Updated user_chats document successfully');
+            }
+          }
+          firestoreDeletedCount++;
+          
+        } catch (e) {
+          errors.add('Firestore deletion error for $chatId: ${e.toString()}');
+        }
+      }
+      
+      // Remove from local lists
+      print('🗑️ Removing from local lists...');
+      final originalChatListCount = chatList.length;
+      final originalFilteredCount = filteredChatList.length;
+      
+      chatList.removeWhere((chat) => selectedChats.contains(chat['id'] ?? chat['conversationId']));
+      filteredChatList.removeWhere((chat) => selectedChats.contains(chat['id'] ?? chat['conversationId']));
+      
+      print('🗑️ Local lists updated - Chat list: $originalChatListCount -> ${chatList.length}, Filtered: $originalFilteredCount -> ${filteredChatList.length}');
+      
+      // Clear selection and exit selection mode
+      selectedChats.clear();
+      exitSelectionMode();
+      
+      // Show success message with details
+      String message = 'Deleted $firestoreDeletedCount chat(s) from app';
+      if (facebookDeletedCount > 0) {
+        message += ' and managed $facebookDeletedCount on Facebook';
+      }
+      if (errors.isNotEmpty) {
+        message += ' (${errors.length} errors occurred)';
+      }
+      
+      Get.snackbar(
+        'Success',
+        message,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 4),
+      );
+      
+      // Show errors if any
+      if (errors.isNotEmpty) {
+        Get.snackbar(
+          'Partial Success',
+          'Some deletions failed. Check console for details.',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+      }
+      
+    } catch (e) {
+      Get.snackbar(
+        'Error',
+        'Failed to delete chats: ${e.toString()}',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Toggle more options dropdown
+  void toggleMoreOptionsDropdown() {
+    isMoreOptionsDropdownOpen.value = !isMoreOptionsDropdownOpen.value;
+  }
+
+  /// Handle more options actions (UI only for now)
+  void handleMoreOptionsAction(String action) {
+    switch (action) {
+      case 'create_group':
+        Get.snackbar('Info', 'Create a group - Coming soon', snackPosition: SnackPosition.BOTTOM);
+        break;
+      case 'send_group_message':
+        Get.snackbar('Info', 'Send a group message - Coming soon', snackPosition: SnackPosition.BOTTOM);
+        break;
+      case 'mark_as_read':
+        Get.snackbar('Info', 'Mark as read - Coming soon', snackPosition: SnackPosition.BOTTOM);
+        break;
+      case 'move_to_another_group':
+        Get.snackbar('Info', 'Move to another group - Coming soon', snackPosition: SnackPosition.BOTTOM);
+        break;
+    }
+    isMoreOptionsDropdownOpen.value = false;
   }
 }

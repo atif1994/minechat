@@ -39,7 +39,7 @@ class ChatConversationScreen extends StatelessWidget {
       () {
         final isDark = themeController.isDarkMode;
         return Scaffold(
-          backgroundColor: isDark ? const Color(0XFF0A0A0A) : Colors.white,
+          backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
           appBar: ChatAppBarWidget(
             contactName: chat['contactName'] ?? 'Unknown',
             profileImageUrl: chat['profileImageUrl'],
@@ -92,7 +92,7 @@ class ChatConversationScreen extends StatelessWidget {
 
       return Container(
         decoration: BoxDecoration(
-          color: isDark ? const Color(0XFF0A0A0A) : Colors.white,
+          color: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
         ),
         child: ListView.builder(
           controller: conversationController.scrollController,

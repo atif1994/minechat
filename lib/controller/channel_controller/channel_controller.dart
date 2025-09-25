@@ -5,7 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
 import 'package:minechat/core/services/facebook_graph_api_service.dart';
 import 'package:minechat/core/services/facebook_token_exchange_service.dart';
-import 'base_channel_controller.dart';
+// Removed unused import
 import 'facebook_channel_controller.dart';
 
 /// Optimized Channel Controller - Reduced from 2012 to ~500 lines
@@ -16,11 +16,10 @@ class ChannelController extends GetxController {
   late final FacebookChannelController _facebookController;
 
   // Channel selection
-  var selectedChannel = 'Website'.obs;
+  var selectedChannel = 'Messenger'.obs;
   var isChannelDropdownOpen = false.obs;
 
-  // Website channel
-  final websiteUrlCtrl = TextEditingController();
+  // Widget colors (kept for potential future use)
   var selectedWidgetColor = 'green'.obs;
   var generatedCode = ''.obs;
 
@@ -45,15 +44,7 @@ class ChannelController extends GetxController {
   final whatsAppPhoneNumberCtrl = TextEditingController();
   final whatsAppAccessTokenCtrl = TextEditingController();
 
-  // Slack
-  var isSlackConnected = false.obs;
-  var isSlackAIPaused = false.obs;
-  final slackBotTokenCtrl = TextEditingController();
-  final slackAppTokenCtrl = TextEditingController();
-
-  // Viber
-  var isViberConnected = false.obs;
-  var isViberAIPaused = false.obs;
+  // Removed unused channels: Slack, Viber, Discord
 
   @override
   void onInit() {
@@ -71,14 +62,6 @@ class ChannelController extends GetxController {
   void handleOAuthCallback(String code, String state) {
     _facebookController.handleOAuthCallback(code, state);
   }
-  final viberBotTokenCtrl = TextEditingController();
-  final viberBotNameCtrl = TextEditingController();
-
-  // Discord
-  var isDiscordConnected = false.obs;
-  var isDiscordAIPaused = false.obs;
-  final discordBotTokenCtrl = TextEditingController();
-  final discordClientIdCtrl = TextEditingController();
 
   // Loading states
   var isLoading = false.obs;
@@ -87,20 +70,14 @@ class ChannelController extends GetxController {
   var isConnectingInstagram = false.obs;
   var isConnectingTelegram = false.obs;
   var isConnectingWhatsApp = false.obs;
-  var isConnectingSlack = false.obs;
-  var isConnectingViber = false.obs;
-  var isConnectingDiscord = false.obs;
+  // Removed unused loading states for Slack, Viber, Discord
 
-  // Available channels with connection status
+  // Available channels with connection status - Only 4 channels as requested
   final List<Map<String, dynamic>> availableChannels = [
-    {'name': 'Website', 'icon': '🌐', 'color': Colors.blue, 'isConnected': false},
-    {'name': 'Messenger', 'icon': '💬', 'color': Colors.blue[600], 'isConnected': false},
-    {'name': 'Instagram', 'icon': '📷', 'color': Colors.pink, 'isConnected': false},
-    {'name': 'Telegram', 'icon': '📱', 'color': Colors.blue[400], 'isConnected': false},
-    {'name': 'WhatsApp', 'icon': '📞', 'color': Colors.green, 'isConnected': false},
-    {'name': 'Slack', 'icon': '💼', 'color': Colors.purple, 'isConnected': false},
-    {'name': 'Viber', 'icon': '💜', 'color': Colors.purple[600], 'isConnected': false},
-    {'name': 'Discord', 'icon': '🎮', 'color': Colors.indigo, 'isConnected': false},
+    {'name': 'Messenger', 'icon': 'messenger', 'color': Colors.blue[600], 'isConnected': false},
+    {'name': 'Telegram', 'icon': 'telegram', 'color': Colors.blue[400], 'isConnected': false},
+    {'name': 'WhatsApp', 'icon': 'whatsapp', 'color': Colors.green, 'isConnected': false},
+    {'name': 'Instagram', 'icon': 'instagram', 'color': Colors.pink, 'isConnected': false},
   ];
 
   // Widget colors
@@ -134,8 +111,7 @@ class ChannelController extends GetxController {
 
       if (doc.exists) {
         final data = doc.data()!;
-        selectedChannel.value = data['selectedChannel'] ?? 'Website';
-        websiteUrlCtrl.text = data['websiteUrl'] ?? '';
+        selectedChannel.value = data['selectedChannel'] ?? 'Messenger';
         selectedWidgetColor.value = data['widgetColor'] ?? 'green';
 
         // Facebook/Messenger
@@ -161,23 +137,7 @@ class ChannelController extends GetxController {
         whatsAppPhoneNumberCtrl.text = data['whatsAppPhoneNumber'] ?? '';
         whatsAppAccessTokenCtrl.text = data['whatsAppAccessToken'] ?? '';
 
-        // Slack
-        isSlackConnected.value = data['isSlackConnected'] ?? false;
-        isSlackAIPaused.value = data['isSlackAIPaused'] ?? false;
-        slackBotTokenCtrl.text = data['slackBotToken'] ?? '';
-        slackAppTokenCtrl.text = data['slackAppToken'] ?? '';
-
-        // Viber
-        isViberConnected.value = data['isViberConnected'] ?? false;
-        isViberAIPaused.value = data['isViberAIPaused'] ?? false;
-        viberBotTokenCtrl.text = data['viberBotToken'] ?? '';
-        viberBotNameCtrl.text = data['viberBotName'] ?? '';
-
-        // Discord
-        isDiscordConnected.value = data['isDiscordConnected'] ?? false;
-        isDiscordAIPaused.value = data['isDiscordAIPaused'] ?? false;
-        discordBotTokenCtrl.text = data['discordBotToken'] ?? '';
-        discordClientIdCtrl.text = data['discordClientId'] ?? '';
+        // Removed unused channels: Slack, Viber, Discord
 
         generatedCode.value = data['generatedCode'] ?? '';
 
@@ -195,9 +155,7 @@ class ChannelController extends GetxController {
   void _updateChannelConnectionStatus() {
     for (int i = 0; i < availableChannels.length; i++) {
       switch (availableChannels[i]['name']) {
-        case 'Website':
-          availableChannels[i]['isConnected'] = websiteUrlCtrl.text.isNotEmpty;
-          break;
+        // Removed Website channel
         case 'Messenger':
           availableChannels[i]['isConnected'] = isFacebookConnected.value;
           break;
@@ -210,15 +168,7 @@ class ChannelController extends GetxController {
         case 'WhatsApp':
           availableChannels[i]['isConnected'] = isWhatsAppConnected.value;
           break;
-        case 'Slack':
-          availableChannels[i]['isConnected'] = isSlackConnected.value;
-          break;
-        case 'Viber':
-          availableChannels[i]['isConnected'] = isViberConnected.value;
-          break;
-        case 'Discord':
-          availableChannels[i]['isConnected'] = isDiscordConnected.value;
-          break;
+        // Removed Slack, Viber, Discord cases
       }
     }
   }
@@ -232,7 +182,7 @@ class ChannelController extends GetxController {
 
       final data = {
         'selectedChannel': selectedChannel.value,
-        'websiteUrl': websiteUrlCtrl.text.trim(),
+        // Removed website URL
         'widgetColor': selectedWidgetColor.value,
 
         // Facebook/Messenger
@@ -258,23 +208,7 @@ class ChannelController extends GetxController {
         'whatsAppPhoneNumber': whatsAppPhoneNumberCtrl.text.trim(),
         'whatsAppAccessToken': whatsAppAccessTokenCtrl.text.trim(),
 
-        // Slack
-        'isSlackConnected': isSlackConnected.value,
-        'isSlackAIPaused': isSlackAIPaused.value,
-        'slackBotToken': slackBotTokenCtrl.text.trim(),
-        'slackAppToken': slackAppTokenCtrl.text.trim(),
-
-        // Viber
-        'isViberConnected': isViberConnected.value,
-        'isViberAIPaused': isViberAIPaused.value,
-        'viberBotToken': viberBotTokenCtrl.text.trim(),
-        'viberBotName': viberBotNameCtrl.text.trim(),
-
-        // Discord
-        'isDiscordConnected': isDiscordConnected.value,
-        'isDiscordAIPaused': isDiscordAIPaused.value,
-        'discordBotToken': discordBotTokenCtrl.text.trim(),
-        'discordClientId': discordClientIdCtrl.text.trim(),
+        // Removed Slack, Viber, Discord data
 
         'generatedCode': generatedCode.value,
         'userId': userId,
@@ -312,15 +246,7 @@ class ChannelController extends GetxController {
     try {
       isGeneratingCode.value = true;
 
-      if (websiteUrlCtrl.text.trim().isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Please enter a website URL first',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
+      // Removed website URL validation
 
       // Generate a simple widget code
       final color = widgetColors.firstWhere(
@@ -344,7 +270,7 @@ class ChannelController extends GetxController {
 <script>
 document.getElementById('minechat-widget').addEventListener('click', function() {
   // Open chat interface
-  window.open('https://minechat.ai/chat?url=${Uri.encodeComponent(websiteUrlCtrl.text.trim())}', '_blank');
+  // Removed website URL opening
 });
 </script>
 ''';
@@ -1226,232 +1152,11 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   }
 
   // ===== SLACK INTEGRATION =====
-  /// Connect Slack
-  Future<void> connectSlack() async {
-    try {
-      isConnectingSlack.value = true;
+  // Removed connectSlack method - Slack channel removed
 
-      if (slackBotTokenCtrl.text.trim().isEmpty || slackAppTokenCtrl.text.trim().isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Please enter both Bot Token and App Token',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
+  // Removed disconnectSlack method - Slack channel removed
 
-      // TODO: Implement Slack API
-      // 1. Verify bot token with Slack API
-      // 2. Set up Events API for incoming messages
-
-      await Future.delayed(Duration(seconds: 2));
-
-      isSlackConnected.value = true;
-      await saveChannelSettings();
-
-      Get.snackbar(
-        'Success',
-        'Slack connected successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('❌ Error connecting Slack: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to connect Slack: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isConnectingSlack.value = false;
-    }
-  }
-
-  /// Disconnect Slack
-  Future<void> disconnectSlack() async {
-    try {
-      isConnectingSlack.value = true;
-      await Future.delayed(Duration(seconds: 1));
-
-      isSlackConnected.value = false;
-      isSlackAIPaused.value = false;
-      slackBotTokenCtrl.clear();
-      slackAppTokenCtrl.clear();
-
-      await saveChannelSettings();
-
-      Get.snackbar(
-        'Success',
-        'Slack disconnected successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('❌ Error disconnecting Slack: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to disconnect Slack: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isConnectingSlack.value = false;
-    }
-  }
-
-  // ===== VIBER INTEGRATION =====
-  /// Connect Viber
-  Future<void> connectViber() async {
-    try {
-      isConnectingViber.value = true;
-
-      if (viberBotTokenCtrl.text.trim().isEmpty || viberBotNameCtrl.text.trim().isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Please enter both Bot Token and Bot Name',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      // TODO: Implement Viber Bot API
-      // 1. Verify bot token with Viber API
-      // 2. Set up webhook for incoming messages
-
-      await Future.delayed(Duration(seconds: 2));
-
-      isViberConnected.value = true;
-      await saveChannelSettings();
-
-      Get.snackbar(
-        'Success',
-        'Viber connected successfully!\nBot: ${viberBotNameCtrl.text.trim()}',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('❌ Error connecting Viber: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to connect Viber: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isConnectingViber.value = false;
-    }
-  }
-
-  /// Disconnect Viber
-  Future<void> disconnectViber() async {
-    try {
-      isConnectingViber.value = true;
-      await Future.delayed(Duration(seconds: 1));
-
-      isViberConnected.value = false;
-      isViberAIPaused.value = false;
-      viberBotTokenCtrl.clear();
-      viberBotNameCtrl.clear();
-
-      await saveChannelSettings();
-
-      Get.snackbar(
-        'Success',
-        'Viber disconnected successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('❌ Error disconnecting Viber: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to disconnect Viber: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isConnectingViber.value = false;
-    }
-  }
-
-  // ===== DISCORD INTEGRATION =====
-  /// Connect Discord
-  Future<void> connectDiscord() async {
-    try {
-      isConnectingDiscord.value = true;
-
-      if (discordBotTokenCtrl.text.trim().isEmpty || discordClientIdCtrl.text.trim().isEmpty) {
-        Get.snackbar(
-          'Error',
-          'Please enter both Bot Token and Client ID',
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      // TODO: Implement Discord Bot API
-      // 1. Verify bot token with Discord API
-      // 2. Set up Gateway for incoming messages
-
-      await Future.delayed(Duration(seconds: 2));
-
-      isDiscordConnected.value = true;
-      await saveChannelSettings();
-
-      Get.snackbar(
-        'Success',
-        'Discord connected successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('❌ Error connecting Discord: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to connect Discord: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isConnectingDiscord.value = false;
-    }
-  }
-
-  /// Disconnect Discord
-  Future<void> disconnectDiscord() async {
-    try {
-      isConnectingDiscord.value = true;
-      await Future.delayed(Duration(seconds: 1));
-
-      isDiscordConnected.value = false;
-      isDiscordAIPaused.value = false;
-      discordBotTokenCtrl.clear();
-      discordClientIdCtrl.clear();
-
-      await saveChannelSettings();
-
-      Get.snackbar(
-        'Success',
-        'Discord disconnected successfully!',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
-    } catch (e) {
-      print('❌ Error disconnecting Discord: $e');
-      Get.snackbar(
-        'Error',
-        'Failed to disconnect Discord: $e',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isConnectingDiscord.value = false;
-    }
-  }
+  // Removed Viber and Discord integration methods - channels removed
 
   // ===== AI CONTROL METHODS =====
   /// Toggle Facebook AI pause
@@ -1510,47 +1215,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     );
   }
 
-  /// Toggle Slack AI pause
-  void toggleSlackAI() {
-    isSlackAIPaused.value = !isSlackAIPaused.value;
-    saveChannelSettings();
-    Get.snackbar(
-      'Success',
-      isSlackAIPaused.value
-        ? 'Slack AI paused'
-        : 'Slack AI resumed',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-  }
-
-  /// Toggle Viber AI pause
-  void toggleViberAI() {
-    isViberAIPaused.value = !isViberAIPaused.value;
-    saveChannelSettings();
-    Get.snackbar(
-      'Success',
-      isViberAIPaused.value
-        ? 'Viber AI paused'
-        : 'Viber AI resumed',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-  }
-
-  /// Toggle Discord AI pause
-  void toggleDiscordAI() {
-    isDiscordAIPaused.value = !isDiscordAIPaused.value;
-    saveChannelSettings();
-    Get.snackbar(
-      'Success',
-      isDiscordAIPaused.value
-        ? 'Discord AI paused'
-        : 'Discord AI resumed',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-    );
-  }
+  // Removed AI toggle methods for Slack, Viber, Discord - channels removed
 
   // ===== UTILITY METHODS =====
   /// Select channel
@@ -1915,7 +1580,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
   @override
   void onClose() {
     // Dispose controllers
-    websiteUrlCtrl.dispose();
+    // Removed websiteUrlCtrl dispose
     facebookPageIdCtrl.dispose();
     facebookAccessTokenCtrl.dispose();
     instagramBusinessIdCtrl.dispose();
@@ -1923,12 +1588,7 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     telegramBotUsernameCtrl.dispose();
     whatsAppPhoneNumberCtrl.dispose();
     whatsAppAccessTokenCtrl.dispose();
-    slackBotTokenCtrl.dispose();
-    slackAppTokenCtrl.dispose();
-    viberBotTokenCtrl.dispose();
-    viberBotNameCtrl.dispose();
-    discordBotTokenCtrl.dispose();
-    discordClientIdCtrl.dispose();
+    // Removed unused controller disposes
     super.onClose();
   }
 }

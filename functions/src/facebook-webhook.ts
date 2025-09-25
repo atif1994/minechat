@@ -1,7 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import * as express from 'express';
-import * as crypto from 'crypto';
+import express from 'express';
 
 const app = express();
 
@@ -9,7 +8,7 @@ const app = express();
 admin.initializeApp();
 
 // Facebook webhook verification
-app.get('/webhook', (req, res) => {
+app.get('/webhook', (req: any, res: any) => {
   const mode = req.query['hub.mode'];
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
@@ -27,7 +26,7 @@ app.get('/webhook', (req, res) => {
 });
 
 // Handle incoming messages from Facebook
-app.post('/webhook', (req, res) => {
+app.post('/webhook', (req: any, res: any) => {
   const body = req.body;
 
   // Check if this is a page subscription
@@ -35,7 +34,7 @@ app.post('/webhook', (req, res) => {
     // Process each entry
     body.entry.forEach((entry: any) => {
       const pageId = entry.id;
-      const timeOfEvent = entry.time;
+      // const timeOfEvent = entry.time;
 
       // Process each messaging event
       if (entry.messaging) {
@@ -139,7 +138,8 @@ async function handleIncomingMessage(event: any, pageId: string) {
   }
 }
 
-// Optional: Send auto-reply function
+// Optional: Send auto-reply function (currently unused)
+/*
 async function sendAutoReply(pageId: string, senderId: string, conversationId: string) {
   try {
     // Get page access token from secure storage
@@ -189,6 +189,7 @@ async function sendAutoReply(pageId: string, senderId: string, conversationId: s
     console.error('❌ Error sending auto-reply:', error);
   }
 }
+*/
 
 // Export the Express app as a Cloud Function
 export const facebookWebhook = functions.https.onRequest(app);
