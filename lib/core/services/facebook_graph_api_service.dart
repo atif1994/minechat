@@ -660,12 +660,74 @@ class FacebookGraphApiService {
 
   /// Send message to a Facebook conversation
   static Future<Map<String, dynamic>> sendMessageToConversation(
-      String conversationId, String pageAccessToken, String message, {String? userId}) async {
+String conversationId, String pageAccessToken, String message, {String? userId}) async {
     try {
       print('📤 Sending message to conversation: $conversationId');
       print('📝 Message: $message');
       print('🔑 Token length: ${pageAccessToken.length}');
       
+      // Check if we're within the allowed messaging window (24 hours)
+      // For now, we'll use a different approach - send via backend
+      return await _sendMessageViaBackend(conversationId, pageAccessToken, message, userId);
+      
+    } catch (e) {
+      print('❌ Error sending message: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// Send message via backend to avoid Facebook API window restrictions
+  static Future<Map<String, dynamic>> _sendMessageViaBackend(
+    String conversationId, String pageAccessToken, String message, String? userId) async {
+    try {
+      print('📤 Sending message via backend to avoid API restrictions');
+      
+      final response = await http.post(
+        Uri.parse("$_backendUrl/conversations/$conversationId/messages"),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $pageAccessToken",
+        },
+        body: jsonEncode({
+          "message": message,
+          "userId": userId,
+          "conversationId": conversationId,
+        }),
+      ).timeout(Duration(seconds: 10)); // Add timeout
+
+      print('📊 Backend response status: ${response.statusCode}');
+      
+      // Check if backend is down (503 or HTML response)
+      if (response.statusCode == 503 || response.body.contains('<!DOCTYPE html>')) {
+        print('⚠️ Backend is down - falling back to direct API');
+        return await _sendMessageDirect(conversationId, pageAccessToken, message, userId: userId);
+      }
+
+      if (response.statusCode == 200) {
+        try {
+          final decodedData = jsonDecode(response.body);
+          print('✅ Message sent via backend: $decodedData');
+          return {"success": true, "data": decodedData};
+        } catch (jsonError) {
+          print('⚠️ Backend JSON parsing failed: $jsonError');
+          return await _sendMessageDirect(conversationId, pageAccessToken, message, userId: userId);
+        }
+      } else {
+        print('❌ Backend error: ${response.statusCode}');
+        // Fallback to direct API
+        return await _sendMessageDirect(conversationId, pageAccessToken, message, userId: userId);
+      }
+    } catch (e) {
+      print('❌ Backend send error: $e');
+      // Fallback to direct API
+      return await _sendMessageDirect(conversationId, pageAccessToken, message, userId: userId);
+    }
+  }
+
+  /// Direct Facebook API send (for testing only)
+  static Future<Map<String, dynamic>> _sendMessageDirect(
+String conversationId, String pageAccessToken, String message, {String? userId}) async {
+    try {
       // Use the Facebook Messenger API endpoint
       final url = Uri.https(
         "graph.facebook.com",
@@ -693,7 +755,7 @@ class FacebookGraphApiService {
           'Content-Type': 'application/json',
         },
         body: jsonEncode(requestBody),
-      ).timeout(Duration(seconds: 10)); // Add timeout for faster failure
+      ).timeout(Duration(seconds: 10));
 
       print('📊 Send message response status: ${response.statusCode}');
       if (response.statusCode != 200) {
