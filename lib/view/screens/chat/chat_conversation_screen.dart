@@ -14,12 +14,15 @@ import 'package:minechat/core/widgets/chat/message_input_widget.dart';
 import 'package:minechat/core/widgets/chat/chat_app_bar_widget.dart';
 import 'package:minechat/core/widgets/chat/ai_enabled_indicator_widget.dart';
 import 'package:minechat/core/widgets/common/loading_widgets.dart';
+import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
+import 'package:minechat/core/services/openai_service.dart';
 
-/// Optimized Chat Conversation Screen
+/// Optimized Chat Conversation Screen with AI Integration
 class ChatConversationScreen extends StatelessWidget {
   final themeController = Get.find<ThemeController>();
   final Map<String, dynamic> chat;
   final conversationController = Get.put(ChatConversationController(), tag: 'ChatConversationController');
+  final aiAssistantController = Get.find<AIAssistantController>();
 
   ChatConversationScreen({required this.chat});
 
@@ -45,27 +48,93 @@ class ChatConversationScreen extends StatelessWidget {
             profileImageUrl: chat['profileImageUrl'],
             onBackPressed: () => Get.back(),
             onProfileTap: () => Get.snackbar('Info', 'Viewing profile...'),
-            onAITap: () => Get.snackbar('Info', 'AI Assistant toggled...'),
+            onAITap: () => conversationController.toggleAIResponse(),
           ),
           body: Column(
             children: [
-              // AI Enabled indicator
+              // AI Enabled indicator with toggle functionality
               AIEnabledIndicatorWidget(
-                isEnabled: true,
-                onTap: () => Get.snackbar('Info', 'AI settings...'),
+                isEnabled: conversationController.isAIEnabled.value,
+                onTap: () => conversationController.toggleAIResponse(),
               ),
+
+              // AI Response Mode indicator
+              if (conversationController.isAIEnabled.value)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  color: Colors.blue.withOpacity(0.1),
+                  child: Row(
+                    children: [
+                      Icon(Icons.smart_toy, color: Colors.blue, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'AI Assistant is responding automatically',
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
 
               // Messages
               Expanded(
                 child: _buildMessagesList(),
               ),
 
-              // Message Input
-              MessageInputWidget(
-                messageController: conversationController.messageController,
-                isSending: conversationController.isSending,
-                onSendMessage: conversationController.sendMessage,
-              ),
+              // Message Input - conditionally show based on AI status
+              Obx(() {
+                if (conversationController.isAIEnabled.value) {
+                  // Show AI status when enabled
+                  return Container(
+                    padding: EdgeInsets.all(16),
+                    margin: EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: themeController.isDarkMode 
+                          ? Colors.green.withOpacity(0.1) 
+                          : Colors.green.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.green.withOpacity(0.3),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.smart_toy, color: Colors.green, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'AI Assistant is responding automatically',
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.w500,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        Switch(
+                          value: conversationController.isAIEnabled.value,
+                          onChanged: (value) {
+                            conversationController.toggleAI(value);
+                          },
+                          activeColor: Colors.green,
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  // Show normal message input when AI is disabled
+                  return MessageInputWidget(
+                    messageController: conversationController.messageController,
+                    isSending: conversationController.isSending,
+                    onSendMessage: conversationController.sendMessage,
+                  );
+                }
+              }),
             ],
           ),
         );
@@ -106,6 +175,8 @@ class ChatConversationScreen extends StatelessWidget {
               timestamp: message['timestamp'] ?? '',
               isFromUser: message['isFromUser'] ?? false,
               isAI: message['isAI'] ?? false,
+              isPending: message['isPending'] ?? false,
+              error: message['error'],
               avatar: _buildUserAvatar(message),
             );
           },
@@ -137,12 +208,17 @@ class ChatConversationScreen extends StatelessWidget {
   }
 }
 
-/// Optimized Chat Conversation Controller
+/// Enhanced Chat Conversation Controller with AI Integration
 class ChatConversationController extends GetxController {
   final messageController = TextEditingController();
   var messages = <Map<String, dynamic>>[].obs;
   var isLoading = true.obs;
   var isSending = false.obs;
+
+  // AI Integration
+  var isAIEnabled = false.obs;
+  var isAIResponding = false.obs;
+  final aiAssistantController = Get.find<AIAssistantController>();
 
   // Facebook conversation data
   String? conversationId;
@@ -392,7 +468,53 @@ class ChatConversationController extends GetxController {
     }
   }
 
-  /// Send message
+  /// Toggle AI Response Mode
+  void toggleAIResponse() {
+    isAIEnabled.value = !isAIEnabled.value;
+    
+    if (isAIEnabled.value) {
+      Get.snackbar(
+        'AI Enabled',
+        'AI Assistant will respond automatically to incoming messages',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+    } else {
+      Get.snackbar(
+        'AI Disabled',
+        'You will respond manually to messages',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+    }
+  }
+
+  /// Toggle AI with specific value
+  void toggleAI(bool enabled) {
+    isAIEnabled.value = enabled;
+    
+    if (enabled) {
+      Get.snackbar(
+        'AI Enabled',
+        'AI Assistant will respond automatically to incoming messages',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+    } else {
+      Get.snackbar(
+        'AI Disabled',
+        'You will respond manually to messages',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: Duration(seconds: 3),
+      );
+    }
+  }
+
+  /// Send message with AI integration
   Future<void> sendMessage() async {
     final messageText = messageController.text.trim();
     if (messageText.isEmpty) return;
@@ -410,11 +532,11 @@ class ChatConversationController extends GetxController {
         'id': messageId,
         'text': messageText,
         'timestamp': _formatTimestamp(DateTime.now().toIso8601String()),
-        'facebookCreatedTime': DateTime.now().toIso8601String(), // Store original timestamp
+        'facebookCreatedTime': DateTime.now().toIso8601String(),
         'isFromUser': true,
         'isAI': false,
-        'isSentMessage': true, // Mark as sent message to prevent duplicates
-        'sentMessageId': messageId, // Unique identifier for sent messages
+        'isSentMessage': true,
+        'sentMessageId': messageId,
       };
 
       // Track this message as sent to prevent duplicates
@@ -439,7 +561,6 @@ class ChatConversationController extends GetxController {
       );
 
       if (sendResult['success'] == true) {
-        // ✅ Message sent successfully - no need to store in Firebase as it's already in messages list
         print('✅ Message sent successfully');
       } else {
         messages.remove(newMessage);
@@ -450,6 +571,128 @@ class ChatConversationController extends GetxController {
       Get.snackbar('Error', 'Failed to send message: $e');
     } finally {
       setSending(false);
+    }
+  }
+
+  /// Generate AI Response for incoming messages
+  Future<void> generateAIResponse(String userMessage) async {
+    if (!isAIEnabled.value || isAIResponding.value) return;
+
+    try {
+      isAIResponding.value = true;
+      print('🤖 Generating AI response for: $userMessage');
+
+      // Get AI assistant configuration
+      final assistant = aiAssistantController.currentAIAssistant.value;
+      if (assistant == null) {
+        print('⚠️ No AI assistant configured');
+        return;
+      }
+
+      // Generate AI response using OpenAI service
+      final aiResponse = await OpenAIService.generateResponseWithKnowledge(
+        userMessage: userMessage,
+        assistantName: assistant.name,
+        introMessage: assistant.introMessage,
+        shortDescription: assistant.shortDescription,
+        aiGuidelines: assistant.aiGuidelines,
+        responseLength: assistant.responseLength,
+        businessInfo: aiAssistantController.businessInfo.value,
+        productsServices: aiAssistantController.productsServices,
+        faqs: aiAssistantController.faqs,
+      );
+
+      print('🤖 AI Response: $aiResponse');
+
+      // Send AI response as a message
+      await _sendAIMessage(aiResponse);
+
+    } catch (e) {
+      print('❌ Error generating AI response: $e');
+    } finally {
+      isAIResponding.value = false;
+    }
+  }
+
+  /// Send AI-generated message
+  Future<void> _sendAIMessage(String aiResponse) async {
+    try {
+      final messageId = DateTime.now().millisecondsSinceEpoch.toString();
+      final aiMessage = {
+        'id': messageId,
+        'text': aiResponse,
+        'timestamp': _formatTimestamp(DateTime.now().toIso8601String()),
+        'facebookCreatedTime': DateTime.now().toIso8601String(),
+        'isFromUser': false,
+        'isAI': true,
+        'isAIMessage': true,
+        'aiMessageId': messageId,
+      };
+
+      // Add AI message to the conversation immediately for better UX
+      messages.add(aiMessage);
+      _forceScrollToBottom();
+
+      // Try to send AI response via Facebook API with proper error handling
+      try {
+        final sendResult = await FacebookGraphApiService.sendMessageToConversation(
+          conversationId!,
+          pageAccessToken!,
+          aiResponse,
+          userId: userId,
+        );
+
+        if (sendResult['success'] == true) {
+          print('✅ AI message sent successfully');
+          // Update message with Facebook response
+          final facebookResponse = sendResult['data'];
+          if (facebookResponse != null && facebookResponse['id'] != null) {
+            aiMessage['facebookMessageId'] = facebookResponse['id'];
+          }
+        } else {
+          print('❌ Failed to send AI message: ${sendResult['error']}');
+          // Check if it's a window policy error
+          if (sendResult['error']?.toString().contains('outside the allowed window') == true) {
+            print('⚠️ Facebook API window restriction - keeping message locally');
+            aiMessage['isPending'] = true;
+            aiMessage['error'] = 'Message outside Facebook API window';
+            Get.snackbar(
+              'AI Response', 
+              'AI responded but message is outside Facebook API window. Response saved locally.',
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              duration: Duration(seconds: 4),
+            );
+          } else {
+            // Keep the message locally but mark it as pending
+            aiMessage['isPending'] = true;
+            aiMessage['error'] = 'Facebook API error: ${sendResult['error']}';
+            Get.snackbar(
+              'AI Response', 
+              'AI responded but Facebook API is unavailable. Response saved locally.',
+              backgroundColor: Colors.orange,
+              colorText: Colors.white,
+              duration: Duration(seconds: 4),
+            );
+          }
+        }
+      } catch (apiError) {
+        print('❌ Facebook API error: $apiError');
+        // Keep the message locally but mark it as pending
+        aiMessage['isPending'] = true;
+        aiMessage['error'] = 'Facebook API error: $apiError';
+        Get.snackbar(
+          'AI Response', 
+          'AI responded but Facebook API is unavailable. Response saved locally.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: Duration(seconds: 4),
+        );
+      }
+
+    } catch (e) {
+      print('❌ Error sending AI message: $e');
+      Get.snackbar('AI Error', 'Failed to send AI response: $e');
     }
   }
 
@@ -753,9 +996,10 @@ class ChatConversationController extends GetxController {
           messages.value = updatedMessages;
           _forceScrollToBottom();
           
-          // Show notification for new user messages
+          // Show notification for new user messages and trigger AI response if enabled
           final userMessages = convertedNewMessages.where((m) => m['isFromUser'] == true).toList();
           if (userMessages.isNotEmpty) {
+            // Show notification
             Get.snackbar(
               '💬 New Message',
               'You have ${userMessages.length} new message(s)',
@@ -764,6 +1008,19 @@ class ChatConversationController extends GetxController {
               backgroundColor: Colors.blue,
               colorText: Colors.white,
             );
+
+            // Trigger AI response if AI is enabled
+            if (isAIEnabled.value && userMessages.isNotEmpty) {
+              final latestUserMessage = userMessages.first;
+              final messageText = latestUserMessage['text']?.toString() ?? '';
+              if (messageText.isNotEmpty) {
+                print('🤖 AI is enabled, generating response for: $messageText');
+                // Add a small delay to make it feel more natural
+                Future.delayed(Duration(seconds: 2), () {
+                  generateAIResponse(messageText);
+                });
+              }
+            }
           }
         } else {
           print('✅ No new messages found');
@@ -899,7 +1156,7 @@ class ChatConversationController extends GetxController {
         print('⚠️ Webhook message already exists or is a duplicate (Facebook: $isDuplicateFacebook, Sent: $isDuplicateSent, Content: $isDuplicateContent, AlreadySent: $isAlreadySentByUser), skipping');
       }
       
-      // Show notification for new user messages
+      // Show notification for new user messages and trigger AI response if enabled
       if (messageData['isFromUser'] == true) {
         Get.snackbar(
           '💬 New Message',
@@ -909,6 +1166,18 @@ class ChatConversationController extends GetxController {
           backgroundColor: Colors.blue,
           colorText: Colors.white,
         );
+
+        // Trigger AI response if AI is enabled
+        if (isAIEnabled.value) {
+          final messageText = messageData['text']?.toString() ?? '';
+          if (messageText.isNotEmpty) {
+            print('🤖 AI is enabled, generating response for real-time message: $messageText');
+            // Add a small delay to make it feel more natural
+            Future.delayed(Duration(seconds: 2), () {
+              generateAIResponse(messageText);
+            });
+          }
+        }
       }
       
       print('✅ Real-time message added successfully');
@@ -1053,7 +1322,7 @@ class ChatConversationController extends GetxController {
         print('⚠️ Webhook message already exists or is a duplicate (Facebook: $isDuplicateFacebook, Sent: $isDuplicateSent, Content: $isDuplicateContent, AlreadySent: $isAlreadySentByUser), skipping');
       }
       
-      // Show notification for new user messages
+      // Show notification for new user messages and trigger AI response if enabled
       if (messageData['isFromUser'] == true) {
         Get.snackbar(
           '💬 New Message',
@@ -1063,6 +1332,18 @@ class ChatConversationController extends GetxController {
           backgroundColor: Colors.blue,
           colorText: Colors.white,
         );
+
+        // Trigger AI response if AI is enabled
+        if (isAIEnabled.value) {
+          final messageText = messageData['text']?.toString() ?? '';
+          if (messageText.isNotEmpty) {
+            print('🤖 AI is enabled, generating response for webhook message: $messageText');
+            // Add a small delay to make it feel more natural
+            Future.delayed(Duration(seconds: 2), () {
+              generateAIResponse(messageText);
+            });
+          }
+        }
       }
       
       print('✅ Webhook message added successfully');
