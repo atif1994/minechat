@@ -39,8 +39,26 @@ class DashboardMessagesSentCard extends StatelessWidget {
 
           // Left legend + bars vs right donut
           Obx(() {
+            if (c.isLoading.value) {
+              return Center(
+                child: Padding(
+                  padding: EdgeInsets.all(AppResponsive.scaleSize(context, 20)),
+                  child: CircularProgressIndicator(
+                    color: Color(0xFFB01D47),
+                    strokeWidth: 2,
+                  ),
+                ),
+              );
+            }
+
             final human = c.humanPercent.value;
             final ai = c.aiPercent;
+
+            // Debug: Print real data values
+            print('📊 Messages Sent Card - Human: ${human}%, AI: ${ai}%');
+            print('📊 Total Messages: ${c.totalMessages.value}');
+            print('📊 Human Messages: ${c.humanMessages.value}');
+            print('📊 AI Messages: ${c.aiMessages.value}');
 
             return Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -64,7 +82,7 @@ class DashboardMessagesSentCard extends StatelessWidget {
                           percent: ai,
                           isAI: true),
                       AppSpacing.vertical(context, 0.01),
-                      DashboardProgressBar(percent: 70, useGradient: true),
+                      DashboardProgressBar(percent: ai, useGradient: true),
                     ],
                   ),
                 ),

@@ -80,12 +80,6 @@ class _CrmMainScreenState extends State<CrmMainScreen>
             },
             icon: const Icon(Icons.refresh, color: AppColors.primary),
           ),
-          IconButton(
-            onPressed: () {
-              Get.toNamed('/add-lead');
-            },
-            icon: const Icon(Icons.add, color: AppColors.primary),
-          ),
         ],
       ),
       body: TabBarView(
