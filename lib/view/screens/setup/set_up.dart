@@ -22,7 +22,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
     final controller = Get.put(AIAssistantController());
-    final channelController = Get.put(ChannelController());
+    Get.put(ChannelController()); // Initialize but don't store reference
 
     final indexMap = {
       "AI Assistant": 0,
@@ -32,30 +32,27 @@ class AIAssistantSetupScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: isDark ? Color(0XFF0A0A0A) : Color(0XFFF4F6FC),
-      body: SafeArea(
-        child: Padding(
-          padding: AppSpacing.all(context, factor: 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Breadcrumb Navigation
-              _buildBreadcrumbs(context, controller),
-
-              // Main content - keeps all pages alive
-              Expanded(
-                child: Obx(() => IndexedStack(
-                  index: indexMap[controller.currentStep.value] ?? 0,
-                  children: [
-                    _buildAIAssistantForm(controller, context),
-                    AIKnowledgeScreen(controller: controller),
-                    ChannelsScreen(),
-                  ],
-                )),
-              ),
-            ],
-          ),
+      appBar: _buildBreadcrumbsAppBar(context, controller, isDark),
+      body: Obx(() => Padding(
+        padding: AppSpacing.symmetric(context, h: 0.04, v: 0),
+        child: IndexedStack(
+          index: indexMap[controller.currentStep.value] ?? 0,
+          children: [
+            _buildAIAssistantForm(controller, context),
+            AIKnowledgeScreen(controller: controller),
+            ChannelsScreen(),
+          ],
         ),
-      ),
+      )),
+    );
+  }
+
+  PreferredSizeWidget _buildBreadcrumbsAppBar(
+      BuildContext context, AIAssistantController controller, bool isDark) {
+    return AppBar(
+      backgroundColor: isDark ? Color(0XFF1D1D1D) : Color(0XFFFFFFFF),
+      elevation: 0,
+      title: _buildBreadcrumbs(context, controller),
     );
   }
 
@@ -63,7 +60,7 @@ class AIAssistantSetupScreen extends StatelessWidget {
   Widget _buildAIAssistantForm(
       AIAssistantController controller, BuildContext context) {
     return SingleChildScrollView(
-      padding: AppSpacing.all(context, factor: 1),
+      padding: AppSpacing.symmetric(context, v: 0.02, h: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

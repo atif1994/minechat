@@ -13,7 +13,6 @@ import 'package:minechat/controller/auth_controller/auth_controller.dart';
 import 'package:minechat/controller/crm_controller/crm_controller.dart';
 import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
-import 'package:minechat/core/services/otp_service/firestore_init.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/core/router/app_pages.dart';
 
@@ -85,29 +84,6 @@ class _MineChatAppState extends State<MineChatApp> {
     // For now, we'll rely on the OAuth flow to handle the callback
   }
 
-
-
-  void _handleDeepLink(Uri uri) {
-    print('🔗 Deep link received: $uri');
-    
-    if (uri.scheme == 'minechat' && uri.host == 'facebook-oauth-callback') {
-      final code = uri.queryParameters['code'];
-      final state = uri.queryParameters['state'];
-      
-      if (code != null && state != null) {
-        print('✅ OAuth callback received - code: $code, state: $state');
-        
-        // Handle OAuth callback
-        try {
-          final channelController = Get.find<ChannelController>();
-          channelController.handleOAuthCallback(code, state);
-        } catch (e) {
-          print('❌ Error handling OAuth callback: $e');
-        }
-      }
-    }
-  }
-
   @override
   void dispose() {
     _linkSubscription?.cancel();
@@ -118,15 +94,14 @@ class _MineChatAppState extends State<MineChatApp> {
   Widget build(BuildContext context) {
     final ThemeController themeController = Get.find<ThemeController>();
 
-    return Obx(() => GetMaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'minechat.ai',
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode:
-              themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-          initialRoute: AppPages.initial,
-          getPages: AppPages.routes,
-        ));
+    return GetMaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'minechat.ai',
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeController.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      initialRoute: AppPages.initial,
+      getPages: AppPages.routes,
+    );
   }
 }

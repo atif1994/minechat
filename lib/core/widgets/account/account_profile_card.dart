@@ -15,9 +15,8 @@ class AccountProfileCard extends StatelessWidget {
     final themeController = Get.find<ThemeController>();
     final loginController = Get.find<LoginController>();
 
-    final isDark = themeController.isDarkMode;
-
     return Obx(() {
+      final isDark = themeController.isDarkMode;
       final user = loginController.currentUser.value;
       final biz = loginController.businessAccount.value;
 
@@ -39,7 +38,9 @@ class AccountProfileCard extends StatelessWidget {
           companyPhoto; // may be empty → avatar handles placeholder
       final avatarSize = AppResponsive.radius(context, factor: 7);
 
-      return Container(
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
         padding: AppSpacing.symmetric(context, h: 0.04, v: 0.02),
         decoration: BoxDecoration(
           color: isDark ? const Color(0XFF1D1D1D) : const Color(0XFFFFFFFF),
@@ -58,15 +59,19 @@ class AccountProfileCard extends StatelessWidget {
             ),
             AppSpacing.horizontal(context, 0.02),
             Expanded(
-              child: Text(
-                displayName,
+              child: AnimatedDefaultTextStyle(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
                 style: AppTextStyles.bodyText(context).copyWith(
                   fontSize: AppResponsive.scaleSize(context, 16),
                   fontWeight: FontWeight.w600,
                   color: isDark ? Colors.white : const Color(0XFF222222),
                 ),
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
+                child: Text(
+                  displayName,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
             ),
           ],

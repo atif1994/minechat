@@ -31,22 +31,11 @@ class AddLeadController extends GetxController {
   }
 
   // Save lead method
-  Future<void> saveLead(LeadModel lead) async {
-    try {
-      isLoading.value = true;
-      await crmController.addLead(lead);
-      Get.back(); // Navigate back after successful save
-    } catch (e) {
-      Get.snackbar(
-        'Error',
-        'Failed to save lead: $e',
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-      );
-    } finally {
-      isLoading.value = false;
-    }
+  void saveLead(LeadModel lead) {
+    isLoading.value = true;
+    crmController.addLead(lead);
+    isLoading.value = false;
+    Get.back(); // Navigate back after successful save
   }
 
   // Reset form
