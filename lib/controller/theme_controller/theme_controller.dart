@@ -8,10 +8,22 @@ import '../../core/utils/helpers/app_themes/app_theme.dart';
 class ThemeController extends GetxController {
   final _storage = GetStorage();
   final RxBool _isDarkMode = false.obs;
+  
+  // Cache theme data to avoid repeated calculations
+  ThemeData? _cachedLightTheme;
+  ThemeData? _cachedDarkTheme;
 
   bool get isDarkMode => _isDarkMode.value;
 
-  ThemeData get theme => isDarkMode ? AppTheme.darkTheme : AppTheme.lightTheme;
+  ThemeData get theme {
+    if (isDarkMode) {
+      _cachedDarkTheme ??= AppTheme.darkTheme;
+      return _cachedDarkTheme!;
+    } else {
+      _cachedLightTheme ??= AppTheme.lightTheme;
+      return _cachedLightTheme!;
+    }
+  }
 
   @override
   void onInit() {

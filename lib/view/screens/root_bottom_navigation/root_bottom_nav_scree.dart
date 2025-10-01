@@ -68,18 +68,26 @@ class RootBottomNavScreen extends StatelessWidget {
         ),
       ];
 
-      return Scaffold(
-        body: IndexedStack(index: index, children: _pages),
-        bottomNavigationBar: AppBottomNavBar(
-          items: items,
-          currentIndex: index,
-          onTap: ctrl.changeTab,
-          backgroundColor: scheme.surface,
-          // ⬅ themed
-          inactiveColor: scheme.onSurface.withOpacity(.6),
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        color: isDark ? const Color(0XFF1D1D1D) : const Color(0xFFFFFFFF),
+        child: Scaffold(
+          body: IndexedStack(index: index, children: _pages),
+          bottomNavigationBar: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: AppBottomNavBar(
+              items: items,
+              currentIndex: index,
+              onTap: ctrl.changeTab,
+              backgroundColor: scheme.surface,
+              // ⬅ themed
+              inactiveColor: scheme.onSurface.withOpacity(.6),
+            ),
+          ),
+          backgroundColor: Colors.transparent,
         ),
-        backgroundColor:
-            isDark ? const Color(0XFF1D1D1D) : const Color(0xFFFFFFFF),
       );
     });
   }
