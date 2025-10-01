@@ -8,23 +8,128 @@ class CrmLeadsScreen extends StatelessWidget {
   CrmLeadsScreen({super.key});
 
   final CrmController crmController = Get.put(CrmController());
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.gray,
-      appBar: AppBar(
-        title: const Text('Leads'),
-        backgroundColor: Colors.white,
-        elevation: 0,
+    return Obx(() {
+      return Scaffold(
+        backgroundColor: AppColors.gray,
+        appBar: crmController.isSelectionMode.value 
+          ? _buildSelectionAppBar(context)
+          : _buildNormalAppBar(context),
+        body: Column(
+          children: [
+            if (crmController.isSelectionMode.value) _buildSelectAllCheckbox(),
+            _buildSearchBar(),
+            _buildFilterTabs(),
+            Expanded(
+              child: _buildLeadsList(),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  PreferredSizeWidget _buildNormalAppBar(BuildContext context) {
+    return AppBar(
+      title: const Text('Leads'),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      actions: [
+        IconButton(
+          onPressed: () {
+            crmController.toggleSelectionMode();
+          },
+          icon: const Icon(Icons.checklist, color: AppColors.primary),
+        ),
+      ],
+    );
+  }
+
+  PreferredSizeWidget _buildSelectionAppBar(BuildContext context) {
+    return AppBar(
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () {
+          crmController.toggleSelectionMode();
+        },
       ),
-      body: Column(
+      title: Text('${crmController.selectedLeadIds.length} Selected'),
+      backgroundColor: Colors.white,
+      elevation: 0,
+      actions: [
+        IconButton(
+          onPressed: () {
+            crmController.deleteSelectedLeads();
+          },
+          icon: const Icon(Icons.delete, color: Colors.red),
+        ),
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            switch (value) {
+              case 'mark_opportunity':
+                crmController.markSelectedAsOpportunity();
+                break;
+              case 'follow_up':
+                crmController.followUpSelectedLater();
+                break;
+              case 'group_message':
+                crmController.sendGroupMessage();
+                break;
+              case 'create_group':
+                crmController.createGroup();
+                break;
+              case 'add_to_group':
+                crmController.addToGroup();
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'mark_opportunity',
+              child: Text('Mark as opportunity'),
+            ),
+            const PopupMenuItem(
+              value: 'follow_up',
+              child: Text('Follow-up later'),
+            ),
+            const PopupMenuItem(
+              value: 'group_message',
+              child: Text('Send a group message'),
+            ),
+            const PopupMenuItem(
+              value: 'create_group',
+              child: Text('Create a group'),
+            ),
+            const PopupMenuItem(
+              value: 'add_to_group',
+              child: Text('Add to a group'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectAllCheckbox() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Row(
         children: [
-          _buildSearchBar(),
-          _buildFilterTabs(),
-          Expanded(
-            child: _buildLeadsList(),
+          Checkbox(
+            value: crmController.selectedLeadIds.length == crmController.filteredLeads.length && crmController.filteredLeads.isNotEmpty,
+            onChanged: (value) {
+              if (value == true) {
+                crmController.selectAllLeads();
+              } else {
+                crmController.clearSelection();
+              }
+            },
           ),
+          const Text('Select all'),
         ],
       ),
     );
@@ -34,15 +139,36 @@ class CrmLeadsScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.white,
-      child: TextField(
-        decoration: const InputDecoration(
-          hintText: 'Search',
-          prefixIcon: Icon(Icons.search),
-          border: OutlineInputBorder(),
-        ),
-        onChanged: (value) {
-          crmController.searchQuery.value = value;
-        },
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                crmController.updateSearchQuery(value);
+              },
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 40,
+            height: 40,
+            decoration: const BoxDecoration(
+              color: Color(0xFF8B5CF6), // Purple color like Facebook Messenger
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.chat,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -104,20 +230,24 @@ class CrmLeadsScreen extends StatelessWidget {
         );
       }
 
-      if (crmController.leads.isEmpty) {
-        return const Center(
+      final filteredLeads = crmController.filteredLeads;
+      
+      if (filteredLeads.isEmpty) {
+        return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.people_outline, size: 64, color: Colors.grey),
               SizedBox(height: 16),
               Text(
-                'No leads found',
+                crmController.leads.isEmpty ? 'No leads found' : 'No leads match your search',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               SizedBox(height: 8),
               Text(
-                'Pull down to refresh or add a new lead',
+                crmController.leads.isEmpty 
+                  ? 'Pull down to refresh or add a new lead'
+                  : 'Try adjusting your search or filter',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ],
@@ -131,9 +261,9 @@ class CrmLeadsScreen extends StatelessWidget {
         },
         child: ListView.builder(
           padding: const EdgeInsets.all(16),
-          itemCount: crmController.leads.length,
+          itemCount: filteredLeads.length,
           itemBuilder: (context, index) {
-            final lead = crmController.leads[index];
+            final lead = filteredLeads[index];
             return _buildLeadCard(lead);
           },
         ),
@@ -162,6 +292,16 @@ class CrmLeadsScreen extends StatelessWidget {
         children: [
           Row(
             children: [
+              // Checkbox for selection mode
+              if (crmController.isSelectionMode.value) ...[
+                Checkbox(
+                  value: crmController.selectedLeadIds.contains(lead.id),
+                  onChanged: (value) {
+                    crmController.toggleLeadSelection(lead.id);
+                  },
+                ),
+                const SizedBox(width: 8),
+              ],
               CircleAvatar(
                 radius: 20,
                 child: Text(
@@ -196,31 +336,56 @@ class CrmLeadsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(lead.description),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildActionButton('Mark as opportunity', Colors.orange),
-              const SizedBox(width: 12),
-              _buildActionButton('Follow-up later', AppColors.primary),
-            ],
-          ),
+          // Different actions based on selection mode
+          if (crmController.isSelectionMode.value) ...[
+            // No individual actions in selection mode
+          ] else ...[
+            Row(
+              children: [
+                _buildActionButton(
+                  'Send a message', 
+                  Colors.blue,
+                  Icons.message,
+                  () => crmController.sendMessageToLead(lead.id),
+                ),
+                const SizedBox(width: 12),
+                _buildActionButton(
+                  'Add to a group', 
+                  Colors.green,
+                  Icons.group_add,
+                  () => crmController.addLeadToGroup(lead.id),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 12,
-          color: color,
-          fontWeight: FontWeight.w500,
+  Widget _buildActionButton(String label, Color color, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );

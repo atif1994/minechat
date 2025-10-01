@@ -8,6 +8,7 @@ class CrmOpportunitiesScreen extends StatelessWidget {
   CrmOpportunitiesScreen({super.key});
 
   final CrmController crmController = Get.put(CrmController());
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +35,14 @@ class CrmOpportunitiesScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       color: Colors.white,
       child: TextField(
+        controller: _searchController,
         decoration: const InputDecoration(
           hintText: 'Search',
           prefixIcon: Icon(Icons.search),
           border: OutlineInputBorder(),
         ),
         onChanged: (value) {
-          crmController.searchQuery.value = value;
+          crmController.updateSearchQuery(value);
         },
       ),
     );
@@ -61,20 +63,24 @@ class CrmOpportunitiesScreen extends StatelessWidget {
         );
       }
 
-      if (crmController.opportunities.isEmpty) {
-        return const Center(
+      final filteredOpportunities = crmController.filteredOpportunities;
+      
+      if (filteredOpportunities.isEmpty) {
+        return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.trending_up_outlined, size: 64, color: Colors.grey),
               SizedBox(height: 16),
               Text(
-                'No opportunities found',
+                crmController.opportunities.isEmpty ? 'No opportunities found' : 'No opportunities match your search',
                 style: TextStyle(fontSize: 18, color: Colors.grey),
               ),
               SizedBox(height: 8),
               Text(
-                'Pull down to refresh or convert a lead to opportunity',
+                crmController.opportunities.isEmpty 
+                  ? 'Pull down to refresh or convert a lead to opportunity'
+                  : 'Try adjusting your search',
                 style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
             ],
@@ -88,9 +94,9 @@ class CrmOpportunitiesScreen extends StatelessWidget {
         },
         child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        itemCount: crmController.opportunities.length,
+        itemCount: filteredOpportunities.length,
         itemBuilder: (context, index) {
-          final opportunity = crmController.opportunities[index];
+          final opportunity = filteredOpportunities[index];
           return _buildOpportunityCard(opportunity);
         },
         ),

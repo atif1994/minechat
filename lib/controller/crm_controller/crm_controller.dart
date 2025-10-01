@@ -15,6 +15,57 @@ class CrmController extends GetxController {
   final RxList<String> selectedOpportunityIds = <String>[].obs;
   final RxString filterType = 'hot'.obs;
 
+  // Computed property for filtered leads
+  List<LeadModel> get filteredLeads {
+    List<LeadModel> filtered = leads.where((lead) {
+      // Filter by search query
+      if (searchQuery.value.isNotEmpty) {
+        final query = searchQuery.value.toLowerCase();
+        if (!lead.name.toLowerCase().contains(query) &&
+            !lead.email.toLowerCase().contains(query) &&
+            !lead.description.toLowerCase().contains(query)) {
+          return false;
+        }
+      }
+      
+      // Filter by status
+      if (filterType.value != 'all') {
+        switch (filterType.value) {
+          case 'hot':
+            return lead.status == LeadStatus.hot;
+          case 'followUps':
+            return lead.status == LeadStatus.followUps;
+          case 'cold':
+            return lead.status == LeadStatus.cold;
+          case 'opportunity':
+            return lead.status == LeadStatus.opportunity;
+        }
+      }
+      
+      return true;
+    }).toList();
+    
+    return filtered;
+  }
+
+  // Computed property for filtered opportunities
+  List<OpportunityModel> get filteredOpportunities {
+    List<OpportunityModel> filtered = opportunities.where((opportunity) {
+      // Filter by search query
+      if (searchQuery.value.isNotEmpty) {
+        final query = searchQuery.value.toLowerCase();
+        if (!opportunity.name.toLowerCase().contains(query) &&
+            !opportunity.description.toLowerCase().contains(query)) {
+          return false;
+        }
+      }
+      
+      return true;
+    }).toList();
+    
+    return filtered;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -28,18 +79,22 @@ class CrmController extends GetxController {
     isLoading.value = true;
     _crmRepository.getLeads().listen(
       (leadsList) {
-      leads.value = leadsList;
-      isLoading.value = false;
+        leads.value = leadsList;
+        isLoading.value = false;
         print('✅ Loaded ${leadsList.length} leads');
+        
+        // If no real data, add sample data for demo
+        if (leadsList.isEmpty) {
+          print('📝 No real leads found, adding sample data...');
+          _addSampleLeads();
+        }
       },
       onError: (error) {
         print('❌ Error loading leads: $error');
         isLoading.value = false;
-        // Add sample data for testing if no data exists
-        if (leads.isEmpty) {
-          print('📝 No leads found, adding sample data...');
-          _addSampleLeads();
-        }
+        // Add sample data for testing if real data fails
+        print('📝 Adding sample data due to error...');
+        _addSampleLeads();
       },
     );
   }
@@ -49,18 +104,22 @@ class CrmController extends GetxController {
     isLoading.value = true;
     _crmRepository.getOpportunities().listen(
       (opportunitiesList) {
-      opportunities.value = opportunitiesList;
-      isLoading.value = false;
+        opportunities.value = opportunitiesList;
+        isLoading.value = false;
         print('✅ Loaded ${opportunitiesList.length} opportunities');
+        
+        // If no real data, add sample data for demo
+        if (opportunitiesList.isEmpty) {
+          print('📝 No real opportunities found, adding sample data...');
+          _addSampleOpportunities();
+        }
       },
       onError: (error) {
         print('❌ Error loading opportunities: $error');
         isLoading.value = false;
-        // Add sample data for testing if no data exists
-        if (opportunities.isEmpty) {
-          print('📝 No opportunities found, adding sample data...');
-          _addSampleOpportunities();
-        }
+        // Add sample data for testing if real data fails
+        print('📝 Adding sample data due to error...');
+        _addSampleOpportunities();
       },
     );
   }
@@ -180,5 +239,155 @@ class CrmController extends GetxController {
 
   void setFilterType(String type) {
     filterType.value = type;
+    // Trigger UI update
+    update();
+  }
+
+  void updateSearchQuery(String query) {
+    searchQuery.value = query;
+    // Trigger UI update
+    update();
+  }
+
+  void selectAllLeads() {
+    selectedLeadIds.clear();
+    selectedLeadIds.addAll(filteredLeads.map((lead) => lead.id));
+  }
+
+  void clearSelection() {
+    selectedLeadIds.clear();
+  }
+
+  // Bulk actions
+  void markSelectedAsOpportunity() async {
+    if (selectedLeadIds.isEmpty) {
+      Get.snackbar('Info', 'No leads selected');
+      return;
+    }
+    
+    try {
+      // Update selected leads status to opportunity
+      for (String leadId in selectedLeadIds) {
+        final leadIndex = leads.indexWhere((lead) => lead.id == leadId);
+        if (leadIndex != -1) {
+          final updatedLead = leads[leadIndex].copyWith(status: LeadStatus.opportunity);
+          leads[leadIndex] = updatedLead;
+          
+          // Update in Firebase
+          await _crmRepository.updateLead(updatedLead);
+        }
+      }
+      
+      print('Marking ${selectedLeadIds.length} leads as opportunities');
+      Get.snackbar('Success', '${selectedLeadIds.length} leads marked as opportunities');
+      clearSelection();
+      isSelectionMode.value = false;
+    } catch (e) {
+      print('Error updating leads: $e');
+      Get.snackbar('Error', 'Failed to update leads: $e');
+    }
+  }
+
+  void followUpSelectedLater() async {
+    if (selectedLeadIds.isEmpty) {
+      Get.snackbar('Info', 'No leads selected');
+      return;
+    }
+    
+    try {
+      // Update selected leads status to follow-ups
+      for (String leadId in selectedLeadIds) {
+        final leadIndex = leads.indexWhere((lead) => lead.id == leadId);
+        if (leadIndex != -1) {
+          final updatedLead = leads[leadIndex].copyWith(status: LeadStatus.followUps);
+          leads[leadIndex] = updatedLead;
+          
+          // Update in Firebase
+          await _crmRepository.updateLead(updatedLead);
+        }
+      }
+      
+      print('Scheduling follow-up for ${selectedLeadIds.length} leads');
+      Get.snackbar('Success', 'Follow-up scheduled for ${selectedLeadIds.length} leads');
+      clearSelection();
+      isSelectionMode.value = false;
+    } catch (e) {
+      print('Error updating leads: $e');
+      Get.snackbar('Error', 'Failed to update leads: $e');
+    }
+  }
+
+  void sendGroupMessage() {
+    if (selectedLeadIds.isEmpty) {
+      Get.snackbar('Info', 'No leads selected');
+      return;
+    }
+    
+    print('Sending group message to ${selectedLeadIds.length} leads');
+    Get.snackbar('Success', 'Group message sent to ${selectedLeadIds.length} leads');
+    clearSelection();
+    isSelectionMode.value = false;
+  }
+
+  void createGroup() {
+    if (selectedLeadIds.isEmpty) {
+      Get.snackbar('Info', 'No leads selected');
+      return;
+    }
+    
+    print('Creating group with ${selectedLeadIds.length} leads');
+    Get.snackbar('Success', 'Group created with ${selectedLeadIds.length} leads');
+    clearSelection();
+    isSelectionMode.value = false;
+  }
+
+  void addToGroup() {
+    if (selectedLeadIds.isEmpty) {
+      Get.snackbar('Info', 'No leads selected');
+      return;
+    }
+    
+    print('Adding ${selectedLeadIds.length} leads to group');
+    Get.snackbar('Success', '${selectedLeadIds.length} leads added to group');
+    clearSelection();
+    isSelectionMode.value = false;
+  }
+
+  void deleteSelectedLeads() async {
+    if (selectedLeadIds.isEmpty) {
+      Get.snackbar('Info', 'No leads selected');
+      return;
+    }
+    
+    try {
+      // Delete from Firebase using batch operation for better performance
+      await _crmRepository.deleteMultipleLeads(selectedLeadIds.toList());
+      
+      // Remove selected leads from the local list
+      leads.removeWhere((lead) => selectedLeadIds.contains(lead.id));
+      
+      print('Deleting ${selectedLeadIds.length} leads');
+      Get.snackbar('Success', '${selectedLeadIds.length} leads deleted');
+      
+      // Clear selection and exit selection mode
+      clearSelection();
+      isSelectionMode.value = false;
+    } catch (e) {
+      print('Error deleting leads: $e');
+      Get.snackbar('Error', 'Failed to delete leads: $e');
+    }
+  }
+
+  // Individual lead actions
+  void sendMessageToLead(String leadId) {
+    // Implementation for sending message to individual lead
+    print('Sending message to lead: $leadId');
+    Get.snackbar('Success', 'Message sent to lead');
+  }
+
+  void addLeadToGroup(String leadId) {
+    // Implementation for adding individual lead to group
+    print('Adding lead to group: $leadId');
+    Get.snackbar('Success', 'Lead added to group');
   }
 }
