@@ -194,12 +194,34 @@ class EnhancedMessageBubble extends StatelessWidget {
           ),
         ),
         errorWidget: (context, url, error) {
-          print('🖼️ Network image error: $error');
+          print('🖼️ Network image error for URL: $url');
+          print('🖼️ Error details: $error');
+          print('🖼️ Error type: ${error.runtimeType}');
           return Container(
             color: Colors.grey[300],
-            child: const Icon(
-              Icons.error,
-              color: Colors.red,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.error,
+                  color: Colors.red,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Failed to load',
+                  style: TextStyle(
+                    color: Colors.red[600],
+                    fontSize: 10,
+                  ),
+                ),
+                Text(
+                  'URL: ${url.length > 30 ? url.substring(0, 30) + '...' : url}',
+                  style: TextStyle(
+                    color: Colors.red[600],
+                    fontSize: 8,
+                  ),
+                ),
+              ],
             ),
           );
         },

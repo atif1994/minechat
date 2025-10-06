@@ -17,7 +17,7 @@ class CrmMainScreen extends StatefulWidget {
 }
 
 class _CrmMainScreenState extends State<CrmMainScreen> {
-  final CrmController crmController = Get.put(CrmController());
+  final CrmController crmController = Get.find<CrmController>();
   final RxString currentSection = "Leads".obs;
 
   final Map<String, int> indexMap = {

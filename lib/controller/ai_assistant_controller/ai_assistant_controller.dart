@@ -170,6 +170,7 @@ class AIAssistantController extends GetxController {
         businessInfo: businessInfo.value,
         productsServices: productsServices,
         faqs: faqs,
+        isFacebookChat: false, // This is for app interface
       );
       
       // Debug: Print the AI response to see what it contains

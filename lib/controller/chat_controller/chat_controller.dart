@@ -208,6 +208,48 @@ class ChatController extends GetxController {
     return FirebaseAuth.instance.currentUser?.uid ?? '';
   }
 
+  /// Generate initials from a name
+  String _generateInitials(String name) {
+    if (name.isEmpty) return '?';
+    
+    final words = name.trim().split(' ').where((word) => word.isNotEmpty).toList();
+    if (words.isEmpty) return '?';
+    
+    if (words.length == 1) {
+      return words[0][0].toUpperCase();
+    } else {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    }
+  }
+
+  /// Get a consistent color scheme based on name hash
+  String _getColorSchemeForName(String name) {
+    if (name.isEmpty) return '6B7280'; // Gray fallback
+    
+    // Generate a hash from the name
+    int hash = 0;
+    for (int i = 0; i < name.length; i++) {
+      hash = name.codeUnitAt(i) + ((hash << 5) - hash);
+    }
+    
+    // Use absolute value and modulo to get a consistent color
+    final colorIndex = hash.abs() % 8;
+    
+    // Professional color palette
+    final colors = [
+      '3B82F6', // Blue
+      '10B981', // Green  
+      'F59E0B', // Amber
+      'EF4444', // Red
+      '8B5CF6', // Purple
+      '06B6D4', // Cyan
+      'F97316', // Orange
+      '84CC16', // Lime
+    ];
+    
+    return colors[colorIndex];
+  }
+
   /// Load all chats from different channels
   Future<void> loadChats() async {
     try {
@@ -571,49 +613,92 @@ class ChatController extends GetxController {
 
           // Generate profile image based on real name
           String profileImageUrl = '';
+          print('🔍 PROFILE IMAGE DEBUG for $contactName (ID: $userId)');
+          
           if (contactName != 'Unknown User' &&
               contactName != 'Facebook User $userId') {
-            // Try to get real Facebook profile picture first
+            
+            // APPROACH 1: Try direct Facebook profile picture URL (most reliable)
             try {
-              final profileResult =
-                  await FacebookGraphApiService.getUserProfile(
-                      userId, pageAccessToken);
-              if (profileResult['success'] && profileResult['data'] != null) {
-                final profileData =
-                    profileResult['data'] as Map<String, dynamic>;
-                final realProfileUrl =
-                    profileData['profileImageUrl'] as String?;
-                if (realProfileUrl != null && realProfileUrl.isNotEmpty) {
-                  profileImageUrl = realProfileUrl;
-                  print(
-                      '✅ Got real Facebook profile picture for $contactName: $profileImageUrl');
-                } else {
-                  throw Exception('No profile picture available');
-                }
+              final directProfileUrl = 'https://graph.facebook.com/$userId/picture?type=normal';
+              print('🔍 Trying direct URL: $directProfileUrl');
+              
+              // Test if the URL is accessible with a GET request (not HEAD)
+              final testResponse = await http.get(Uri.parse(directProfileUrl));
+              print('🔍 Direct URL response: ${testResponse.statusCode}');
+              
+              if (testResponse.statusCode == 200) {
+                profileImageUrl = directProfileUrl;
+                print('✅ SUCCESS: Got direct Facebook profile picture for $contactName: $profileImageUrl');
               } else {
-                throw Exception(
-                    'Failed to get profile: ${profileResult['error']}');
+                throw Exception('Direct profile URL returned ${testResponse.statusCode}');
               }
             } catch (e) {
-              print(
-                  '⚠️ Could not get real profile picture for $contactName: $e');
-              // Fallback to generated avatar with real name initials
-              final initials = contactName
-                  .split(' ')
-                  .take(2)
-                  .map((n) => n[0])
-                  .join('')
-                  .toUpperCase();
-              // Use Facebook blue color scheme
-              profileImageUrl =
-                  'https://dummyimage.com/100x100/1877F2/ffffff&text=$initials';
-              print('✅ Generated avatar for $contactName: $profileImageUrl');
+              print('⚠️ Direct profile URL failed for $contactName: $e');
+              
+              // APPROACH 2: Try Graph API call
+              try {
+                print('🔍 Trying Graph API for $contactName...');
+                final profileResult = await FacebookGraphApiService.getUserProfile(
+                    userId, pageAccessToken);
+                print('🔍 Graph API result: ${profileResult['success']}');
+                
+                if (profileResult['success'] && profileResult['data'] != null) {
+                  final profileData = profileResult['data'] as Map<String, dynamic>;
+                  final realProfileUrl = profileData['profileImageUrl'] as String?;
+                  print('🔍 Graph API profile URL: $realProfileUrl');
+                  
+                  if (realProfileUrl != null && realProfileUrl.isNotEmpty) {
+                    profileImageUrl = realProfileUrl;
+                    print('✅ SUCCESS: Got Facebook profile picture via API for $contactName: $profileImageUrl');
+                  } else {
+                    throw Exception('No profile picture available from API');
+                  }
+                } else {
+                  throw Exception('Failed to get profile: ${profileResult['error']}');
+                }
+              } catch (apiError) {
+                print('⚠️ Graph API profile fetch failed for $contactName: $apiError');
+                
+                // APPROACH 3: Try alternative Facebook profile URL formats
+                try {
+                  final altUrl1 = 'https://graph.facebook.com/$userId/picture?width=200&height=200';
+                  final altUrl2 = 'https://graph.facebook.com/$userId/picture?type=large';
+                  
+                  print('🔍 Trying alternative URL 1: $altUrl1');
+                  final altResponse1 = await http.get(Uri.parse(altUrl1));
+                  if (altResponse1.statusCode == 200) {
+                    profileImageUrl = altUrl1;
+                    print('✅ SUCCESS: Got profile picture via alternative URL 1 for $contactName: $profileImageUrl');
+                  } else {
+                    print('🔍 Alternative URL 1 failed: ${altResponse1.statusCode}');
+                    print('🔍 Trying alternative URL 2: $altUrl2');
+                    final altResponse2 = await http.get(Uri.parse(altUrl2));
+                    if (altResponse2.statusCode == 200) {
+                      profileImageUrl = altUrl2;
+                      print('✅ SUCCESS: Got profile picture via alternative URL 2 for $contactName: $profileImageUrl');
+                    } else {
+                      throw Exception('All alternative URLs failed');
+                    }
+                  }
+                } catch (altError) {
+                  print('⚠️ Alternative URLs failed for $contactName: $altError');
+                  
+                  // FINAL FALLBACK: Generated avatar with real name initials
+                  final initials = _generateInitials(contactName);
+                  // Use a more professional color scheme based on name hash
+                  final colorScheme = _getColorSchemeForName(contactName);
+                  profileImageUrl = 'https://dummyimage.com/100x100/$colorScheme/ffffff&text=$initials&font=roboto';
+                  print('⚠️ FALLBACK: Generated avatar for $contactName: $profileImageUrl');
+                }
+              }
             }
           } else {
             // Use fallback for generic names
-            profileImageUrl =
-                'https://dummyimage.com/100x100/cccccc/666666&text=FB';
-            print('⚠️ Using fallback avatar for $contactName');
+            final initials = _generateInitials(contactName);
+            final colorScheme = _getColorSchemeForName(contactName);
+            profileImageUrl = 'https://dummyimage.com/100x100/$colorScheme/ffffff&text=$initials&font=roboto';
+            print('⚠️ Using fallback avatar for generic name: $contactName');
           }
 
           // Get the actual last message from Facebook

@@ -8,6 +8,7 @@ class ImageParser {
     print('🔍 ImageParser: Analyzing text for images...');
     print('🔍 Text length: ${text.length}');
     print('🔍 Text preview: ${text.length > 200 ? text.substring(0, 200) + '...' : text}');
+    print('🔍 FULL TEXT: $text');
     
     // Look for markdown image syntax: ![alt text](image_url) or ![alt text] (image_url)
     final RegExp markdownImagePattern = RegExp(
@@ -74,6 +75,21 @@ class ImageParser {
       }
     }
     
+    // Look for Firebase Storage URLs specifically
+    final RegExp firebaseUrlPattern = RegExp(
+      r'https://firebasestorage\.googleapis\.com/[^\s]+',
+      caseSensitive: false,
+    );
+    
+    final firebaseMatches = firebaseUrlPattern.allMatches(text);
+    for (final match in firebaseMatches) {
+      final url = match.group(0);
+      if (url != null && !imageUrls.contains(url)) {
+        print('🔍 Found Firebase Storage URL: $url');
+        imageUrls.add(url);
+      }
+    }
+    
     // Look for common image URL patterns
     final RegExp imageUrlPattern = RegExp(
       r'https?://[^\s]+\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?[^\s]*)?',
@@ -84,6 +100,7 @@ class ImageParser {
     for (final match in matches) {
       final url = match.group(0);
       if (url != null && !imageUrls.contains(url)) {
+        print('🔍 Found general image URL: $url');
         imageUrls.add(url);
       }
     }

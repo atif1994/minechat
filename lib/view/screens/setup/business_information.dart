@@ -77,7 +77,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Business Name
         SignupTextField(
-          labelText: 'Business Name',
+          labelText: 'Business Name ',
           hintText: 'Enter Business Name',
           controller: controller.businessNameCtrl,
           errorText: controller.businessNameError,
@@ -160,7 +160,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Address
         SignupTextField(
-          labelText: 'Address',
+          labelText: 'Address ',
           hintText: 'Enter address',
           controller: controller.addressCtrl,
           errorText: controller.addressError,
@@ -179,7 +179,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Company Story
         SignupTextField(
-          labelText: 'Company Story',
+          labelText: 'Company Story ',
           hintText: 'Enter Company Story',
           controller: controller.companyStoryCtrl,
           errorText: controller.companyStoryError,
@@ -188,7 +188,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Payment Details
         SignupTextField(
-          labelText: 'Payment Details',
+          labelText: 'Payment Details ',
           hintText: 'Enter Payment Details',
           controller: controller.paymentDetailsCtrl,
           errorText: controller.paymentDetailsError,
@@ -197,8 +197,8 @@ class BusinessInformation extends StatelessWidget {
 
         // Discounts
         SignupTextField(
-          labelText: 'Discounts',
-          hintText: 'Enter FAQs',
+          labelText: 'Discounts ',
+          hintText: 'Enter Discounts',
           controller: controller.discountsCtrl,
           errorText: controller.discountsError,
         ),
@@ -206,7 +206,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Policy
         SignupTextField(
-          labelText: 'Policy',
+          labelText: 'Policy ',
           hintText: 'Enter Policy',
           controller: controller.policyCtrl,
           errorText: controller.policyError,
@@ -215,7 +215,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Additional Notes
         SignupTextField(
-          labelText: 'Additional Notes',
+          labelText: 'Additional Notes ',
           hintText: 'Enter Additional Notes',
           controller: controller.additionalNotesCtrl,
           errorText: controller.additionalNotesError,
@@ -224,7 +224,7 @@ class BusinessInformation extends StatelessWidget {
 
         // Thank you message
         SignupTextField(
-          labelText: 'Thank You Message',
+          labelText: 'Thank You Message ',
           hintText: 'Enter Thank You Message',
           controller: controller.thankYouMessageCtrl,
           errorText: controller.thankYouMessageError,

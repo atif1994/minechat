@@ -12,7 +12,7 @@ import 'package:minechat/core/constants/app_assets/app_assets.dart';
 class CrmLeadsScreen extends StatelessWidget {
   CrmLeadsScreen({super.key});
 
-  final CrmController crmController = Get.put(CrmController());
+  final CrmController crmController = Get.find<CrmController>();
   final TextEditingController _searchController = TextEditingController();
 
   @override

@@ -13,8 +13,28 @@ import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
 import 'package:minechat/core/widgets/chat/chat_selection_app_bar.dart';
 import 'package:minechat/core/widgets/chat/chat_more_options_dropdown.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   ChatScreen({Key? key}) : super(key: key);
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Refresh chats when screen is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final chatController = Get.find<ChatController>();
+        chatController.refreshChats();
+        print('🔄 Chat screen opened - refreshing chats...');
+      } catch (e) {
+        print('⚠️ Error refreshing chats on screen open: $e');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +76,21 @@ class ChatScreen extends StatelessWidget {
             elevation: 0,
             actionsPadding: AppSpacing.symmetric(context, v: 0, h: 0.03),
             actions: [
+              // Refresh button
+              IconButton(
+                onPressed: () {
+                  chatController.refreshChats();
+                  Get.snackbar(
+                    'Refreshing...',
+                    'Loading latest conversations...',
+                    backgroundColor: Colors.blue,
+                    colorText: Colors.white,
+                    duration: Duration(seconds: 2),
+                  );
+                },
+                icon: Icon(Icons.refresh),
+                tooltip: 'Refresh chats',
+              ),
               CreateNewChatButton(chatController: chatController),
             ],
           ),
@@ -302,19 +337,42 @@ class ChatScreen extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 24,
-              backgroundImage: profileImageUrl.isNotEmpty
-                  ? NetworkImage(profileImageUrl)
+                  backgroundImage: profileImageUrl.isNotEmpty
+                      ? NetworkImage(profileImageUrl)
                       : null,
                   backgroundColor: _getPlatformColor(chat['platform']),
-              child: profileImageUrl.isEmpty
+                  onBackgroundImageError: (exception, stackTrace) {
+                    print('❌ Failed to load profile image for $contactName: $exception');
+                  },
+                  child: profileImageUrl.isEmpty
                       ? Text(
-                      initial,
-                      style: AppTextStyles.heading(context).copyWith(
+                          initial,
+                          style: AppTextStyles.heading(context).copyWith(
                             color: Colors.white,
                           ),
                         )
                       : null,
                 ),
+                // Add platform badge for Facebook chats
+                if (chat['platform'] == 'Facebook')
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.chat,
+                        size: 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
               ],
         );
 

@@ -321,7 +321,12 @@ class OpenAIService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['choices'][0]['message']['content'] ?? 'No response generated.';
+        String aiResponse = data['choices'][0]['message']['content'] ?? 'No response generated.';
+        
+        // CRITICAL FIX: Remove any Firebase Storage URLs that might slip through
+        aiResponse = _removeFirebaseUrls(aiResponse);
+        
+        return aiResponse;
       } else {
         throw Exception('API request failed: ${response.statusCode}');
       }
@@ -341,6 +346,7 @@ class OpenAIService {
     AIKnowledgeModel? businessInfo,
     List<ProductServiceModel>? productsServices,
     List<FAQModel>? faqs,
+    bool isFacebookChat = false, // NEW: Detect context
   }) async {
     try {
       final response = await http
@@ -364,6 +370,7 @@ class OpenAIService {
                     businessInfo: businessInfo,
                     productsServices: productsServices,
                     faqs: faqs,
+                    isFacebookChat: isFacebookChat,
                   ),
                 },
                 {
@@ -393,7 +400,14 @@ class OpenAIService {
               print('⚠️ Truncated content: ${content.substring(content.length - 100)}');
             }
             
-            return content;
+            // CONTEXT-AWARE: Only clean URLs for Facebook chat
+            if (isFacebookChat) {
+              final cleanedContent = _removeFirebaseUrls(content);
+              return cleanedContent;
+            } else {
+              // For app chat: Keep URLs for image display
+              return content;
+            }
           }
         }
         return 'Sorry, I could not generate a response.';
@@ -423,6 +437,7 @@ class OpenAIService {
     AIKnowledgeModel? businessInfo,
     List<ProductServiceModel>? productsServices,
     List<FAQModel>? faqs,
+    bool isFacebookChat = false,
   }) {
     String prompt = '''
 You are $assistantName, an AI assistant with the following characteristics:
@@ -466,21 +481,28 @@ ${i + 1}. Name: ${product.name}
    Category: ${product.category}
    Features: ${product.features}''';
         
-        // Add image information
+        // Add image information - CONTEXT-AWARE: Handle images based on chat type
         if (product.images.isNotEmpty) {
           prompt += '\n   Images: ${product.images.length} image(s) available';
-          for (int j = 0; j < product.images.length; j++) {
-            prompt += '\n   - Image ${j + 1}: ${product.images[j]}';
-          }
-          prompt += '\n   USE THESE IMAGE PATHS: When showing this product, use: ![${product.name}](${product.images[0]})';
-          if (product.images.length > 1) {
-            for (int j = 1; j < product.images.length; j++) {
-              prompt += '\n   AND: ![${product.name} ${j + 1}](${product.images[j]})';
+          if (isFacebookChat) {
+            // For Facebook chat: Don't include URLs, just mention availability
+            prompt += '\n   NOTE: Images are available but cannot be displayed in Facebook chat. Describe the product instead.';
+          } else {
+            // For app chat: Include image URLs for display
+            for (int j = 0; j < product.images.length; j++) {
+              prompt += '\n   - Image ${j + 1}: ${product.images[j]}';
             }
+            prompt += '\n   USE THESE IMAGE PATHS: When showing this product, use: ![${product.name}](${product.images[0]})';
           }
         } else if (product.selectedImage != null && product.selectedImage!.isNotEmpty) {
-          prompt += '\n   Primary Image: ${product.selectedImage}';
-          prompt += '\n   USE THIS IMAGE PATH: When showing this product, use: ![${product.name}](${product.selectedImage})';
+          if (isFacebookChat) {
+            // For Facebook chat: Don't include URL, just mention availability
+            prompt += '\n   NOTE: Image is available but cannot be displayed in Facebook chat. Describe the product instead.';
+          } else {
+            // For app chat: Include image URL for display
+            prompt += '\n   Primary Image: ${product.selectedImage}';
+            prompt += '\n   USE THIS IMAGE PATH: When showing this product, use: ![${product.name}](${product.selectedImage})';
+          }
         }
         
         prompt += '\n';
@@ -500,25 +522,43 @@ ${i + 1}. Q: ${faq.question}
       }
     }
 
-    prompt += '''
+    // CONTEXT-AWARE INSTRUCTIONS: Different behavior for app vs Facebook chat
+    if (isFacebookChat) {
+      prompt += '''
 
 INSTRUCTIONS:
 - Use the business information to answer questions about the company
 - Use the products/services information to help customers with product inquiries
 - Use the FAQs to provide quick answers to common questions
 - If a question matches an FAQ, provide the exact answer from the FAQ
-- When customers ask about product images, provide the image paths in this exact format: ![Product Name](image_path) (NO SPACE after the opening parenthesis)
-- For image requests, mention that images are available and provide the image information from the product data
-- IMPORTANT: Use the exact format ![Product Name](image_path) with NO SPACE between the opening parenthesis and the path
-- CRITICAL: Always provide COMPLETE image paths - do not truncate or cut off image URLs
-- When showing multiple products with images, include ALL image paths completely
-- PRIORITY: If you have multiple products with images, show ALL of them - do not skip any
-- FORMAT: For each product with an image, use: ![ProductName](complete_file_path)
-- MANDATORY: When showing products, ALWAYS include the image paths provided in the product data above
-- MANDATORY: If a product has multiple images, show ALL of them using the exact paths provided
+- CRITICAL: DO NOT include image URLs in your responses - they will not display in Facebook chat
+- When customers ask about products, describe them in detail instead of including image links
+- For product inquiries, provide comprehensive descriptions including color, style, features, and price
+- NEVER use markdown image syntax like ![Product Name](url) in Facebook chat responses
+- Focus on detailed product descriptions rather than image references
+- If customers ask about images, explain that images are available but cannot be displayed in this chat
+- IMPORTANT: When showing products, provide detailed descriptions of what the images would show
 - Always be helpful, professional, and maintain the assistant's personality
 - If you don't have information about something, politely say so and offer to help with what you do know
 ''';
+    } else {
+      prompt += '''
+
+INSTRUCTIONS:
+- Use the business information to answer questions about the company
+- Use the products/services information to help customers with product inquiries
+- Use the FAQs to provide quick answers to common questions
+- If a question matches an FAQ, provide the exact answer from the FAQ
+- IMPORTANT: You are in the app interface where images CAN be displayed
+- When customers ask about products, show both product details AND images
+- For product inquiries, provide comprehensive descriptions AND include image links
+- USE markdown image syntax like ![Product Name](url) to display images in the app
+- Show product images along with detailed descriptions
+- When showing products, include both text descriptions and image references
+- Always be helpful, professional, and maintain the assistant's personality
+- If you don't have information about something, politely say so and offer to help with what you do know
+''';
+    }
 
     return prompt;
   }
@@ -553,6 +593,24 @@ INSTRUCTIONS:
     } catch (e) {
       throw Exception('Failed to encode image: $e');
     }
+  }
+
+  /// Remove Firebase Storage URLs from AI responses
+  static String _removeFirebaseUrls(String content) {
+    // Remove Firebase Storage URLs
+    final firebaseUrlPattern = RegExp(r'https://firebasestorage\.googleapis\.com/[^\s)]+');
+    String cleaned = content.replaceAll(firebaseUrlPattern, '[Image not available in chat]');
+    
+    // Remove markdown image syntax with Firebase URLs
+    final markdownImagePattern = RegExp(r'!\[[^\]]*\]\(https://firebasestorage\.googleapis\.com/[^)]+\)');
+    cleaned = cleaned.replaceAll(markdownImagePattern, '[Image not available in chat]');
+    
+    // Remove any remaining Firebase URLs in parentheses
+    final parenthesesUrlPattern = RegExp(r'\(https://firebasestorage\.googleapis\.com/[^)]+\)');
+    cleaned = cleaned.replaceAll(parenthesesUrlPattern, '(Image not available in chat)');
+    
+    print('🧹 Cleaned Firebase URLs from AI response');
+    return cleaned;
   }
 
   /// Extract text content from various file types

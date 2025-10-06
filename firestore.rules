@@ -113,14 +113,14 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // ✅ CRM Leads collection
-    match /leads/{userId}/leads/{leadId} {
+    // ✅ CRM Leads collection (nested under users)
+    match /users/{userId}/leads/{leadId} {
       // Allow read/write if user owns the leads
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // ✅ CRM Opportunities collection  
-    match /opportunities/{userId}/opportunities/{opportunityId} {
+    // ✅ CRM Opportunities collection (nested under users)
+    match /users/{userId}/opportunities/{opportunityId} {
       // Allow read/write if user owns the opportunities
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }

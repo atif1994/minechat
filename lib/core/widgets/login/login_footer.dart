@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:minechat/core/services/url_launcher_service.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
@@ -34,15 +36,35 @@ class LoginFooter extends StatelessWidget {
           children: [
             Text(firstNormalText, style: base),
             GestureDetector(
-              onTap: () {
-                // TODO: open T&C page
+              onTap: () async {
+                final bool launched = await UrlLauncherService.launchTermsAndConditions();
+                if (!launched) {
+                  // Show a simple snackbar instead of dialog
+                  Get.snackbar(
+                    'Cannot Open Link',
+                    'Please copy this URL and open in your browser: https://www.minechat.ai/terms.html',
+                    duration: const Duration(seconds: 5),
+                    backgroundColor: Colors.orange,
+                    colorText: Colors.white,
+                  );
+                }
               },
               child: Text(firstGestureText, style: base).withAppGradient(),
             ),
             Text(secondNormalText, style: base),
             GestureDetector(
-              onTap: () {
-                // TODO: open Privacy Policy page
+              onTap: () async {
+                final bool launched = await UrlLauncherService.launchPrivacyPolicy();
+                if (!launched) {
+                  // Show a simple snackbar instead of dialog
+                  Get.snackbar(
+                    'Cannot Open Link',
+                    'Please copy this URL and open in your browser: https://www.minechat.ai/privacy.html',
+                    duration: const Duration(seconds: 5),
+                    backgroundColor: Colors.orange,
+                    colorText: Colors.white,
+                  );
+                }
               },
               child: Text(secondGestureText, style: base).withAppGradient(),
             ),

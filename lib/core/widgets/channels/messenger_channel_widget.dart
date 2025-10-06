@@ -724,34 +724,27 @@ class MessengerChannelWidget extends StatelessWidget {
   /// Connect using Firebase Functions (secure token management)
   void _connectDirectlyWithToken() async {
     try {
-      print('🚀 Connecting via Firebase Functions...');
+      print('🚀 Connecting with direct token method...');
       
-      // Call Firebase Functions to get the stored token and connect
-      final result = await _connectViaFirebaseFunctions();
+      // Use the direct token connection method from controller
+      await controller.connectFacebook();
       
-      if (result['success']) {
-        final pageId = result['pageId'];
-        final pageName = result['pageName'] ?? 'Facebook Page';
-        
-        Get.snackbar(
-          '🎉 Connected Successfully!',
-          'Facebook Messenger connected to $pageName (ID: $pageId)! Loading all chats...',
-          backgroundColor: Colors.green,
-          colorText: Colors.white,
-          duration: Duration(seconds: 4),
-        );
-        
-        // Navigate to chat screen to show all loaded chats
-        Get.toNamed('/chat');
-      } else {
-        throw Exception(result['error'] ?? 'Connection failed');
-      }
+      Get.snackbar(
+        '🎉 Connected Successfully!',
+        'Facebook Messenger connected! Please check the Chat tab to see your conversations.',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 4),
+      );
+      
+      // Navigate to chat screen to show all loaded chats
+      Get.toNamed('/chat');
       
     } catch (e) {
-      print('❌ Firebase Functions connection failed: $e');
+      print('❌ Direct token connection failed: $e');
       Get.snackbar(
         'Connection Failed',
-        'Failed to connect via Firebase Functions: $e',
+        'Failed to connect with direct token: $e',
         backgroundColor: Colors.red,
         colorText: Colors.white,
         duration: Duration(seconds: 5),
