@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/model/data/product_service_model.dart';
 import 'package:minechat/controller/ai_assistant_controller/ai_assistant_controller.dart';
+import 'package:minechat/core/services/firebase_storage_service.dart';
+import 'dart:io';
 
 class ProductsServicesController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseStorageService _storageService = FirebaseStorageService();
 
   // Loading States
   var isLoading = false.obs;
@@ -50,6 +53,13 @@ class ProductsServicesController extends GetxController {
     super.onClose();
   }
 
+  // Manual migration method for testing
+  Future<void> migrateAllProducts() async {
+    print("🚀 Starting manual migration of all products...");
+    await loadProductsServices();
+    print("✅ Migration completed!");
+  }
+
   Future<void> loadProductsServices() async {
     try {
       isLoading.value = true;
@@ -66,16 +76,165 @@ class ProductsServicesController extends GetxController {
           .where('userId', isEqualTo: user.uid)
           .get();
 
-      final loadedProducts = snapshot.docs
-          .map((doc) {
-            final data = doc.data();
-            // Ensure the document ID is properly set
-            data['id'] = doc.id;
-            final product = ProductServiceModel.fromMap(data);
-            print("📦 Loaded product: ${product.name} (ID: ${product.id})");
-            return product;
-          })
-          .toList();
+      final loadedProducts = <ProductServiceModel>[];
+      
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        print("🔍 ===== FIRESTORE DOCUMENT DEBUG =====");
+        print("🔍 Document ID: ${doc.id}");
+        print("🔍 Raw Firestore data: $data");
+        print("🔍 Images field type: ${data['images'].runtimeType}");
+        print("🔍 Images field value: ${data['images']}");
+        print("🔍 SelectedImage field type: ${data['selectedImage'].runtimeType}");
+        print("🔍 SelectedImage field value: ${data['selectedImage']}");
+        
+        // Ensure the document ID is properly set
+        data['id'] = doc.id;
+        final product = ProductServiceModel.fromMap(data);
+        
+        print("📦 Loaded product: ${product.name} (ID: ${product.id})");
+        print("🖼️ Product images array: ${product.images}");
+        print("🖼️ Product images count: ${product.images.length}");
+        print("🖼️ Product selectedImage: ${product.selectedImage}");
+        print("🖼️ SelectedImage is null: ${product.selectedImage == null}");
+        print("🖼️ SelectedImage is empty: ${product.selectedImage?.isEmpty ?? true}");
+        
+        // 🔄 AUTO-MIGRATION: Check if product has old local file paths
+        bool needsMigration = false;
+        List<String> localImagePaths = [];
+        
+        // Check images array for local paths
+        for (String imagePath in product.images) {
+          if (imagePath.startsWith('/data/') || imagePath.startsWith('file://')) {
+            localImagePaths.add(imagePath);
+            needsMigration = true;
+            print("🔄 Found local image path in images array: $imagePath");
+          }
+        }
+        
+        // Check selectedImage for local path
+        if (product.selectedImage != null && 
+            (product.selectedImage!.startsWith('/data/') || product.selectedImage!.startsWith('file://'))) {
+          localImagePaths.add(product.selectedImage!);
+          needsMigration = true;
+          print("🔄 Found local image path in selectedImage: ${product.selectedImage}");
+        }
+        
+        if (needsMigration) {
+          print("🚀 AUTO-MIGRATING product: ${product.name}");
+          try {
+            // Check if local files still exist before uploading
+            final existingLocalPaths = <String>[];
+            for (String path in localImagePaths) {
+              if (File(path).existsSync()) {
+                existingLocalPaths.add(path);
+                print("✅ Local file exists: $path");
+              } else {
+                print("❌ Local file not found: $path");
+              }
+            }
+            
+            if (existingLocalPaths.isEmpty) {
+              print("⚠️ No local files found for product ${product.name} - skipping migration");
+              // Add product without images
+              final productWithoutImages = ProductServiceModel(
+                id: product.id,
+                name: product.name,
+                description: product.description,
+                price: product.price,
+                category: product.category,
+                features: product.features,
+                userId: product.userId,
+                createdAt: product.createdAt,
+                updatedAt: DateTime.now(),
+                images: <String>[],
+                selectedImage: null,
+              );
+              
+              // Update in Firestore to clear old local paths
+              await _firestore.collection('products_services').doc(product.id).update({
+                'images': <String>[],
+                'selectedImage': null,
+                'updatedAt': DateTime.now(),
+              });
+              
+              loadedProducts.add(productWithoutImages);
+              continue;
+            }
+            
+            // Upload existing local images to Firebase Storage
+            final firebaseUrls = await _storageService.uploadImagesFromPaths(existingLocalPaths);
+            print("✅ Uploaded ${firebaseUrls.length} images to Firebase Storage");
+            
+            // Update the product with Firebase URLs
+            final updatedImages = <String>[];
+            final updatedSelectedImage = product.selectedImage;
+            
+            // Replace local paths with Firebase URLs in images array
+            for (String imagePath in product.images) {
+              if (imagePath.startsWith('/data/') || imagePath.startsWith('file://')) {
+                // Find corresponding Firebase URL
+                final localIndex = localImagePaths.indexOf(imagePath);
+                if (localIndex < firebaseUrls.length) {
+                  updatedImages.add(firebaseUrls[localIndex]);
+                  print("✅ Replaced local path with Firebase URL: ${firebaseUrls[localIndex]}");
+                } else {
+                  print("⚠️ No Firebase URL found for local path: $imagePath");
+                }
+              } else {
+                // Keep existing Firebase URLs
+                updatedImages.add(imagePath);
+              }
+            }
+            
+            // Update selectedImage if it was a local path
+            String? newSelectedImage = updatedSelectedImage;
+            if (updatedSelectedImage != null && 
+                (updatedSelectedImage.startsWith('/data/') || updatedSelectedImage.startsWith('file://'))) {
+              final localIndex = localImagePaths.indexOf(updatedSelectedImage);
+              if (localIndex < firebaseUrls.length) {
+                newSelectedImage = firebaseUrls[localIndex];
+                print("✅ Updated selectedImage with Firebase URL: $newSelectedImage");
+              }
+            }
+            
+            // Create updated product
+            final migratedProduct = ProductServiceModel(
+              id: product.id,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              category: product.category,
+              features: product.features,
+              userId: product.userId,
+              createdAt: product.createdAt,
+              updatedAt: DateTime.now(),
+              images: updatedImages,
+              selectedImage: newSelectedImage,
+            );
+            
+            // Update in Firestore
+            await _firestore.collection('products_services').doc(product.id).update({
+              'images': updatedImages,
+              'selectedImage': newSelectedImage,
+              'updatedAt': DateTime.now(),
+            });
+            
+            print("✅ Successfully migrated product: ${product.name}");
+            loadedProducts.add(migratedProduct);
+            
+          } catch (e) {
+            print("❌ Error migrating product ${product.name}: $e");
+            // Add original product if migration fails
+            loadedProducts.add(product);
+          }
+        } else {
+          print("✅ Product ${product.name} already uses Firebase Storage");
+          loadedProducts.add(product);
+        }
+        
+        print("🔍 ===== END FIRESTORE DEBUG =====");
+      }
 
       // Filter out products with empty IDs to prevent errors
       final validProducts = loadedProducts.where((p) => p.id.isNotEmpty).toList();
@@ -139,12 +298,20 @@ class ProductsServicesController extends GetxController {
       int retryCount = 0;
       const maxRetries = 3;
 
-      // Build payload with backward compatibility
+      // Upload images to Firebase Storage first
+      List<String> uploadedImageUrls = [];
+      if (images.isNotEmpty) {
+        print('📤 Uploading ${images.length} images to Firebase Storage...');
+        uploadedImageUrls = await _storageService.uploadImagesFromPaths(images.toList());
+        print('✅ Uploaded ${uploadedImageUrls.length} images successfully');
+      }
+
+      // Build payload with Firebase Storage URLs
       final payload = product.toMap()
-        ..['images'] = images.toList()
-        ..['selectedImage'] = (images.isNotEmpty)
-            ? images.first
-            : (selectedImage.value.isNotEmpty ? selectedImage.value : null);
+        ..['images'] = uploadedImageUrls
+        ..['selectedImage'] = uploadedImageUrls.isNotEmpty
+            ? uploadedImageUrls.first
+            : null;
 
       // Add with retries (unchanged outer logic)
       while (retryCount < maxRetries) {
@@ -237,6 +404,14 @@ class ProductsServicesController extends GetxController {
         return;
       }
 
+      // Upload new images to Firebase Storage if any
+      List<String> uploadedImageUrls = [];
+      if (images.isNotEmpty) {
+        print('📤 Uploading ${images.length} images to Firebase Storage for update...');
+        uploadedImageUrls = await _storageService.uploadImagesFromPaths(images.toList());
+        print('✅ Uploaded ${uploadedImageUrls.length} images successfully');
+      }
+
       final updatedData = {
         'name': nameCtrl.text.trim(),
         'description': descriptionCtrl.text.trim(),
@@ -244,10 +419,10 @@ class ProductsServicesController extends GetxController {
         'category': '',
         'features': '',
         'updatedAt': FieldValue.serverTimestamp(),
-        'images': images.toList(),
-        'selectedImage': images.isNotEmpty
-            ? images.first
-            : (selectedImage.value.isNotEmpty ? selectedImage.value : null),
+        'images': uploadedImageUrls,
+        'selectedImage': uploadedImageUrls.isNotEmpty
+            ? uploadedImageUrls.first
+            : null,
       };
 
       print("📤 Updating product $productId with data: $updatedData");
@@ -447,12 +622,20 @@ class ProductsServicesController extends GetxController {
       print("🔍 User ID: ${user.uid}");
       print("🔍 Collection: products_services");
 
-      // Save directly to Firestore
+      // Upload images to Firebase Storage first
+      List<String> uploadedImageUrls = [];
+      if (images.isNotEmpty) {
+        print('📤 Uploading ${images.length} images to Firebase Storage...');
+        uploadedImageUrls = await _storageService.uploadImagesFromPaths(images.toList());
+        print('✅ Uploaded ${uploadedImageUrls.length} images successfully');
+      }
+
+      // Save directly to Firestore with Firebase Storage URLs
       final payload = product.toMap()
-        ..['images'] = images.toList()
-        ..['selectedImage'] = (images.isNotEmpty)
-            ? images.first
-            : (selectedImage.value.isNotEmpty ? selectedImage.value : null);
+        ..['images'] = uploadedImageUrls
+        ..['selectedImage'] = uploadedImageUrls.isNotEmpty
+            ? uploadedImageUrls.first
+            : null;
 
       final docRef = await _firestore
           .collection('products_services')

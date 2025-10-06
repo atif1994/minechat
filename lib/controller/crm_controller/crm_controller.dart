@@ -96,18 +96,16 @@ class CrmController extends GetxController {
         isLoading.value = false;
         print('✅ Loaded ${leadsList.length} leads');
         
-        // If no real data, add sample data for demo
+        // No real data found - show empty list instead of demo data
         if (leadsList.isEmpty) {
-          print('📝 No real leads found, adding sample data...');
-          _addSampleLeads();
+          print('📝 No real leads found - showing empty list');
         }
       },
       onError: (error) {
         print('❌ Error loading leads: $error');
         isLoading.value = false;
-        // Add sample data for testing if real data fails
-        print('📝 Adding sample data due to error...');
-        _addSampleLeads();
+        // Show empty list instead of demo data on error
+        print('📝 Error loading real data - showing empty list');
       },
     );
   }
@@ -121,18 +119,16 @@ class CrmController extends GetxController {
         isLoading.value = false;
         print('✅ Loaded ${opportunitiesList.length} opportunities');
         
-        // If no real data, add sample data for demo
+        // No real data found - show empty list instead of demo data
         if (opportunitiesList.isEmpty) {
-          print('📝 No real opportunities found, adding sample data...');
-          _addSampleOpportunities();
+          print('📝 No real opportunities found - showing empty list');
         }
       },
       onError: (error) {
         print('❌ Error loading opportunities: $error');
         isLoading.value = false;
-        // Add sample data for testing if real data fails
-        print('📝 Adding sample data due to error...');
-        _addSampleOpportunities();
+        // Show empty list instead of demo data on error
+        print('📝 Error loading real data - showing empty list');
       },
     );
   }

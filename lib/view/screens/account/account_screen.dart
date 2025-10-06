@@ -6,6 +6,7 @@ import 'package:minechat/controller/login_controller/login_controller.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/constants/app_assets/app_assets.dart';
 import 'package:minechat/core/router/app_routes.dart';
+import 'package:minechat/core/services/url_launcher_service.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_spacing/app_spacing.dart';
 import 'package:minechat/core/widgets/account/account_app_bar.dart';
@@ -116,7 +117,35 @@ class AccountScreen extends StatelessWidget {
                           title: 'Terms & Conditions',
                           leadingSvgPath: AppAssets.signupIconPassword,
                           trailingSvgPath: AppAssets.accountArrowRight,
-                          onTap: () {},
+                          onTap: () async {
+                            final bool launched = await UrlLauncherService.launchTermsAndConditions();
+                            if (!launched) {
+                              Get.snackbar(
+                                'Cannot Open Link',
+                                'Please copy this URL and open in your browser: https://www.minechat.ai/terms.html',
+                                duration: const Duration(seconds: 5),
+                                backgroundColor: Colors.orange,
+                                colorText: Colors.white,
+                              );
+                            }
+                          },
+                        ),
+                        AccountOptionTile(
+                          title: 'Privacy Policy',
+                          leadingSvgPath: AppAssets.signupIconPassword,
+                          trailingSvgPath: AppAssets.accountArrowRight,
+                          onTap: () async {
+                            final bool launched = await UrlLauncherService.launchPrivacyPolicy();
+                            if (!launched) {
+                              Get.snackbar(
+                                'Cannot Open Link',
+                                'Please copy this URL and open in your browser: https://www.minechat.ai/privacy.html',
+                                duration: const Duration(seconds: 5),
+                                backgroundColor: Colors.orange,
+                                colorText: Colors.white,
+                              );
+                            }
+                          },
                         ),
                         AccountOptionTile(
                           title: 'Contact Us',
@@ -124,14 +153,14 @@ class AccountScreen extends StatelessWidget {
                           trailingSvgPath: AppAssets.accountArrowRight,
                           onTap: () {},
                         ),
-                        AccountOptionTile(
-                          title: 'Upgrade Subscription',
-                          leadingSvgPath: AppAssets.accountSubscription,
-                          trailingSvgPath: AppAssets.accountArrowRight,
-                          onTap: () {
-                            Get.toNamed(AppRoutes.subscription);
-                          },
-                        ),
+                        // AccountOptionTile(
+                        //   title: 'Upgrade Subscription',
+                        //   leadingSvgPath: AppAssets.accountSubscription,
+                        //   trailingSvgPath: AppAssets.accountArrowRight,
+                        //   onTap: () {
+                        //     Get.toNamed(AppRoutes.subscription);
+                        //   },
+                        // ),
                         AccountOptionTile(
                           title: 'Logout',
                           leadingSvgPath: AppAssets.accountLogout,

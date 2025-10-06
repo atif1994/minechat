@@ -1,0 +1,23 @@
+rules_version = '2';
+
+// Firebase Storage Rules
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Allow public read access to product images
+    match /users/{userId}/products_images/{allPaths=**} {
+      allow read: if true; // Public read access for product images
+      allow write: if request.auth != null && request.auth.uid == userId; // Only owner can write
+    }
+    
+    // Allow public read access to business info files
+    match /business_info_files/{allPaths=**} {
+      allow read: if true; // Public read access for business files
+      allow write: if request.auth != null; // Authenticated users can write
+    }
+    
+    // Default rule: require authentication for all other files
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

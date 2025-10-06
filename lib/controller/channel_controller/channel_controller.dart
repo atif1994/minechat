@@ -143,11 +143,60 @@ class ChannelController extends GetxController {
 
         // Update connection status in available channels
         _updateChannelConnectionStatus();
+
+        // Auto-connect Facebook if token is saved but not connected
+        if (!isFacebookConnected.value) {
+          await _autoConnectFacebookIfTokenExists();
+        }
       }
     } catch (e) {
       print('❌ Error loading channel settings: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Auto-connect Facebook if token exists in Firebase Functions
+  Future<void> _autoConnectFacebookIfTokenExists() async {
+    try {
+      print('🔍 Checking for saved Facebook token to auto-connect...');
+      
+      // Check if there's a saved token in Firebase Functions
+      final functionsCollection = await _firestore
+          .collection('integrations')
+          .doc('facebook')
+          .collection('pages')
+          .get();
+
+      if (functionsCollection.docs.isNotEmpty) {
+        final firstPage = functionsCollection.docs.first;
+        final pageId = firstPage.id;
+        final pageData = firstPage.data();
+        final pageName = pageData['pageName'] ?? 'Facebook Page';
+        final pageAccessToken = pageData['pageAccessToken'] as String?;
+
+        if (pageAccessToken != null && pageAccessToken.isNotEmpty) {
+          print('✅ Found saved Facebook token for page: $pageName');
+          
+          // Verify token is still valid
+          final pageVerification = await FacebookGraphApiService.verifyPageAccess(pageId, pageAccessToken);
+          if (pageVerification['success']) {
+            print('✅ Saved token is valid, auto-connecting...');
+            
+            // Auto-connect without showing dialogs
+            facebookPageIdCtrl.text = pageId;
+            isFacebookConnected.value = true;
+            await saveChannelSettings();
+            
+            print('✅ Facebook auto-connected successfully!');
+          } else {
+            print('⚠️ Saved token is invalid: ${pageVerification['error']}');
+          }
+        }
+      }
+    } catch (e) {
+      print('⚠️ Error in auto-connect: $e');
+      // Don't show error to user for auto-connect
     }
   }
 
@@ -454,15 +503,127 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
     }
   }
 
-  /// Connect Facebook Messenger with OAuth (new method)
+  /// Connect Facebook Messenger with direct token method
   Future<void> connectFacebook() async {
     // Check if user has Page ID already
     if (facebookPageIdCtrl.text.trim().isNotEmpty) {
       // Use existing Page ID method if available
       await _connectWithExistingPageId();
     } else {
-      // Start OAuth flow for new connections
-      await startFacebookOAuth();
+      // Try to connect using saved token from Firebase Functions
+      await _connectWithSavedToken();
+    }
+  }
+
+  /// Connect using saved token from Firebase Functions
+  Future<void> _connectWithSavedToken() async {
+    try {
+      isConnectingFacebook.value = true;
+      print('🔍 Looking for saved Facebook token in Firebase Functions...');
+
+      // Get all saved pages from Firebase Functions
+      final functionsCollection = await _firestore
+          .collection('integrations')
+          .doc('facebook')
+          .collection('pages')
+          .get();
+
+      if (functionsCollection.docs.isEmpty) {
+        print('❌ No saved Facebook tokens found in Firebase Functions');
+        Get.snackbar(
+          'No Saved Token',
+          'No Facebook token found. Please add a token first.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      // Use the first available page
+      final firstPage = functionsCollection.docs.first;
+      final pageId = firstPage.id;
+      final pageData = firstPage.data();
+      final pageName = pageData['pageName'] ?? 'Facebook Page';
+      final pageAccessToken = pageData['pageAccessToken'] as String?;
+
+      if (pageAccessToken == null || pageAccessToken.isEmpty) {
+        print('❌ No access token found for page: $pageId');
+        Get.snackbar(
+          'Invalid Token',
+          'Saved token is invalid. Please update your token.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      print('✅ Found saved token for page: $pageName ($pageId)');
+
+      // Verify the token is still valid
+      final pageVerification = await FacebookGraphApiService.verifyPageAccess(pageId, pageAccessToken);
+      if (!pageVerification['success']) {
+        print('❌ Saved token is invalid: ${pageVerification['error']}');
+        Get.snackbar(
+          'Token Expired',
+          'Your saved token has expired. Please update it.',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      print('✅ Token is valid for page: ${pageVerification['data']['name']}');
+
+      // Update UI with the page info
+      facebookPageIdCtrl.text = pageId;
+      isFacebookConnected.value = true;
+      await saveChannelSettings();
+
+      Get.snackbar(
+        'Success!',
+        'Connected to Facebook page: $pageName using saved token!',
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+        duration: Duration(seconds: 4),
+      );
+
+      // Trigger chat loading
+      try {
+        await Future.delayed(Duration(seconds: 1)); // Wait for connection to be saved
+        final chatController = Get.find<ChatController>();
+        print('🔄 Attempting to refresh Facebook chats...');
+        await chatController.refreshFacebookChats();
+        print('✅ Facebook chats loaded successfully');
+        
+        Get.snackbar(
+          'Facebook Connected!',
+          'Chats are now loading. Please check the Chat tab.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      } catch (e) {
+        print('⚠️ Error loading Facebook chats: $e');
+        Get.snackbar(
+          'Facebook Connected!',
+          'Please go to the Chat tab to see your Facebook conversations.',
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
+      }
+
+    } catch (e) {
+      print('❌ Error connecting with saved token: $e');
+      Get.snackbar(
+        'Connection Failed',
+        'Failed to connect with saved token: $e',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: Duration(seconds: 5),
+      );
+    } finally {
+      isConnectingFacebook.value = false;
     }
   }
 
@@ -542,9 +703,9 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
               ElevatedButton(
                 onPressed: () {
                   Get.back();
-                  _showTokenInputDialog();
+                  _connectWithSavedToken();
                 },
-                child: Text('Add Token'),
+                child: Text('Connect with Saved Token'),
               ),
             ],
           ),
@@ -707,9 +868,9 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
                 ElevatedButton(
                   onPressed: () {
                     Get.back();
-                    _showTokenInputDialog();
+                    _connectWithSavedToken();
                   },
-                  child: Text('Try Again'),
+                  child: Text('Try with Saved Token'),
                 ),
               ],
             ),
@@ -794,15 +955,34 @@ document.getElementById('minechat-widget').addEventListener('click', function() 
           duration: Duration(seconds: 4),
         );
 
-      // Trigger chat loading
+      // Trigger chat loading with delay to ensure token is saved
       try {
+        await Future.delayed(Duration(seconds: 1)); // Wait for token to be saved
         final chatController = Get.find<ChatController>();
         print('🔄 Attempting to refresh Facebook chats...');
         await chatController.refreshFacebookChats();
         print('✅ Facebook chats loaded successfully');
+        
+        // Show success message
+        Get.snackbar(
+          'Facebook Connected!',
+          'Chats are now loading. Please check the Chat tab.',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
       } catch (e) {
         print('⚠️ Error loading Facebook chats: $e');
         print('⚠️ Chat controller not found, will load chats when chat screen is opened');
+        
+        // Show info message
+        Get.snackbar(
+          'Facebook Connected!',
+          'Please go to the Chat tab to see your Facebook conversations.',
+          backgroundColor: Colors.blue,
+          colorText: Colors.white,
+          duration: Duration(seconds: 3),
+        );
       }
 
       // Navigate to main app with bottom navigation

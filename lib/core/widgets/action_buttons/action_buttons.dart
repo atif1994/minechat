@@ -124,7 +124,7 @@ class ActionButtons extends StatelessWidget {
         ),
         if (secondaryLabel != null) ...[
           const SizedBox(width: 12),
-          // Secondary Button
+          // Secondary Button (Test AI) - No loading spinner
           Flexible(
             child: Container(
               height: 48,
@@ -133,22 +133,13 @@ class ActionButtons extends StatelessWidget {
               ).withAppGradient,
               child: TextButton(
                 onPressed: isLoading ? null : onSecondary,
-                child: isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        secondaryLabel!,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                child: Text(
+                  secondaryLabel!,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
           ),

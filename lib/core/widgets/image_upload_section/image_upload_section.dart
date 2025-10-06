@@ -7,6 +7,7 @@ import 'package:minechat/core/constants/app_colors/app_colors.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
 import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 
 class ImageUploadSection extends StatelessWidget {
@@ -262,12 +263,7 @@ class _ImagesGrid extends StatelessWidget {
               radius: const Radius.circular(12),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  File(path),
-                  width: double.infinity,
-                  height: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+                child: _buildImageWidget(path),
               ),
             ),
             Positioned(
@@ -290,6 +286,47 @@ class _ImagesGrid extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildImageWidget(String path) {
+    // Check if it's a URL or local file path
+    if (path.startsWith('http')) {
+      // Firebase Storage URL - use CachedNetworkImage
+      return CachedNetworkImage(
+        imageUrl: path,
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (context, url) => Container(
+          color: Colors.grey[200],
+          child: const Center(
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => Container(
+          color: Colors.grey[200],
+          child: const Icon(Icons.error, color: Colors.red),
+        ),
+      );
+    } else {
+      // Local file path - use Image.file
+      return Image.file(
+        File(path),
+        width: double.infinity,
+        height: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[200],
+            child: const Icon(Icons.error, color: Colors.red),
+          );
+        },
+      );
+    }
   }
 }
 

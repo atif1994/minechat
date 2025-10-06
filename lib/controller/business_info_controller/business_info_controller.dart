@@ -218,7 +218,7 @@ class BusinessInfoController extends GetxController {
 
       await _repository.saveAIKnowledge(aiKnowledge);
 
-      Get.snackbar('Success', 'Business Information saved successfully!',
+      Get.snackbar('Success', 'Business Information saved successfully',
           backgroundColor: Colors.green, colorText: Colors.white);
     } catch (e) {
       Get.snackbar('Error', 'Failed to save Business Information: $e',
@@ -258,23 +258,25 @@ class BusinessInfoController extends GetxController {
     return 'Uploaded File';
   }
 
-  /// Validation Methods
+  /// Validation Methods - All fields are now optional
   void validateBusinessName(String value) {
-    businessNameError.value = value.trim().isEmpty ? "Business name is required" : '';
+    // Optional field - no validation required
+    businessNameError.value = '';
   }
 
   void validatePhone(String value) {
-    phoneError.value = value.trim().isEmpty ? "Phone number is required" : '';
+    // Optional field - no validation required
+    phoneError.value = '';
   }
 
   void validateAddress(String value) {
-    addressError.value = value.trim().isEmpty ? "Address is required" : '';
+    // Optional field - no validation required
+    addressError.value = '';
   }
 
   void validateEmail(String value) {
-    if (value.trim().isEmpty) {
-      emailError.value = "Email is required";
-    } else if (!GetUtils.isEmail(value.trim())) {
+    // Only validate email format if email is provided
+    if (value.trim().isNotEmpty && !GetUtils.isEmail(value.trim())) {
       emailError.value = "Please enter a valid email";
     } else {
       emailError.value = '';
@@ -282,30 +284,37 @@ class BusinessInfoController extends GetxController {
   }
 
   void validateCompanyStory(String value) {
-    companyStoryError.value = value.trim().isEmpty ? "Company story is required" : '';
+    // Optional field - no validation required
+    companyStoryError.value = '';
   }
 
   void validatePaymentDetails(String value) {
-    paymentDetailsError.value = value.trim().isEmpty ? "Payment details are required" : '';
+    // Optional field - no validation required
+    paymentDetailsError.value = '';
   }
 
   void validateDiscounts(String value) {
-    discountsError.value = value.trim().isEmpty ? "Discounts information is required" : '';
+    // Optional field - no validation required
+    discountsError.value = '';
   }
 
   void validatePolicy(String value) {
-    policyError.value = value.trim().isEmpty ? "Policy information is required" : '';
+    // Optional field - no validation required
+    policyError.value = '';
   }
 
   void validateAdditionalNotes(String value) {
-    additionalNotesError.value = value.trim().isEmpty ? "Additional notes are required" : '';
+    // Optional field - no validation required
+    additionalNotesError.value = '';
   }
 
   void validateThankYouMessage(String value) {
-    thankYouMessageError.value = value.trim().isEmpty ? "Thank you message is required" : '';
+    // Optional field - no validation required
+    thankYouMessageError.value = '';
   }
 
   bool _validateForm() {
+    // Run validation for all fields (now all optional)
     validateBusinessName(businessNameCtrl.text);
     validatePhone(phoneCtrl.text);
     validateAddress(addressCtrl.text);
@@ -317,16 +326,9 @@ class BusinessInfoController extends GetxController {
     validateAdditionalNotes(additionalNotesCtrl.text);
     validateThankYouMessage(thankYouMessageCtrl.text);
 
-    return businessNameError.value.isEmpty &&
-        phoneError.value.isEmpty &&
-        addressError.value.isEmpty &&
-        emailError.value.isEmpty &&
-        companyStoryError.value.isEmpty &&
-        paymentDetailsError.value.isEmpty &&
-        discountsError.value.isEmpty &&
-        policyError.value.isEmpty &&
-        additionalNotesError.value.isEmpty &&
-        thankYouMessageError.value.isEmpty;
+    // All fields are optional, so form is always valid
+    // Only email format validation can cause errors
+    return emailError.value.isEmpty;
   }
 
   @override
