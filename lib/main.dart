@@ -15,6 +15,7 @@ import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/controller/chat_controller/chat_controller.dart';
 import 'package:minechat/core/utils/helpers/app_themes/app_theme.dart';
 import 'package:minechat/core/router/app_pages.dart';
+import 'package:minechat/core/services/media_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -49,6 +50,7 @@ void main() async {
     Get.put(SubscriptionController(), permanent: true);
     Get.put(CrmController(), permanent: true);
     Get.put(ChannelController(), permanent: true);
+    Get.put(MediaService(), permanent: true);
     
     print('✅ All controllers initialized successfully');
   });

@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:minechat/core/services/facebook_token_exchange_service.dart';
 
@@ -318,6 +320,54 @@ class FacebookGraphApiService {
     }
   }
 
+  /// Get Facebook Page profile picture
+  static Future<String?> getPageProfilePicture(String pageId, String pageAccessToken) async {
+    try {
+      final response = await http.get(
+        Uri.https("graph.facebook.com", "/v23.0/$pageId/picture", {
+          "access_token": pageAccessToken,
+          "type": "normal",
+          "redirect": "false",
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data']?['url'];
+      } else {
+        print('❌ Failed to get page picture: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error getting page picture: $e');
+      return null;
+    }
+  }
+
+  /// Get Facebook user profile picture
+  static Future<String?> getUserProfilePicture(String userId, String pageAccessToken) async {
+    try {
+      final response = await http.get(
+        Uri.https("graph.facebook.com", "/v23.0/$userId/picture", {
+          "access_token": pageAccessToken,
+          "type": "normal",
+          "redirect": "false",
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['data']?['url'];
+      } else {
+        print('❌ Failed to get user picture: ${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Error getting user picture: $e');
+      return null;
+    }
+  }
+
   /// Get page conversations using page access token
   static Future<Map<String, dynamic>> getPageConversationsWithToken(
       String pageId, String pageAccessToken) async {
@@ -445,7 +495,7 @@ class FacebookGraphApiService {
           endpoint,
           {
             "access_token": validToken,
-            "fields": "id,message,created_time,from,updated_time",
+            "fields": "id,message,created_time,from,updated_time,attachments",
             "limit": "50", // Get more messages
           },
         ),
@@ -557,7 +607,7 @@ class FacebookGraphApiService {
               "/v23.0/${matchingConversation['id']}/messages",
               {
                 "access_token": pageAccessToken,
-                "fields": "id,message,created_time,from,updated_time",
+                "fields": "id,message,created_time,from,updated_time,attachments",
                 "limit": "50",
               },
             ),
@@ -1486,6 +1536,236 @@ String conversationId, String pageAccessToken, String message, {String? userId, 
     } catch (e) {
       print('❌ Error archiving Facebook conversation: $e');
       return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// Upload image to Facebook and send it as attachment
+  static Future<Map<String, dynamic>> sendImageToConversation(
+    String conversationId,
+    String pageAccessToken,
+    String imagePath,
+    {String? userId}
+  ) async {
+    try {
+      print('📤 Sending image to conversation: $conversationId');
+      print('📸 Image path: $imagePath');
+      
+      final file = File(imagePath);
+      if (!await file.exists()) {
+        return {"success": false, "error": "Image file does not exist"};
+      }
+
+      // Check file size (Facebook limit is 25MB)
+      final fileSize = await file.length();
+      if (fileSize > 25 * 1024 * 1024) {
+        return {"success": false, "error": "Image file is too large (max 25MB)"};
+      }
+
+      // First, upload the image as an attachment
+      final uploadUrl = Uri.https(
+        "graph.facebook.com",
+        "/v23.0/me/message_attachments",
+        {"access_token": pageAccessToken},
+      );
+
+      final uploadRequest = http.MultipartRequest('POST', uploadUrl);
+      
+      // Add the image file
+      uploadRequest.files.add(
+        await http.MultipartFile.fromPath(
+          'attachment',
+          imagePath,
+          contentType: _getContentType(imagePath),
+        ),
+      );
+
+      // Add message data
+      uploadRequest.fields['message'] = jsonEncode({
+        "attachment": {
+          "type": "image",
+          "payload": {}
+        }
+      });
+
+      print('📤 Uploading image to Facebook...');
+      final uploadResponse = await uploadRequest.send().timeout(Duration(seconds: 30));
+      
+      if (uploadResponse.statusCode != 200) {
+        final responseBody = await uploadResponse.stream.bytesToString();
+        print('❌ Image upload failed: ${uploadResponse.statusCode} - $responseBody');
+        return {
+          "success": false,
+          "error": "Image upload failed: ${uploadResponse.statusCode}",
+          "details": responseBody
+        };
+      }
+
+      final uploadResult = jsonDecode(await uploadResponse.stream.bytesToString());
+      print('✅ Image uploaded successfully: $uploadResult');
+
+      // Use the same bypass strategies as text messages for image sending
+      return await _sendImageWithBypass(conversationId, pageAccessToken, uploadResult["attachment_id"], userId);
+
+    } catch (e) {
+      print('❌ Error sending image: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// Send image with multiple bypass strategies for 24-hour restriction
+  static Future<Map<String, dynamic>> _sendImageWithBypass(
+    String conversationId, String pageAccessToken, String attachmentId, String? userId) async {
+    
+    print('🚀 Attempting to bypass 24-hour restriction for image...');
+    
+    // Strategy 1: Try with UTILITY messaging type (bypasses 24h window)
+    print('📤 Strategy 1: Using UTILITY messaging type for image');
+    var result = await _sendImageWithMessagingType(conversationId, pageAccessToken, attachmentId, userId, "UTILITY");
+    if (result['success'] == true) {
+      print('✅ Strategy 1 successful: UTILITY messaging type for image');
+      return result;
+    }
+    
+    // Strategy 2: Try with RESPONSE messaging type (for recent conversations)
+    print('📤 Strategy 2: Using RESPONSE messaging type for image');
+    result = await _sendImageWithMessagingType(conversationId, pageAccessToken, attachmentId, userId, "RESPONSE");
+    if (result['success'] == true) {
+      print('✅ Strategy 2 successful: RESPONSE messaging type for image');
+      return result;
+    }
+    
+    // Strategy 3: Try with UPDATE messaging type
+    print('📤 Strategy 3: Using UPDATE messaging type for image');
+    result = await _sendImageWithMessagingType(conversationId, pageAccessToken, attachmentId, userId, "UPDATE");
+    if (result['success'] == true) {
+      print('✅ Strategy 3 successful: UPDATE messaging type for image');
+      return result;
+    }
+    
+    // Strategy 4: Try with MESSAGE_TAG and CONFIRMED_EVENT_UPDATE tag
+    print('📤 Strategy 4: Using MESSAGE_TAG with CONFIRMED_EVENT_UPDATE for image');
+    result = await _sendImageWithMessagingType(conversationId, pageAccessToken, attachmentId, userId, "MESSAGE_TAG", "CONFIRMED_EVENT_UPDATE");
+    if (result['success'] == true) {
+      print('✅ Strategy 4 successful: CONFIRMED_EVENT_UPDATE tag for image');
+      return result;
+    }
+    
+    // Strategy 5: Try with MESSAGE_TAG and POST_PURCHASE_UPDATE tag
+    print('📤 Strategy 5: Using MESSAGE_TAG with POST_PURCHASE_UPDATE for image');
+    result = await _sendImageWithMessagingType(conversationId, pageAccessToken, attachmentId, userId, "MESSAGE_TAG", "POST_PURCHASE_UPDATE");
+    if (result['success'] == true) {
+      print('✅ Strategy 5 successful: POST_PURCHASE_UPDATE tag for image');
+      return result;
+    }
+    
+    // Strategy 6: Try with MESSAGE_TAG and PAIRING tag
+    print('📤 Strategy 6: Using MESSAGE_TAG with PAIRING for image');
+    result = await _sendImageWithMessagingType(conversationId, pageAccessToken, attachmentId, userId, "MESSAGE_TAG", "PAIRING");
+    if (result['success'] == true) {
+      print('✅ Strategy 6 successful: PAIRING tag for image');
+      return result;
+    }
+    
+    // All strategies failed - return a more helpful error
+    print('❌ All image bypass strategies failed');
+    return {
+      "success": false,
+      "error": "Unable to send image due to Facebook's 24-hour messaging policy. This conversation is too old to send images to. Consider asking the user to send a new message first.",
+      "code": "RESTRICTION_BYPASS_FAILED",
+      "suggestion": "Ask the user to send a new message to restart the conversation"
+    };
+  }
+
+  /// Send image with specific messaging type
+  static Future<Map<String, dynamic>> _sendImageWithMessagingType(
+    String conversationId, String pageAccessToken, String attachmentId, String? userId, String messagingType, [String? tag]) async {
+    try {
+      final url = Uri.https(
+        "graph.facebook.com",
+        "/v23.0/me/messages",
+        {"access_token": pageAccessToken},
+      );
+
+      final recipientId = userId ?? conversationId;
+      final requestBody = <String, dynamic>{
+        "recipient": {"id": recipientId},
+        "message": {
+          "attachment": {
+            "type": "image",
+            "payload": {
+              "attachment_id": attachmentId
+            }
+          }
+        },
+        "messaging_type": messagingType,
+      };
+      
+      if (tag != null) {
+        requestBody["tag"] = tag;
+      }
+
+      print('🔗 Image API URL: ${url.toString().replaceAll(pageAccessToken, '***TOKEN***')}');
+      print('📤 Image request body: $requestBody');
+
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(requestBody),
+      ).timeout(Duration(seconds: 10));
+
+      print('📊 Image response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        try {
+          final decodedData = jsonDecode(response.body);
+          print('✅ Image sent successfully: $decodedData');
+          return {"success": true, "data": decodedData};
+        } catch (jsonError) {
+          print('⚠️ JSON parsing failed for image response: $jsonError');
+          return {
+            "success": false,
+            "error": "JSON parsing failed: $jsonError"
+          };
+        }
+      } else {
+        try {
+          final error = jsonDecode(response.body);
+          print('❌ Facebook API error sending image: ${response.statusCode} - ${error['error']?['message']}');
+          return {
+            "success": false,
+            "error": error['error']?['message'] ?? "Facebook API error",
+            "code": response.statusCode,
+          };
+        } catch (e) {
+          print('❌ Error parsing image error response: $e');
+          return {
+            "success": false,
+            "error": "HTTP ${response.statusCode}: ${response.body}",
+            "code": response.statusCode,
+          };
+        }
+      }
+    } catch (e) {
+      print('❌ Exception in _sendImageWithMessagingType: $e');
+      return {"success": false, "error": e.toString()};
+    }
+  }
+
+  /// Get content type for image file
+  static MediaType _getContentType(String filePath) {
+    final extension = filePath.toLowerCase().split('.').last;
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+        return MediaType('image', 'jpeg');
+      case 'png':
+        return MediaType('image', 'png');
+      case 'gif':
+        return MediaType('image', 'gif');
+      case 'webp':
+        return MediaType('image', 'webp');
+      default:
+        return MediaType('image', 'jpeg');
     }
   }
 }

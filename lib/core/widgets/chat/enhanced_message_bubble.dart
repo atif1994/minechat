@@ -142,8 +142,8 @@ class EnhancedMessageBubble extends StatelessWidget {
   Widget _buildSingleImage(String imageUrl) {
     return Container(
       constraints: const BoxConstraints(
-        maxWidth: 200,
-        maxHeight: 200,
+        maxWidth: 150,
+        maxHeight: 150,
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -155,8 +155,8 @@ class EnhancedMessageBubble extends StatelessWidget {
   Widget _buildMultipleImages(List<String> imageUrls) {
     return Container(
       constraints: const BoxConstraints(
-        maxWidth: 250,
-        maxHeight: 300,
+        maxWidth: 200,
+        maxHeight: 200,
       ),
       child: GridView.builder(
         shrinkWrap: true,
@@ -187,10 +187,23 @@ class EnhancedMessageBubble extends StatelessWidget {
       return CachedNetworkImage(
         imageUrl: imageUrl,
         fit: BoxFit.cover,
+        memCacheWidth: 300,
+        memCacheHeight: 300,
+        maxWidthDiskCache: 600,
+        maxHeightDiskCache: 600,
+        fadeInDuration: Duration(milliseconds: 200),
+        fadeOutDuration: Duration(milliseconds: 100),
         placeholder: (context, url) => Container(
           color: Colors.grey[300],
           child: const Center(
-            child: CircularProgressIndicator(),
+            child: SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.5,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.grey),
+              ),
+            ),
           ),
         ),
         errorWidget: (context, url, error) {
