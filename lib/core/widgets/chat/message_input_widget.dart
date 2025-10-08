@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:minechat/controller/theme_controller/theme_controller.dart';
 import 'package:minechat/core/utils/extensions/app_gradient/app_gradient_extension.dart';
+import 'package:minechat/core/services/media_service.dart';
 
 /// Reusable message input widget for chat conversations
-class MessageInputWidget extends StatelessWidget {
+class MessageInputWidget extends StatefulWidget {
   final TextEditingController messageController;
   final RxBool isSending;
   final VoidCallback? onSendMessage;
+  final Function(String)? onImageSelected;
+  final Function(String)? onVoiceSelected;
   final VoidCallback? onEmojiTap;
   final VoidCallback? onGifTap;
   final VoidCallback? onImageTap;
@@ -18,11 +21,32 @@ class MessageInputWidget extends StatelessWidget {
     required this.messageController,
     required this.isSending,
     this.onSendMessage,
+    this.onImageSelected,
+    this.onVoiceSelected,
     this.onEmojiTap,
     this.onGifTap,
     this.onImageTap,
     this.onVoiceTap,
   }) : super(key: key);
+
+  @override
+  State<MessageInputWidget> createState() => _MessageInputWidgetState();
+}
+
+class _MessageInputWidgetState extends State<MessageInputWidget> {
+  late final MediaService _mediaService;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use Get.find to get the existing instance instead of creating new one
+    try {
+      _mediaService = Get.find<MediaService>();
+    } catch (e) {
+      // If not found, put it once
+      _mediaService = Get.put(MediaService(), permanent: true);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +61,79 @@ class MessageInputWidget extends StatelessWidget {
         isDark ? const Color(0xFF8B93A6) : const Color(0xFF8B93A6);
     final hintColor =
         isDark ? const Color(0xFF939AA9) : const Color(0xFF939AA9);
+
+    return Obx(() {
+      // Show voice recording UI when recording
+      if (_mediaService.isRecording.value) {
+        return _buildVoiceRecordingUI(context, isDark);
+      }
+
+      // Show normal input UI
+      return _buildNormalInputUI(context, isDark, pillBg, pillBorder, iconColor, hintColor);
+    });
+  }
+
+  Widget _buildVoiceRecordingUI(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0XFF0A0A0A) : Colors.white,
+      ),
+      child: Row(
+        children: [
+          // Recording indicator
+          Container(
+            width: 12,
+            height: 12,
+            decoration: const BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 12),
+          
+          // Recording duration
+          Obx(() => Text(
+            _mediaService.getFormattedDuration(),
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          )),
+          
+          const Spacer(),
+          
+          // Cancel button
+          IconButton(
+            onPressed: () => _mediaService.cancelRecording(),
+            icon: Icon(Icons.close, color: Colors.red),
+          ),
+          
+          // Stop and send button
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.red,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: () async {
+                final audioPath = await _mediaService.stopRecording();
+                if (audioPath != null && widget.onVoiceSelected != null) {
+                  widget.onVoiceSelected!(audioPath);
+                }
+              },
+              icon: const Icon(Icons.send, color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNormalInputUI(BuildContext context, bool isDark, Color pillBg, Color pillBorder, Color iconColor, Color hintColor) {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -61,18 +158,17 @@ class MessageInputWidget extends StatelessWidget {
                   _IconBtn(
                     icon: Icons.emoji_emotions_outlined,
                     color: iconColor,
-                    onTap: onEmojiTap ??
-                        () => Get.snackbar('Info', 'Emoji picker...'),
+                    onTap: widget.onEmojiTap ?? () => _showEmojiPicker(context),
                   ),
                   const SizedBox(width: 8),
 
                   // TextField
                   Expanded(
                     child: TextField(
-                      controller: messageController,
+                      controller: widget.messageController,
                       maxLines: 1,
                       textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => onSendMessage?.call(),
+                      onSubmitted: (_) => widget.onSendMessage?.call(),
                       decoration: InputDecoration(
                         isCollapsed: true,
                         hintText: 'Send a message',
@@ -87,29 +183,22 @@ class MessageInputWidget extends StatelessWidget {
                   ),
 
                   // Gif add
-                  _IconBtn(
-                    icon: Icons.gif_box_outlined,
-                    color: iconColor,
-                    onTap:
-                        onGifTap ?? () => Get.snackbar('Info', 'GIF picker...'),
-                  ),
-                  const SizedBox(width: 10),
+
 
                   // Image add
                   _IconBtn(
                     icon: Icons.add_photo_alternate_outlined,
                     color: iconColor,
-                    onTap: onImageTap ?? () => _showImagePicker(context),
+                    onTap: widget.onImageTap ?? () => _pickImage(context),
                   ),
                   const SizedBox(width: 10),
 
                   // Mic
-                  _IconBtn(
-                    icon: Icons.mic_none_rounded,
-                    color: iconColor,
-                    onTap: onVoiceTap ??
-                        () => Get.snackbar('Info', 'Voice recording...'),
-                  ),
+                  // _IconBtn(
+                  //   icon: Icons.mic_none_rounded,
+                  //   color: iconColor,
+                  //   onTap: widget.onVoiceTap ?? () => _startVoiceRecording(),
+                  // ),
                 ],
               ),
             ),
@@ -123,7 +212,7 @@ class MessageInputWidget extends StatelessWidget {
                 width: 44,
                 height: 44,
                 child: ElevatedButton(
-                  onPressed: isSending.value ? null : onSendMessage,
+                  onPressed: widget.isSending.value ? null : widget.onSendMessage,
                   style: ButtonStyle(
                     padding: const WidgetStatePropertyAll(EdgeInsets.zero),
                     shape: WidgetStatePropertyAll(
@@ -143,7 +232,7 @@ class MessageInputWidget extends StatelessWidget {
                       shape: BoxShape.circle,
                     ).withAppGradient,
                     child: Center(
-                      child: isSending.value
+                      child: widget.isSending.value
                           ? const SizedBox(
                               width: 18,
                               height: 18,
@@ -166,42 +255,47 @@ class MessageInputWidget extends StatelessWidget {
     );
   }
 
-  void _showImagePicker(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: const Text('Take Photo'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Info', 'Camera opened...');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: const Text('Choose from Gallery'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Info', 'Gallery opened...');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.file_present),
-              title: const Text('Send File'),
-              onTap: () {
-                Get.back();
-                Get.snackbar('Info', 'File picker opened...');
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+  /// Pick image from camera or gallery
+  Future<void> _pickImage(BuildContext context) async {
+    final imagePath = await _mediaService.pickImage(context);
+    if (imagePath != null && widget.onImageSelected != null) {
+      widget.onImageSelected!(imagePath);
+    }
+  }
+
+  /// Start voice recording
+  Future<void> _startVoiceRecording() async {
+    final success = await _mediaService.startRecording();
+    if (!success) {
+      Get.snackbar(
+        'Error',
+        'Failed to start voice recording. Please check permissions.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Show emoji picker
+  void _showEmojiPicker(BuildContext context) {
+    _mediaService.showEmojiPicker(context, (emoji) {
+      // Insert emoji at cursor position
+      final text = widget.messageController.text;
+      final cursorPosition = widget.messageController.selection.baseOffset;
+      
+      // Validate cursor position to prevent RangeError
+      final validCursorPosition = cursorPosition >= 0 && cursorPosition <= text.length 
+          ? cursorPosition 
+          : text.length;
+      
+      final newText = text.substring(0, validCursorPosition) + 
+                     emoji.emoji + 
+                     text.substring(validCursorPosition);
+      widget.messageController.text = newText;
+      widget.messageController.selection = TextSelection.fromPosition(
+        TextPosition(offset: validCursorPosition + emoji.emoji.length),
+      );
+    });
   }
 }
 

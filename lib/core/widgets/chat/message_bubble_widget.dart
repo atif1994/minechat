@@ -7,6 +7,7 @@ import 'package:minechat/core/utils/helpers/app_responsive/app_responsive.dart';
 import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:minechat/core/widgets/chat/media_message_bubble_widget.dart';
 
 /// Reusable message bubble widget for chat conversations
 class MessageBubbleWidget extends StatelessWidget {
@@ -17,6 +18,7 @@ class MessageBubbleWidget extends StatelessWidget {
   final bool isPending;
   final String? error;
   final Widget? avatar;
+  final Map<String, dynamic>? messageData; // For media messages
 
   const MessageBubbleWidget({
     Key? key,
@@ -27,10 +29,34 @@ class MessageBubbleWidget extends StatelessWidget {
     this.isPending = false,
     this.error,
     this.avatar,
+    this.messageData,
   }) : super(key: key);
+
+  /// Factory constructor for media messages
+  factory MessageBubbleWidget.media({
+    required Map<String, dynamic> messageData,
+    required bool isFromUser,
+    Widget? avatar,
+  }) {
+    return MessageBubbleWidget(
+      message: messageData['text'] ?? '',
+      timestamp: messageData['timestamp'] ?? '',
+      isFromUser: isFromUser,
+      messageData: messageData,
+      avatar: avatar,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Check if this is a media message
+    if (messageData != null && messageData!['type'] != null) {
+      return MediaMessageBubbleWidget(
+        message: messageData!,
+        isFromUser: isFromUser,
+      );
+    }
+
     final themeController = Get.find<ThemeController>();
     final isDark = themeController.isDarkMode;
     return Container(

@@ -349,6 +349,34 @@ class OpenAIService {
     bool isFacebookChat = false, // NEW: Detect context
   }) async {
     try {
+      final systemPrompt = _buildEnhancedSystemPrompt(
+        assistantName: assistantName,
+        introMessage: introMessage,
+        shortDescription: shortDescription,
+        aiGuidelines: aiGuidelines,
+        responseLength: responseLength,
+        businessInfo: businessInfo,
+        productsServices: productsServices,
+        faqs: faqs,
+        isFacebookChat: isFacebookChat,
+      );
+      
+      // DEBUG: Print system prompt to verify image instructions
+      print('🤖 SYSTEM PROMPT DEBUG:');
+      print('🤖   isFacebookChat: $isFacebookChat');
+      print('🤖   Products count: ${productsServices?.length ?? 0}');
+      if (productsServices != null && productsServices.isNotEmpty) {
+        print('🤖   First product name: ${productsServices[0].name}');
+        print('🤖   First product images: ${productsServices[0].images}');
+        print('🤖   First product selectedImage: ${productsServices[0].selectedImage}');
+      }
+      print('🤖   System prompt length: ${systemPrompt.length} characters');
+      if (systemPrompt.contains('MANDATORY IMAGE SYNTAX')) {
+        print('🤖   ✅ System prompt contains MANDATORY IMAGE SYNTAX');
+      } else {
+        print('🤖   ❌ WARNING: System prompt does NOT contain MANDATORY IMAGE SYNTAX');
+      }
+      
       final response = await http
           .post(
             Uri.parse(_proxyUrl),
@@ -361,17 +389,7 @@ class OpenAIService {
               'messages': [
                 {
                   'role': 'system',
-                  'content': _buildEnhancedSystemPrompt(
-                    assistantName: assistantName,
-                    introMessage: introMessage,
-                    shortDescription: shortDescription,
-                    aiGuidelines: aiGuidelines,
-                    responseLength: responseLength,
-                    businessInfo: businessInfo,
-                    productsServices: productsServices,
-                    faqs: faqs,
-                    isFacebookChat: isFacebookChat,
-                  ),
+                  'content': systemPrompt,
                 },
                 {
                   'role': 'user',
@@ -390,14 +408,26 @@ class OpenAIService {
         if (choices is List && choices.isNotEmpty) {
           final content = choices[0]?['message']?['content'];
           if (content is String && content.isNotEmpty) {
-            // Debug: Check if response is complete
-            print('🤖 OpenAI Response Length: ${content.length} characters');
-            print('🤖 OpenAI Response Complete: ${content.endsWith('.') || content.endsWith('!') || content.endsWith('?')}');
+            // Enhanced Debug: Check AI response details
+            print('🤖 AI RESPONSE DEBUG:');
+            print('🤖   Response length: ${content.length} characters');
+            print('🤖   First 200 chars: ${content.length > 200 ? content.substring(0, 200) : content}');
+            print('🤖   Contains ![: ${content.contains('![')}');
+            print('🤖   Contains markdown image: ${content.contains('![') && content.contains('](http')}');
+            print('🤖   Contains firebasestorage: ${content.contains('firebasestorage.googleapis.com')}');
             
-            // Check if response contains incomplete image paths
-            if (content.contains('![') && content.contains('(/data/user/0') && !content.contains('.jpg)') && !content.contains('.png)') && !content.contains('.jpeg)')) {
-              print('⚠️ WARNING: AI response appears to be truncated - incomplete image paths detected');
-              print('⚠️ Truncated content: ${content.substring(content.length - 100)}');
+            // Extract and print any image URLs found
+            final imageMarkdownPattern = RegExp(r'!\[([^\]]*)\]\(([^)]+)\)');
+            final matches = imageMarkdownPattern.allMatches(content);
+            if (matches.isNotEmpty) {
+              print('🤖   ✅ Found ${matches.length} image(s) in response:');
+              for (final match in matches) {
+                print('🤖      - Alt text: ${match.group(1)}');
+                print('🤖      - URL: ${match.group(2)}');
+              }
+            } else {
+              print('🤖   ❌ WARNING: No image markdown found in AI response!');
+              print('🤖   This means images will NOT be sent to Facebook Messenger');
             }
             
             // CONTEXT-AWARE: Only clean URLs for Facebook chat
@@ -483,16 +513,19 @@ ${i + 1}. Name: ${product.name}
         
         // Add image information - CONTEXT-AWARE: Handle images based on chat type
         if (product.images.isNotEmpty) {
-          prompt += '\n   Images: ${product.images.length} image(s) available';
           if (isFacebookChat) {
             // For Facebook chat: Don't include URLs, just mention availability
+            prompt += '\n   Images: ${product.images.length} image(s) available';
             prompt += '\n   NOTE: Images are available but cannot be displayed in Facebook chat. Describe the product instead.';
           } else {
             // For app chat: Include image URLs for display
-            for (int j = 0; j < product.images.length; j++) {
-              prompt += '\n   - Image ${j + 1}: ${product.images[j]}';
-            }
-            prompt += '\n   USE THESE IMAGE PATHS: When showing this product, use: ![${product.name}](${product.images[0]})';
+            final imageUrl = product.images[0];
+            prompt += '\n   📸 IMAGE URL: $imageUrl';
+            prompt += '\n   ⚠️⚠️⚠️ MANDATORY IMAGE SYNTAX ⚠️⚠️⚠️';
+            prompt += '\n   YOU MUST START YOUR RESPONSE WITH: ![${product.name}]($imageUrl)';
+            prompt += '\n   EXAMPLE CORRECT RESPONSE: "![${product.name}]($imageUrl)\n\nHere are the details for ${product.name}..."';
+            prompt += '\n   ❌ NEVER respond without including the image markdown first!';
+            prompt += '\n   ❌ DO NOT describe images - SHOW them using ![name](url) syntax!';
           }
         } else if (product.selectedImage != null && product.selectedImage!.isNotEmpty) {
           if (isFacebookChat) {
@@ -500,8 +533,13 @@ ${i + 1}. Name: ${product.name}
             prompt += '\n   NOTE: Image is available but cannot be displayed in Facebook chat. Describe the product instead.';
           } else {
             // For app chat: Include image URL for display
-            prompt += '\n   Primary Image: ${product.selectedImage}';
-            prompt += '\n   USE THIS IMAGE PATH: When showing this product, use: ![${product.name}](${product.selectedImage})';
+            final imageUrl = product.selectedImage!;
+            prompt += '\n   📸 IMAGE URL: $imageUrl';
+            prompt += '\n   ⚠️⚠️⚠️ MANDATORY IMAGE SYNTAX ⚠️⚠️⚠️';
+            prompt += '\n   YOU MUST START YOUR RESPONSE WITH: ![${product.name}]($imageUrl)';
+            prompt += '\n   EXAMPLE CORRECT RESPONSE: "![${product.name}]($imageUrl)\n\nHere are the details for ${product.name}..."';
+            prompt += '\n   ❌ NEVER respond without including the image markdown first!';
+            prompt += '\n   ❌ DO NOT describe images - SHOW them using ![name](url) syntax!';
           }
         }
         
@@ -544,19 +582,33 @@ INSTRUCTIONS:
     } else {
       prompt += '''
 
-INSTRUCTIONS:
-- Use the business information to answer questions about the company
-- Use the products/services information to help customers with product inquiries
-- Use the FAQs to provide quick answers to common questions
-- If a question matches an FAQ, provide the exact answer from the FAQ
-- IMPORTANT: You are in the app interface where images CAN be displayed
-- When customers ask about products, show both product details AND images
-- For product inquiries, provide comprehensive descriptions AND include image links
-- USE markdown image syntax like ![Product Name](url) to display images in the app
-- Show product images along with detailed descriptions
-- When showing products, include both text descriptions and image references
-- Always be helpful, professional, and maintain the assistant's personality
-- If you don't have information about something, politely say so and offer to help with what you do know
+INSTRUCTIONS FOR PRODUCT RESPONSES:
+⚠️⚠️⚠️ CRITICAL RULES - YOU MUST FOLLOW THESE ⚠️⚠️⚠️
+
+1. IMAGE DISPLAY IS MANDATORY:
+   - You are in the app interface where images MUST be displayed
+   - When customers ask about products, START your response with the image markdown
+   - Format: ![Product Name](exact_image_url)
+   - The image URL is provided above in the product data as "📸 IMAGE URL:"
+   
+2. RESPONSE STRUCTURE FOR PRODUCTS:
+   Step 1: START with image markdown: ![Product Name](image_url)
+   Step 2: Add a blank line
+   Step 3: Then provide product details
+   
+3. EXAMPLES:
+   ❌ WRONG: "Here are the product details for Clothes: Name: Clothes, Price: 4500..."
+   ✅ CORRECT: "![Clothes](https://firebasestorage.googleapis.com/...)\n\nHere are the details for Clothes: Price: 4500..."
+   
+4. GENERAL INSTRUCTIONS:
+   - Use the business information to answer questions about the company
+   - Use the products/services information to help customers with product inquiries
+   - Use the FAQs to provide quick answers to common questions
+   - If a question matches an FAQ, provide the exact answer from the FAQ
+   - Always be helpful, professional, and maintain the assistant's personality
+   - If you don't have information about something, politely say so and offer to help with what you do know
+
+⚠️ REMEMBER: ALWAYS start product responses with ![Product Name](url) - NO EXCEPTIONS!
 ''';
     }
 
