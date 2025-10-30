@@ -17,6 +17,8 @@ import 'package:minechat/view/screens/account/account_screen.dart';
 import 'package:minechat/view/screens/subscription/subscription_screen.dart';
 import 'package:minechat/view/screens/chat/chat_screen.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
+import 'package:minechat/view/screens/chat/create_group_screen.dart';
+import 'package:minechat/view/screens/chat/group_chat_screen.dart';
 import 'package:minechat/view/screens/crm/crm_main_screen.dart';
 import 'package:minechat/view/screens/crm/crm_leads_screen.dart';
 import 'package:minechat/view/screens/crm/crm_opportunities_screen.dart';
@@ -66,6 +68,10 @@ class AppPages {
     GetPage(
         name: AppRoutes.chatConversation,
         page: () => ChatConversationScreen(chat: Get.arguments)),
+    GetPage(name: AppRoutes.createGroup, page: () => const CreateGroupScreen()),
+    GetPage(
+        name: AppRoutes.groupChat,
+        page: () => GroupChatScreen(groupData: Get.arguments)),
 
     // CRM Pages
     GetPage(name: AppRoutes.crmMain, page: () => const CrmMainScreen()),

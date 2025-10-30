@@ -151,7 +151,32 @@ class AccountScreen extends StatelessWidget {
                           title: 'Contact Us',
                           leadingSvgPath: AppAssets.accountContactUs,
                           trailingSvgPath: AppAssets.accountArrowRight,
-                          onTap: () {},
+                          onTap: () async {
+                            try {
+                              final bool launched = await UrlLauncherService.launchEmail(
+                                email: 'support@minechat.ai',
+                                subject: 'Support Request',
+                                body: 'Hello,\n\nI need help with...\n\n',
+                              );
+                              if (!launched) {
+                                Get.snackbar(
+                                  'Cannot Open Email',
+                                  'Please contact us at: support@minechat.ai',
+                                  duration: const Duration(seconds: 5),
+                                  backgroundColor: Colors.orange,
+                                  colorText: Colors.white,
+                                );
+                              }
+                            } catch (e) {
+                              Get.snackbar(
+                                'Error',
+                                'Please contact us at: support@minechat.ai',
+                                duration: const Duration(seconds: 5),
+                                backgroundColor: Colors.red,
+                                colorText: Colors.white,
+                              );
+                            }
+                          },
                         ),
                         // AccountOptionTile(
                         //   title: 'Upgrade Subscription',

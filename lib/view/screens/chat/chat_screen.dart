@@ -12,6 +12,7 @@ import 'package:minechat/core/utils/helpers/app_styles/app_text_styles.dart';
 import 'package:minechat/view/screens/chat/chat_conversation_screen.dart';
 import 'package:minechat/core/widgets/chat/chat_selection_app_bar.dart';
 import 'package:minechat/core/widgets/chat/chat_more_options_dropdown.dart';
+import 'package:minechat/core/router/app_routes.dart';
 
 class ChatScreen extends StatefulWidget {
   ChatScreen({Key? key}) : super(key: key);
@@ -333,48 +334,56 @@ class _ChatScreenState extends State<ChatScreen> {
     final String initial =
         contactName.isNotEmpty ? contactName[0].toUpperCase() : '?';
 
-    Widget _profileAvatar() => Stack(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundImage: profileImageUrl.isNotEmpty
-                      ? NetworkImage(profileImageUrl)
-                      : null,
-                  backgroundColor: _getPlatformColor(chat['platform']),
-                  onBackgroundImageError: (exception, stackTrace) {
-                    print('❌ Failed to load profile image for $contactName: $exception');
-                  },
-                  child: profileImageUrl.isEmpty
-                      ? Text(
-                          initial,
-                          style: AppTextStyles.heading(context).copyWith(
-                            color: Colors.white,
-                          ),
-                        )
-                      : null,
-                ),
-                // Add platform badge for Facebook chats
-                if (chat['platform'] == 'Facebook')
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: Icon(
-                        Icons.chat,
-                        size: 10,
-                        color: Colors.white,
-                      ),
+    // Build avatar based on chat type
+    Widget avatarWidget;
+    if (chat['type'] == 'group') {
+      final members = chat['members'] as List<Map<String, dynamic>>? ?? [];
+      avatarWidget = _buildGroupAvatar(members, context);
+    } else {
+      // Regular individual chat avatar
+      avatarWidget = Stack(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundImage: profileImageUrl.isNotEmpty
+                ? NetworkImage(profileImageUrl)
+                : null,
+            backgroundColor: _getPlatformColor(chat['platform']),
+            onBackgroundImageError: (exception, stackTrace) {
+              print('❌ Failed to load profile image for $contactName: $exception');
+            },
+            child: profileImageUrl.isEmpty
+                ? Text(
+                    initial,
+                    style: AppTextStyles.heading(context).copyWith(
+                      color: Colors.white,
                     ),
-                  ),
-              ],
-        );
+                  )
+                : null,
+          ),
+          // Add platform badge for Facebook chats
+          if (chat['platform'] == 'Facebook')
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+                child: Icon(
+                  Icons.chat,
+                  size: 10,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+        ],
+      );
+    }
 
     return GestureDetector(
       onTap: () {
@@ -382,7 +391,12 @@ class _ChatScreenState extends State<ChatScreen> {
           chatController.toggleChatSelection(chatId);
         } else {
           chatController.markAsRead(chat['id']);
-          Get.to(() => ChatConversationScreen(chat: chat));
+          // Check if it's a group chat
+          if (chat['type'] == 'group') {
+            Get.toNamed(AppRoutes.groupChat, arguments: chat);
+          } else {
+            Get.to(() => ChatConversationScreen(chat: chat));
+          }
         }
       },
       onLongPress: () {
@@ -421,10 +435,10 @@ class _ChatScreenState extends State<ChatScreen> {
                           color: Colors.black,
                         ),
                       )
-                    : _profileAvatar(),
+                    : avatarWidget,
               ] else ...[
                 // Profile Image with Platform Badge (same avatar for non-selection mode)
-                _profileAvatar(),
+                avatarWidget,
               ],
 
             const SizedBox(width: 12),
@@ -582,6 +596,119 @@ class _ChatScreenState extends State<ChatScreen> {
       default:
         return Colors.grey[600] ?? Colors.grey;
     }
+  }
+
+  Widget _buildGroupAvatar(List<Map<String, dynamic>> members, BuildContext context) {
+    if (members.isEmpty) {
+      return CircleAvatar(
+        radius: 24,
+        backgroundColor: Colors.grey[400],
+        child: Icon(
+          Icons.group,
+          color: Colors.white,
+          size: 24,
+        ),
+      );
+    }
+
+    if (members.length == 1) {
+      final member = members.first;
+      final memberName = member['name'] ?? '';
+      final memberImageUrl = member['profileImageUrl'] as String?;
+      final initial = memberName.isNotEmpty ? memberName[0].toUpperCase() : '?';
+      
+      return CircleAvatar(
+        radius: 24,
+        backgroundImage: memberImageUrl != null && memberImageUrl.isNotEmpty
+            ? NetworkImage(memberImageUrl)
+            : null,
+        backgroundColor: _getAvatarColor(memberName),
+        child: memberImageUrl == null || memberImageUrl.isEmpty
+            ? Text(
+                initial,
+                style: AppTextStyles.heading(context).copyWith(
+                  color: Colors.white,
+                ),
+              )
+            : null,
+      );
+    }
+
+    // Multiple members - show overlapping avatars
+    return SizedBox(
+      width: 48,
+      height: 48,
+      child: Stack(
+        children: [
+          // First member (left)
+          Positioned(
+            left: 0,
+            top: 0,
+            child: CircleAvatar(
+              radius: 20,
+              backgroundColor: _getAvatarColor(members[0]['name'] ?? ''),
+              child: Text(
+                _getInitials(members[0]['name'] ?? ''),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          // Second member (right, overlapping)
+          if (members.length > 1)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: CircleAvatar(
+                radius: 20,
+                backgroundColor: _getAvatarColor(members[1]['name'] ?? ''),
+                child: Text(
+                  _getInitials(members[1]['name'] ?? ''),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  String _getInitials(String name) {
+    if (name.isEmpty) return '?';
+    final words = name.trim().split(' ');
+    if (words.length == 1) {
+      return words[0].substring(0, 1).toUpperCase();
+    } else {
+      final firstLetter = words[0].substring(0, 1).toUpperCase();
+      final secondLetter = words[1].substring(0, 1).toUpperCase();
+      return firstLetter + secondLetter;
+    }
+  }
+
+  Color _getAvatarColor(String name) {
+    final colors = [
+      Colors.blue,
+      Colors.green,
+      Colors.orange,
+      Colors.purple,
+      Colors.teal,
+      Colors.indigo,
+      Colors.pink,
+      Colors.cyan,
+      Colors.red,
+      Colors.amber,
+      Colors.deepPurple,
+      Colors.lightBlue,
+    ];
+    final hash = name.hashCode;
+    return colors[hash.abs() % colors.length];
   }
 }
 

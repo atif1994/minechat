@@ -61,30 +61,40 @@ class ChatConversationScreen extends StatelessWidget {
               // AI Enabled indicator with toggle functionality
               AIEnabledIndicatorWidget(
                 isEnabled: conversationController.isAIEnabled.value,
-                onTap: () => conversationController.toggleAIResponse(),
+                onTap: () {
+                  print('🔄 AIEnabledIndicatorWidget tapped - current state: ${conversationController.isAIEnabled.value}');
+                  conversationController.toggleAIResponse();
+                },
               ),
 
               // AI Response Mode indicator
-              if (conversationController.isAIEnabled.value)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  color: Colors.blue.withOpacity(0.1),
-                  child: Row(
-                    children: [
-                      Icon(Icons.smart_toy, color: Colors.blue, size: 16),
-                      const SizedBox(width: 8),
-                      Text(
-                        'AI Assistant is responding automatically',
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+              Builder(
+                builder: (context) {
+                  final isAIEnabled = conversationController.isAIEnabled.value;
+                  print('🔄 UI: AI Response Mode indicator - isAIEnabled: $isAIEnabled');
+                  if (!isAIEnabled) return const SizedBox.shrink();
+                  
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    color: Colors.blue.withOpacity(0.1),
+                    child: Row(
+                      children: [
+                        Icon(Icons.smart_toy, color: Colors.blue, size: 16),
+                        const SizedBox(width: 8),
+                        Text(
+                          'AI Assistant is responding automatically',
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
+                      ],
+                    ),
+                  );
+                },
+              ),
 
               // Messages
               Expanded(
@@ -125,6 +135,7 @@ class ChatConversationScreen extends StatelessWidget {
                         Switch(
                           value: conversationController.isAIEnabled.value,
                           onChanged: (value) {
+                            print('🔄 Switch toggled - new value: $value, current state: ${conversationController.isAIEnabled.value}');
                             conversationController.toggleAI(value);
                           },
                           activeColor: Colors.green,
