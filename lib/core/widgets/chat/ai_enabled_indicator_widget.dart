@@ -12,7 +12,7 @@ class AIEnabledIndicatorWidget extends StatelessWidget {
 
   const AIEnabledIndicatorWidget({
     Key? key,
-    this.isEnabled = true,
+    this.isEnabled = false,  // FIXED: Default to false (disabled)
     this.onTap,
   }) : super(key: key);
 

@@ -125,6 +125,18 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // User Conversations collection (for group chats and conversations)
+    match /user_conversations/{userId}/conversations/{conversationId} {
+      // Allow read/write if user owns the conversations
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // User Messages collection (for chat messages)
+    match /user_messages/{userId}/messages/{messageId} {
+      // Allow read/write if user owns the messages
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
     // Test collection (for debugging)
     match /test/{docId} {
       allow read, write: if request.auth != null;

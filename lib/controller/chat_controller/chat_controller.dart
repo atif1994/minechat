@@ -7,6 +7,7 @@ import 'package:minechat/controller/channel_controller/channel_controller.dart';
 import 'package:minechat/core/services/realtime_message_service.dart';
 import 'package:minechat/core/services/facebook_webhook_service.dart';
 import 'package:minechat/core/services/simple_webhook_service.dart';
+import 'package:minechat/view/screens/chat/create_group_screen.dart';
 import 'dart:async'; // Added for Timer
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -271,6 +272,9 @@ class ChatController extends GetxController {
 
       // Load other channel chats (REAL DATA ONLY)
       await loadOtherChannelChats();
+
+      // Load groups from Firestore
+      await loadGroupsFromFirestore();
 
       // Apply current filter
       applyFilter();
@@ -985,8 +989,8 @@ class ChatController extends GetxController {
   void onCreateNewOptionTap(String key) {
     switch (key) {
       case 'new_group':
-        Get.snackbar('New Group', 'Opening group creation...',
-            backgroundColor: Colors.blue, colorText: Colors.white);
+        // Navigate to create group screen
+        Get.to(() => const CreateGroupScreen());
         break;
       case 'new_group_message':
         Get.snackbar('New Group Message', 'Opening group message...',
@@ -1708,5 +1712,179 @@ class ChatController extends GetxController {
         break;
     }
     isMoreOptionsDropdownOpen.value = false;
+  }
+
+  /// Add a new group to the chat list and save to Firestore
+  Future<void> addGroupToChatList(Map<String, dynamic> groupData) async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) {
+        print('❌ Error: No user ID found');
+        return;
+      }
+
+      // Add the group to the beginning of the chat list (for immediate UI update)
+      chatList.insert(0, groupData);
+
+      // Apply current filter to update filtered list
+      applyFilter();
+
+      // Save group to Firestore for persistence
+      await _firestore
+          .collection('user_conversations')
+          .doc(userId)
+          .collection('conversations')
+          .doc(groupData['id'])
+          .set({
+        'conversationId': groupData['id'],
+        'contactName': groupData['contactName'],
+        'type': 'group',
+        'members': groupData['members'],
+        'lastMessage': groupData['lastMessage'] ?? 'Group created',
+        'lastMessageTime': groupData['lastMessageTime'] ?? DateTime.now().toIso8601String(),
+        'platform': 'Group',
+        'unreadCount': 0,
+        'messageCount': 0,
+        'isActive': true,
+        'createdAt': FieldValue.serverTimestamp(),
+        'createdBy': userId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      print('✅ Added group "${groupData['contactName']}" to chat list and Firestore');
+    } catch (e) {
+      print('❌ Error adding group to chat list: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to create group. Please try again.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Update group chat with new message and save to Firestore
+  Future<void> updateGroupChat(String groupId, Map<String, dynamic> messageData) async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) return;
+
+      final groupIndex = chatList.indexWhere((chat) => chat['id'] == groupId);
+      if (groupIndex != -1) {
+        chatList[groupIndex]['lastMessage'] = messageData['message'] ?? messageData['text'] ?? '';
+        chatList[groupIndex]['lastMessageTime'] = messageData['timestamp'] ?? DateTime.now().toIso8601String();
+        chatList[groupIndex]['timestamp'] = DateTime.now();
+
+        // Move to top of list
+        final updatedGroup = chatList[groupIndex];
+        chatList.removeAt(groupIndex);
+        chatList.insert(0, updatedGroup);
+
+        // Apply filter
+        applyFilter();
+
+        // Update in Firestore
+        await _firestore
+            .collection('user_conversations')
+            .doc(userId)
+            .collection('conversations')
+            .doc(groupId)
+            .update({
+          'lastMessage': messageData['message'] ?? messageData['text'] ?? '',
+          'lastMessageTime': messageData['timestamp'] ?? DateTime.now().toIso8601String(),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        // Store the message in Firestore for real-time updates
+        await _realtimeService.storeMessage(
+          conversationId: groupId,
+          messageText: messageData['message'] ?? messageData['text'] ?? '',
+          isFromUser: messageData['type'] == 'user',
+          platform: 'Group',
+          senderId: messageData['senderId'],
+          senderName: messageData['senderName'],
+        );
+
+        print('✅ Updated group chat $groupId in UI and Firestore');
+      }
+    } catch (e) {
+      print('❌ Error updating group chat: $e');
+    }
+  }
+
+  /// Load groups from Firestore
+  Future<void> loadGroupsFromFirestore() async {
+    try {
+      final userId = getCurrentUserId();
+      if (userId.isEmpty) {
+        print('❌ Error: No user ID found for loading groups');
+        return;
+      }
+
+      print('🔍 Loading groups from Firestore for user: $userId');
+
+      final groupsSnapshot = await _firestore
+          .collection('user_conversations')
+          .doc(userId)
+          .collection('conversations')
+          .where('type', isEqualTo: 'group')
+          .orderBy('updatedAt', descending: true)
+          .get();
+
+      if (groupsSnapshot.docs.isEmpty) {
+        print('ℹ️ No groups found in Firestore');
+        return;
+      }
+
+      print('✅ Found ${groupsSnapshot.docs.length} groups in Firestore');
+
+      for (final doc in groupsSnapshot.docs) {
+        final groupData = doc.data();
+        
+        // Convert Firestore data to app format
+        final appGroup = {
+          'id': groupData['conversationId'] ?? doc.id,
+          'type': 'group',
+          'contactName': groupData['contactName'] ?? 'Unnamed Group',
+          'lastMessage': groupData['lastMessage'] ?? 'Group created',
+          'lastMessageTime': groupData['lastMessageTime'] ?? DateTime.now().toIso8601String(),
+          'messageCount': groupData['messageCount'] ?? 0,
+          'unreadCount': groupData['unreadCount'] ?? 0,
+          'platform': 'Group',
+          'profileImageUrl': null,
+          'conversationId': groupData['conversationId'] ?? doc.id,
+          'isActive': groupData['isActive'] ?? true,
+          'timestamp': _parseTimestamp(groupData['lastMessageTime']),
+          'members': groupData['members'] ?? [],
+        };
+
+        // Check if group already exists in chatList (to avoid duplicates)
+        final existingIndex = chatList.indexWhere((chat) => chat['id'] == appGroup['id']);
+        if (existingIndex == -1) {
+          chatList.add(appGroup);
+          print('✅ Added group "${appGroup['contactName']}" from Firestore');
+        } else {
+          print('ℹ️ Group "${appGroup['contactName']}" already exists in chat list');
+        }
+      }
+
+      print('✅ Loaded ${groupsSnapshot.docs.length} groups from Firestore');
+    } catch (e) {
+      print('❌ Error loading groups from Firestore: $e');
+    }
+  }
+
+  /// Get group members for a specific group
+  List<Map<String, dynamic>> getGroupMembers(String groupId) {
+    try {
+      final groupIndex = chatList.indexWhere((chat) => chat['id'] == groupId);
+      if (groupIndex != -1) {
+        return List<Map<String, dynamic>>.from(chatList[groupIndex]['members'] ?? []);
+      }
+      return [];
+    } catch (e) {
+      print('❌ Error getting group members: $e');
+      return [];
+    }
   }
 }

@@ -63,4 +63,33 @@ class UrlLauncherService {
   static Future<bool> launchPrivacyPolicy() async {
     return await launchUrl('https://www.minechat.ai/privacy.html');
   }
+  
+  static Future<bool> launchEmail({
+    required String email,
+    String? subject,
+    String? body,
+  }) async {
+    try {
+      // Create mailto URL with parameters
+      String mailtoUrl = 'mailto:$email';
+      
+      List<String> parameters = [];
+      if (subject != null && subject.isNotEmpty) {
+        parameters.add('subject=${Uri.encodeComponent(subject)}');
+      }
+      if (body != null && body.isNotEmpty) {
+        parameters.add('body=${Uri.encodeComponent(body)}');
+      }
+      
+      if (parameters.isNotEmpty) {
+        mailtoUrl += '?${parameters.join('&')}';
+      }
+      
+      print('📧 Attempting to launch email: $mailtoUrl');
+      return await launchUrl(mailtoUrl);
+    } catch (e) {
+      print('❌ Error launching email: $e');
+      return false;
+    }
+  }
 }
